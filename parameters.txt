@@ -1,0 +1,3 @@
+Power (W)  | Scanning Speed (m/s)
+1 1
+2 2 
