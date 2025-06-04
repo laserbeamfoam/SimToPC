@@ -15,11 +15,6 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-libs
-(
-    "liblduSolvers.so"
-)
-
 application     laserMeltFoam;
 
 startFrom       latestTime;
@@ -32,15 +27,15 @@ endTime         1e-3;
 
 deltaT          1e-12;
 
-writeControl    timeStep; //adjustableRunTime;
+writeControl    adjustableRunTime;
 
-writeInterval   1; // 1e-5; //Gowthaman used 1e-5 
+writeInterval   1e-5; // 1e-12 if you want to run a couple of time steps to see if its ok
 
 writeFormat     ascii;
 
 writePrecision  6;
 
-writeCompression uncompressed;
+writeCompression off;
 
 timeFormat      general;
 
@@ -52,7 +47,7 @@ adjustTimeStep  yes;
 
 maxCo          	0.5;
 
-maxAlphaCo	0.5;
+maxAlphaCo	    0.5;
 
 maxDeltaT       2e-8;
 

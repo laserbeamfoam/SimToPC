@@ -22,7 +22,7 @@ ddtSchemes
 
 gradSchemes
 {
-    //default         extendedLeastSquares 0; //cellLimited leastSquares 1;
+    default         leastSquares;
     grad(U)         leastSquares;
     grad(alpha.material) leastSquares;  
     grad(T)         leastSquares;
@@ -33,8 +33,6 @@ divSchemes
 {
     default	    none;
     div(rhoPhi,U)   Gauss upwind;
-    //div(phi,alpha)  Gauss linearUpwind grad(alpha.material);
-    //div(phirb,alpha) Gauss interfaceCompression;
     div(phi,T) 	    Gauss upwind;
     div(rhoMPhi,gT) Gauss linearUpwind grad(gT);
 }
@@ -53,6 +51,5 @@ snGradSchemes
 {
     default         corrected;
 }
-
 
 // ************************************************************************* //

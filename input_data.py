@@ -1,2 +1,2 @@
-
-OF9_EV_LOCATION = "/opt/openfoam9/etc/bashrc"
+RUNNING_ON = "LOCAL" # Options: "LOCAL", "MELUXINA", "SONIC"
+OPENFOAM_VERSION = "2412" # Or "FE40"

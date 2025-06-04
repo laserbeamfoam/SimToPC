@@ -53,12 +53,35 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 
-OF9_EV_LOCATION = "/opt/openfoam9/etc/bashrc"
-FE_40_LOCATION = "/home/simon/foam/foam-extend-4.0/etc/bashrc"
-terminal("pwd")
+if (RUNNING_ON == "LOCAL"):
+    #Use OpenFOAM-v2412
+    OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+
+if (RUNNING_ON == "MELUXINA"):
+    OF2412_LOCATION = "/project/home/p200734/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+
+else: # This means SONIC
+    OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+    
+    
+if (OPENFOAM_VERSION == "2412"):
+    OF_LOCATION = OF2412_LOCATION
+    
+else:
+    OF_LOCATION = FE_40_LOCATION
+
+
+terminal(f'bash -c "source {OF_LOCATION} && cd base_case && cp -r initial 0"')
+
+if (OPENFOAM_VERSION == "FE40"):
+    terminal(f'bash -c "source {OF_LOCATION} && cd base_case/constant && mkdir polyMesh"')
+    terminal(f'bash -c "source {OF_LOCATION} && cd base_case && mv system/blockMeshDict constant/polyMesh/"')
 
 print("Running blockMesh")
-terminal(f'bash -c "source {FE_40_LOCATION} && cd base_case && blockMesh"')
+terminal(f'bash -c "source {OF_LOCATION} && cd base_case && blockMesh"')
 
 print("Running setSolidFraction")
 terminal(f'bash -c "source {FE_40_LOCATION} && cd base_case && setSolidFraction"')

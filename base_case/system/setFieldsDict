@@ -11,19 +11,26 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      bedPlateDict;
+    object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Bed true;
+defaultFieldValues
+(
+    volScalarFieldValue alpha.material 0
+);
 
-xmin 0.0;
-xmax 0.0002;
+regions
+(
+    boxToCell
+    {
+        box (0 0 -1) (200e-6 750e-6 100e-6);
+        fieldValues
+        (
+            volScalarFieldValue alpha.material 1
+        );
+    }
+);
 
-ymin 0.0;
-ymax 0.0008;
-
-zmin 0.0;
-zmax 0.0001;
 
 // ************************************************************************* //

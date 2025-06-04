@@ -9,21 +9,47 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "system";
-    object      bedPlateDict;
+    class       volScalarField;
+    location    "0";
+    object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Bed true;
+dimensions      [0 0 0 1 0 0 0];
 
-xmin 0.0;
-xmax 0.0002;
+internalField   uniform 298.0;
 
-ymin 0.0;
-ymax 0.0008;
+boundaryField
+{
+    leftWall
+    {
+      type		zeroGradient;
+    }
+    rightWall
+    {
+      type		zeroGradient;
+    }
+    topWall
+    {
+    type		zeroGradient;
+      }
+    bottomWall
+    {
+	type		zeroGradient;
+    }
+    front
+    {
+	type		zeroGradient;
+    }
+    back
+    {
+      type		zeroGradient;
+    }
+    solidInterface
+    {
+      type		zeroGradient;
+    }
+}
 
-zmin 0.0;
-zmax 0.0001;
 
 // ************************************************************************* //
