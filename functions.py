@@ -25,8 +25,36 @@ Authors
 
 
 import os
+import input_data
+from input_data import *
 
 def terminal(command):
     os.system(command)
+
+def create_test_case(base_case_name, test_case_number):
+    name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
+    terminal("mkdir -p "  + name_new_folder)
+    # terminal("cp -r base_case/* " + name_new_folder)
+    terminal("cp -r " + base_case_name + "/* " + name_new_folder)
+    terminal("cp -r *py " + "./" + name_new_folder)
     
     
+    
+def replace_speed_power_radius(variable, value):
+
+        
+    if (variable == "radius"):
+        # Replace the laser radius in the correct file, depending on simulation case
+        file_name = "./" + name_new_folder + "/constant/laserProperties"
+        # Read all lines in the file
+        with open(file_name, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        if (OPENFOAM_VERSION == "2412"):
+            lines[17] = "laserRadius " + str(value) + "; // The radius of the laser \n"  
+        else:
+            lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
+            
+        # Write the new lines in the file 
+        with open(file_name, 'w', encoding='utf-8') as f:
+            f.writelines(lines)

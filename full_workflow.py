@@ -74,7 +74,7 @@ from matplotlib.colors import ListedColormap
 # else:
 #     OF_LOCATION = FE_40_LOCATION
 
-
+BASE_CASE_NAME = ""
 if (OPENFOAM_VERSION == "2412"):
     BASE_CASE_NAME = MESH_DENSITY + "/base_case_of2412"
 else:
@@ -86,30 +86,15 @@ parameters = np.loadtxt("./parameters.txt", skiprows=1)
 number_cases = parameters.shape[0]
 number_of_variables = parameters.shape[1]
 
-# Create the test cases
-# Replace the laser radius in the correct file, depending on simulation case
+
+
+
 for i in range(number_cases):
-    name_new_folder = MESH_DENSITY + "/test_case_" + str(i+1)
-    terminal("mkdir -p "  + name_new_folder)
-    # terminal("cp -r base_case/* " + name_new_folder)
-    terminal("cp -r " + BASE_CASE_NAME + "/* " + name_new_folder)
-    terminal("cp -r *py " + name_new_folder)
+    # Create the test cases
+    create_test_case(BASE_CASE_NAME, i)
     
-    
-    file_name = "./" + name_new_folder + "/constant/laserProperties"
-    # Read all lines in the file
-    with open(file_name, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        
-    if (OPENFOAM_VERSION == "2412"):
-        lines[17] = "laserRadius " + str(parameters[i, 2]) + "; // The radius of the laser \n"  
-    else:
-        lines[16] = "\tr0\t\t  " + str(parameters[i, 0]) +"; //25e-6;\n"
-
-    # Write the new lines in the file 
-    with open(file_name, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
-
+    #Replace the correct values for radius, scanning speed and power
+    replace_speed_power_radius("radius", parameters[i, 2], BASE_CASE_NAME, i)
 
 
 
