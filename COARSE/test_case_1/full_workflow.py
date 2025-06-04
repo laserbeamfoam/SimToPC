@@ -87,7 +87,6 @@ number_cases = parameters.shape[0]
 number_of_variables = parameters.shape[1]
 
 # Create the test cases
-# Replace the laser radius in the correct file, depending on simulation case
 for i in range(number_cases):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(i+1)
     terminal("mkdir -p "  + name_new_folder)
