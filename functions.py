@@ -40,9 +40,9 @@ def create_test_case(base_case_name, test_case_number):
     
     
     
-def replace_speed_power_radius(variable, value):
-
-        
+def replace_speed_power_radius(variable, value, test_case_number):
+    name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
+    
     if (variable == "radius"):
         # Replace the laser radius in the correct file, depending on simulation case
         file_name = "./" + name_new_folder + "/constant/laserProperties"
@@ -54,6 +54,25 @@ def replace_speed_power_radius(variable, value):
             lines[17] = "laserRadius " + str(value) + "; // The radius of the laser \n"  
         else:
             lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
+            
+        # Write the new lines in the file 
+        with open(file_name, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+
+    if (variable == "speed"):
+        # Replace the laser radius in the correct file, depending on simulation case
+        file_name = "./" + name_new_folder + "/constant/timeVsLaserPosition"
+        # Read all lines in the file
+        with open(file_name, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        if (OPENFOAM_VERSION == "2412"):
+            lines[2] = "    ("+ str(value * 600e-6)+"      (100e-6 700e-6 0)) \n"
+            lines[3] = "    ("+ str(value * 600e-6 + 0.001e-6)+"      (100e-6 700e-6 0)) \n"
+        else:
+            # lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
+            # To be implemented
+            pass
             
         # Write the new lines in the file 
         with open(file_name, 'w', encoding='utf-8') as f:

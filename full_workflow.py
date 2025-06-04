@@ -90,12 +90,15 @@ number_of_variables = parameters.shape[1]
 
 
 for i in range(number_cases):
+    
     # Create the test cases
     create_test_case(BASE_CASE_NAME, i)
     
-    #Replace the correct values for radius, scanning speed and power
-    replace_speed_power_radius("radius", parameters[i, 2], BASE_CASE_NAME, i)
+    #Replace the correct values for radius,
+    replace_speed_power_radius("radius", parameters[i, 2], i)
 
+    #Replace the correct values for scanning speed
+    replace_speed_power_radius("speed", parameters[i, 0], i)
 
 
 # terminal(f'bash -c "source {OF_LOCATION} && cd base_case && cp -r initial 0"')
