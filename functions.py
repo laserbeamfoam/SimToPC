@@ -25,6 +25,8 @@ Authors
 
 
 import os
+import functions
+from functions import *
 import input_data
 from input_data import *
 
@@ -37,10 +39,10 @@ def create_test_case(base_case_name, test_case_number):
     # terminal("cp -r base_case/* " + name_new_folder)
     terminal("cp -r " + base_case_name + "/* " + name_new_folder)
     terminal("cp -r *py " + "./" + name_new_folder)
+
     
     
-    
-def replace_speed_power_radius(variable, value, test_case_number):
+def replace_speed_radius(variable, value, test_case_number):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
     
     if (variable == "radius"):
@@ -67,8 +69,8 @@ def replace_speed_power_radius(variable, value, test_case_number):
             lines = f.readlines()
             
         if (OPENFOAM_VERSION == "2412"):
-            lines[2] = "    ("+ str(value * 600e-6)+"      (100e-6 700e-6 0)) \n"
-            lines[3] = "    ("+ str(value * 600e-6 + 0.001e-6)+"      (100e-6 700e-6 0)) \n"
+            lines[2] = "    ("+ str(value * 600e-6) + "      (100e-6 700e-6 0)) \n"
+            lines[3] = "    ("+ str(value * 600e-6 + 0.001e-6) +"      (100e-6 700e-6 0)) \n"
         else:
             # lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
             # To be implemented
@@ -77,3 +79,32 @@ def replace_speed_power_radius(variable, value, test_case_number):
         # Write the new lines in the file 
         with open(file_name, 'w', encoding='utf-8') as f:
             f.writelines(lines)
+            
+            
+
+
+def replace_power(variable, value, test_case_number, speed):
+    name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
+        
+    # Replace the laser radius in the correct file, depending on simulation case
+    file_name = "./" + name_new_folder + "/constant/timeVsLaserPower"
+    # Read all lines in the file
+    with open(file_name, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        
+    if (OPENFOAM_VERSION == "2412"):
+        lines[1] = "    (0            "+ str(value) + ")\n "
+        lines[2] = "    ("+ str(speed * 600e-6) + "         "+ str(value) + ") \n"
+        lines[3] = "    ("+ str(speed * 600e-6 + 0.001e-6) + "         "+ "0) \n"
+    else:
+        # lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
+        # To be implemented
+        pass
+        
+    # Write the new lines in the file 
+    with open(file_name, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+            
+            
+            
+            
