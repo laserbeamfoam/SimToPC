@@ -54,25 +54,25 @@ from matplotlib.colors import ListedColormap
 
 
 
-# if (RUNNING_ON == "LOCAL"):
-#     #Use OpenFOAM-v2412
-#     OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
-#     FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+if (RUNNING_ON == "LOCAL"):
+    #Use OpenFOAM-v2412
+    OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
 
-# if (RUNNING_ON == "MELUXINA"):
-#     OF2412_LOCATION = "/project/home/p200734/OpenFOAM-v2412/etc/bashrc"
-#     FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+if (RUNNING_ON == "MELUXINA"):
+    OF2412_LOCATION = "/project/home/p200734/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
 
-# else: # This means SONIC
-#     OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
-#     FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
+else: # This means SONIC
+    OF2412_LOCATION = "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"
+    FE_40_LOCATION = "$HOME/foam/foam-extend-4.0/etc/bashrc"
     
     
-# if (OPENFOAM_VERSION == "2412"):
-#     OF_LOCATION = OF2412_LOCATION
+if (OPENFOAM_VERSION == "2412"):
+    OF_LOCATION = OF2412_LOCATION
     
-# else:
-#     OF_LOCATION = FE_40_LOCATION
+else:
+    OF_LOCATION = FE_40_LOCATION
 
 BASE_CASE_NAME = ""
 if (OPENFOAM_VERSION == "2412"):
@@ -87,10 +87,7 @@ number_cases = parameters.shape[0]
 number_of_variables = parameters.shape[1]
 
 
-
-
-for i in range(number_cases):
-    
+for i in range(number_cases):    
     # Create the test cases
     create_test_case(BASE_CASE_NAME, i)
     
@@ -102,6 +99,18 @@ for i in range(number_cases):
 
     #Replace the correct values for power
     replace_power("power", parameters[i, 1], i, parameters[i, 0])
+
+# Execute the simulations
+if (RUNNING_ON == "LOCAL"):
+    for i in range(number_cases):  
+        name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
+        terminal("cd " + name_new_folder + "/system/ && mv decomposeParDict_16cores decomposeParDict")
+        terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && ./Allrun_local"')
+        
+        pass
+
+
+
 
 # terminal(f'bash -c "source {OF_LOCATION} && cd base_case && cp -r initial 0"')
 
