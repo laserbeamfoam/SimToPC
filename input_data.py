@@ -1,4 +1,4 @@
-RUNNING_ON = "LOCAL" # Options: "LOCAL", "MELUXINA", "SONIC"
+RUNNING_ON = "SONIC" #"LOCAL" # Options: "LOCAL", "MELUXINA", "SONIC"
 OPENFOAM_VERSION = "2412" # Or "FE40"
 
 # FINE for ~2 million cells.

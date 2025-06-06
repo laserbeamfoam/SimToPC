@@ -106,38 +106,57 @@ if (RUNNING_ON == "LOCAL"):
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
         terminal("cd " + name_new_folder + "/system/ && mv decomposeParDict_16cores decomposeParDict")
         terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && ./Allrun_local"')
+
+else:
+    for i in range(number_cases):  
+        name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
+        # Prepare the required files
+        terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && cp -r initial 0"')      
+        terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && blockMesh"')
+        terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && setSolidFraction"')
+        terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && decomposePar"')
         
-        pass
+        # Transfer the files to the HPC system
+        if (RUNNING_ON == "SONIC"):
+            # Tranfer test_case_i to the HPC system
+            print("Transferring the test case ", str(i+1))
+            terminal(f'ssh sonicstaff "cd /home/people/srodriguez/scratch/run/ && mkdir {MESH_DENSITY}"') 
+            terminal("scp -r " + name_new_folder +  
+                  " sonicstaff:/home/people/srodriguez/scratch/run/" + 
+                  name_new_folder)
+        else: # Running on Meluxina
+            terminal(f'ssh meluxina "cd /project/home/p200734/Simon/GowthamanSolver/run/ && mkdir {MESH_DENSITY}"') 
+            terminal("scp -r " + name_new_folder +  
+                  " meluxina:project/home/p200734/Simon/GowthamanSolver/run/" + 
+                  name_new_folder)    
+            # terminal("scp -r " + name_new_folder +  
+              # " meluxina:/project/home/p200734/Simon/GowthamanSolver/run/" + 
+              # name_new_folder)
 
-
-
-
-# terminal(f'bash -c "source {OF_LOCATION} && cd base_case && cp -r initial 0"')
-
-# if (OPENFOAM_VERSION == "FE40"):
-#     terminal(f'bash -c "source {OF_LOCATION} && cd base_case/constant && mkdir polyMesh"')
-#     terminal(f'bash -c "source {OF_LOCATION} && cd base_case && mv system/blockMeshDict constant/polyMesh/"')
-
-# print("Running blockMesh")
-# terminal(f'bash -c "source {OF_LOCATION} && cd base_case && blockMesh"')
-
-# print("Running setSolidFraction")
-# terminal(f'bash -c "source {FE_40_LOCATION} && cd base_case && setSolidFraction"')
-
-
+        # Execute simulation test_case_i
+        if (i == 0):
+            run_next = "yes"
+        else:
+            run_next = input("Do you want to run new simulations? (yes/no): ").strip().lower()
+        
+        if (run_next == "yes"):
+            if (RUNNING_ON == "SONIC"):
+                terminal(f'ssh sonicstaff "cd /home/people/srodriguez/scratch/run/{name_new_folder} && sbatch singleTrackSonic.sh"') 
+            else: #Running on Meluxina
+                terminal(f'ssh meluxina "cd /project/home/p200734/Simon/GowthamanSolver/run/{name_new_folder} && sbatch singleTrack.sh"')
 
 
         
     
     
-# Transfer the test cases to the HPC system
-for i in range(number_cases):
-    name_new_folder = "test_case_" + str(i+1)
-    print("Transferring the test case ", str(i+1))
+# # Transfer the test cases to the HPC system
+# for i in range(number_cases):
+#     name_new_folder = "test_case_" + str(i+1)
+#     print("Transferring the test case ", str(i+1))
 
-    terminal("scp -r " + name_new_folder +  
-              " meluxina:/project/home/p200734/Simon/GowthamanSolver/run/" + 
-              "runs_coarse_mesh")
+#     terminal("scp -r " + name_new_folder +  
+#               " meluxina:/project/home/p200734/Simon/GowthamanSolver/run/" + 
+#               "runs_coarse_mesh")
 
 
 
