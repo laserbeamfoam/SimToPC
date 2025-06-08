@@ -26,3 +26,5 @@ mpirun -np 80 laserMeltFoam -parallel
 
 # Reconstruct the files
 reconstructPar
+
+rm -r processor*
