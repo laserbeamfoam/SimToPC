@@ -88,12 +88,12 @@ boundary
             (0 3 2 1)
         );
     }
-    solidInterface
+    /*solidInterface
     {  
         type patch;
         faces
         ();
-    }
+    }*/
 );
 
 mergePatchPairs
