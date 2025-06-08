@@ -1,9 +1,10 @@
-/*--------------------------------*- C++ -*----------------------------------*\
+
+/*--------------------------------*- C++ -*----------------------------------* \
 | =========                 |                                                 |
-| \\      /  F ield         | foam-extend: Open Source CFD                    |
-|  \\    /   O peration     | Version:     4.0                                |
-|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
-|    \\/     M anipulation  |                                                 |
+| \      /  F ield         | foam-extend: Open Source CFD                    |
+|  \    /   O peration     | Version:     4.0                                |
+|   \  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -18,19 +19,19 @@ convertToMeters 1.0;
 
 vertices
 (
-	(0	0	0) 		//0
-	(200e-6	0	0)		//1
-	(200e-6	800e-6	0)		//2
-	(0	800e-6	0)		//3
-	(0	0	200e-6)		//4
-	(200e-6	0	200e-6)		//5
-	(200e-6 800e-6	200e-6)		//6
-	(0	800e-6	200e-6)		//7
+    (0    0    0)         //0
+    (200e-6    0    0)        //1
+    (200e-6    800e-6    0)        //2
+    (0    800e-6    0)        //3
+    (0    0    200e-6)        //4
+    (200e-6    0    200e-6)        //5
+    (200e-6 800e-6    200e-6)        //6
+    (0    800e-6    200e-6)        //7
 );
 
 blocks
 (
-    hex (0 1 2 3 4 5 6 7) (80 320 80) simpleGrading (1 1 1)
+    hex (0 1 2 3 4 5 6 7) (50 200 50) simpleGrading (1 1 1)
 );
 
 edges
@@ -80,12 +81,18 @@ boundary
         );
     }
     bottomWall
-    {   
+    {
         type patch;
         faces
         (
             (0 3 2 1)
         );
+    }
+    solidInterface
+    {  
+        type patch;
+        faces
+        ();
     }
 );
 
