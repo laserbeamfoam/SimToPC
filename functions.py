@@ -53,9 +53,9 @@ def replace_speed_radius(variable, value, test_case_number):
             lines = f.readlines()
             
         if (OPENFOAM_VERSION == "2412"):
-            lines[17] = "laserRadius " + str(value) + "; // The radius of the laser \n"  
+            lines[17] = "laserRadius " + str(value/2) + "; // The radius of the laser \n"  
         else:
-            lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
+            lines[16] = "\tr0\t\t  " + str(value/2) +"; //25e-6;\n"
             
         # Write the new lines in the file 
         with open(file_name, 'w', encoding='utf-8') as f:
