@@ -69,8 +69,8 @@ def replace_speed_radius(variable, value, test_case_number):
             lines = f.readlines()
             
         if (OPENFOAM_VERSION == "2412"):
-            lines[2] = "    ("+ str(value * 600e-6) + "      (100e-6 700e-6 0)) \n"
-            lines[3] = "    ("+ str(value * 600e-6 + 0.001e-6) +"      (100e-6 700e-6 0)) \n"
+            lines[2] = "    ("+ str((1/value) * 600e-6) + "      (100e-6 700e-6 0)) \n"
+            lines[3] = "    ("+ str((1/value) * 600e-6 + 0.001e-6) +"      (100e-6 700e-6 0)) \n"
         else:
             # lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
             # To be implemented
@@ -94,8 +94,8 @@ def replace_power(variable, value, test_case_number, speed):
         
     if (OPENFOAM_VERSION == "2412"):
         lines[1] = "    (0            "+ str(value) + ")\n "
-        lines[2] = "    ("+ str(speed * 600e-6) + "         "+ str(value) + ") \n"
-        lines[3] = "    ("+ str(speed * 600e-6 + 0.001e-6) + "         "+ "0) \n"
+        lines[2] = "    ("+ str(1/(speed) * 600e-6) + "         "+ str(value) + ") \n"
+        lines[3] = "    ("+ str(1/(speed) * 600e-6 + 0.001e-6) + "         "+ "0) \n"
     else:
         # lines[16] = "\tr0\t\t  " + str(value) +"; //25e-6;\n"
         # To be implemented
