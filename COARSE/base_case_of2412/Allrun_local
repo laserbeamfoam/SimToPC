@@ -11,5 +11,5 @@ runApplication blockMesh
 runApplication setSolidFraction
 runApplication decomposePar
 #runApplication laserMeltFoam
-mpirun -np 10 laserMeltFoam -parallel > log.laserMeltFoam 2>&1
+mpirun -np 16 laserMeltFoam -parallel > log.laserMeltFoam 2>&1
 #------------------------------------------------------------------------------
