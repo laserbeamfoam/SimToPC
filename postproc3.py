@@ -9,10 +9,11 @@ from paraview.simple import *
 paraview.simple._DisableFirstRenderCameraReset()
 
 # get active source.
-# casefoam = GetActiveSource()
+#casefoam = GetActiveSource()
 casefoam = OpenFOAMReader(FileName='main.foam')
 
 # Properties modified on casefoam
+casefoam.SkipZeroTime = 0
 casefoam.MeshRegions = ['back', 'bottomWall', 'front', 'internalMesh', 'leftWall', 'rightWall', 'topWall']
 
 # get active view
@@ -360,73 +361,11 @@ pPWF.AllowDuplicateScalars = 1
 pPWF.UseLogScale = 0
 pPWF.ScalarRangeInitialized = 1
 
-# Properties modified on casefoam
-casefoam.SkipZeroTime = 0
-
-# get animation scene
-animationScene1 = GetAnimationScene()
-
-# get the time-keeper
-timeKeeper1 = GetTimeKeeper()
-
-# update the view to ensure updated data information
-renderView1.Update()
-
-animationScene1.GoToLast()
-
-# set scalar coloring
-ColorBy(casefoamDisplay, ('POINTS', 'T'))
-
-# Hide the scalar bar for this color map if no visible data is colored by it.
-HideScalarBarIfNotNeeded(pLUT, renderView1)
-
-# rescale color and/or opacity maps used to include current data range
-casefoamDisplay.RescaleTransferFunctionToDataRange(True, False)
-
-# show color bar/color legend
-casefoamDisplay.SetScalarBarVisibility(renderView1, True)
-
-# get color transfer function/color map for 'T'
-tLUT = GetColorTransferFunction('T')
-tLUT.AutomaticRescaleRangeMode = "Grow and update on 'Apply'"
-tLUT.InterpretValuesAsCategories = 0
-tLUT.AnnotationsInitialized = 0
-tLUT.ShowCategoricalColorsinDataRangeOnly = 0
-tLUT.RescaleOnVisibilityChange = 0
-tLUT.EnableOpacityMapping = 0
-tLUT.RGBPoints = [298.0140075683594, 0.231373, 0.298039, 0.752941, 955.0338592529297, 0.865003, 0.865003, 0.865003, 1612.0537109375, 0.705882, 0.0156863, 0.14902]
-tLUT.UseLogScale = 0
-tLUT.ColorSpace = 'Diverging'
-tLUT.UseBelowRangeColor = 0
-tLUT.BelowRangeColor = [0.0, 0.0, 0.0]
-tLUT.UseAboveRangeColor = 0
-tLUT.AboveRangeColor = [0.5, 0.5, 0.5]
-tLUT.NanColor = [1.0, 1.0, 0.0]
-tLUT.NanOpacity = 1.0
-tLUT.Discretize = 1
-tLUT.NumberOfTableValues = 256
-tLUT.ScalarRangeInitialized = 1.0
-tLUT.HSVWrap = 0
-tLUT.VectorComponent = 0
-tLUT.VectorMode = 'Magnitude'
-tLUT.AllowDuplicateScalars = 1
-tLUT.Annotations = []
-tLUT.ActiveAnnotatedValues = []
-tLUT.IndexedColors = []
-tLUT.IndexedOpacities = []
-
-# get opacity transfer function/opacity map for 'T'
-tPWF = GetOpacityTransferFunction('T')
-tPWF.Points = [298.0140075683594, 0.0, 0.5, 0.0, 1612.0537109375, 1.0, 0.5, 0.0]
-tPWF.AllowDuplicateScalars = 1
-tPWF.UseLogScale = 0
-tPWF.ScalarRangeInitialized = 1
-
 # create a new 'Clip'
 clip1 = Clip(Input=casefoam)
 clip1.ClipType = 'Plane'
 clip1.Scalars = ['POINTS', 'p']
-clip1.Value = 412585.6689453125
+clip1.Value = 431020.5
 clip1.Invert = 1
 clip1.Crinkleclip = 0
 clip1.Exact = 0
@@ -435,9 +374,6 @@ clip1.Exact = 0
 clip1.ClipType.Origin = [9.999999747378752e-05, 0.00039999998989515007, 9.999999747378752e-05]
 clip1.ClipType.Normal = [1.0, 0.0, 0.0]
 clip1.ClipType.Offset = 0.0
-
-# Properties modified on casefoam
-casefoam.CellArrays = ['Deposition', 'Laser_boundary', 'T', 'U', 'alpha.liquid', 'alpha.material', 'alpha_filtered', 'electrical_resistivity', 'errorTrack', 'flb', 'gT', 'gradTSol', 'laserFlux', 'n_filtered', 'p', 'pd', 'rayNumber', 'rayQ', 'refineflag', 'solidificationTime', 'p_rgh']
 
 # Properties modified on clip1
 clip1.ClipType = 'Scalar'
@@ -545,7 +481,7 @@ clip1Display.SelectionPointLabelOpacity = 1.0
 clip1Display.SelectionPointLabelShadow = 0
 clip1Display.PolarAxes = 'PolarAxesRepresentation'
 clip1Display.ScalarOpacityFunction = pPWF
-clip1Display.ScalarOpacityUnitDistance = 1.0752685366335265e-05
+clip1Display.ScalarOpacityUnitDistance = 1.0307660144600464e-05
 clip1Display.ExtractedBlockIndex = 1
 clip1Display.SelectMapper = 'Projected tetra'
 clip1Display.SamplingDimensions = [128, 128, 128]
@@ -564,11 +500,11 @@ clip1Display.GlyphType.ShaftRadius = 0.03
 clip1Display.GlyphType.Invert = 0
 
 # init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
-clip1Display.ScaleTransferFunction.Points = [-26542.662109375, 0.0, 0.5, 0.0, 851714.0, 1.0, 0.5, 0.0]
+clip1Display.ScaleTransferFunction.Points = [10434.0, 0.0, 0.5, 0.0, 851607.0, 1.0, 0.5, 0.0]
 clip1Display.ScaleTransferFunction.UseLogScale = 0
 
 # init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
-clip1Display.OpacityTransferFunction.Points = [-26542.662109375, 0.0, 0.5, 0.0, 851714.0, 1.0, 0.5, 0.0]
+clip1Display.OpacityTransferFunction.Points = [10434.0, 0.0, 0.5, 0.0, 851607.0, 1.0, 0.5, 0.0]
 clip1Display.OpacityTransferFunction.UseLogScale = 0
 
 # init the 'GridAxesRepresentation' selected for 'DataAxesGrid'
@@ -755,6 +691,14 @@ clip1Display.SetScalarBarVisibility(renderView1, True)
 # update the view to ensure updated data information
 renderView1.Update()
 
+# get animation scene
+animationScene1 = GetAnimationScene()
+
+# get the time-keeper
+timeKeeper1 = GetTimeKeeper()
+
+animationScene1.GoToLast()
+
 # set scalar coloring
 ColorBy(clip1Display, ('POINTS', 'T'))
 
@@ -767,8 +711,41 @@ clip1Display.RescaleTransferFunctionToDataRange(True, False)
 # show color bar/color legend
 clip1Display.SetScalarBarVisibility(renderView1, True)
 
-# rescale color and/or opacity maps used to exactly fit the current data range
-clip1Display.RescaleTransferFunctionToDataRange(False, True)
+# get color transfer function/color map for 'T'
+tLUT = GetColorTransferFunction('T')
+tLUT.AutomaticRescaleRangeMode = "Grow and update on 'Apply'"
+tLUT.InterpretValuesAsCategories = 0
+tLUT.AnnotationsInitialized = 0
+tLUT.ShowCategoricalColorsinDataRangeOnly = 0
+tLUT.RescaleOnVisibilityChange = 0
+tLUT.EnableOpacityMapping = 0
+tLUT.RGBPoints = [298.0140075683594, 0.231373, 0.298039, 0.752941, 949.8824310302734, 0.865003, 0.865003, 0.865003, 1601.7508544921875, 0.705882, 0.0156863, 0.14902]
+tLUT.UseLogScale = 0
+tLUT.ColorSpace = 'Diverging'
+tLUT.UseBelowRangeColor = 0
+tLUT.BelowRangeColor = [0.0, 0.0, 0.0]
+tLUT.UseAboveRangeColor = 0
+tLUT.AboveRangeColor = [0.5, 0.5, 0.5]
+tLUT.NanColor = [1.0, 1.0, 0.0]
+tLUT.NanOpacity = 1.0
+tLUT.Discretize = 1
+tLUT.NumberOfTableValues = 256
+tLUT.ScalarRangeInitialized = 1.0
+tLUT.HSVWrap = 0
+tLUT.VectorComponent = 0
+tLUT.VectorMode = 'Magnitude'
+tLUT.AllowDuplicateScalars = 1
+tLUT.Annotations = []
+tLUT.ActiveAnnotatedValues = []
+tLUT.IndexedColors = []
+tLUT.IndexedOpacities = []
+
+# get opacity transfer function/opacity map for 'T'
+tPWF = GetOpacityTransferFunction('T')
+tPWF.Points = [298.0140075683594, 0.0, 0.5, 0.0, 1601.7508544921875, 1.0, 0.5, 0.0]
+tPWF.AllowDuplicateScalars = 1
+tPWF.UseLogScale = 0
+tPWF.ScalarRangeInitialized = 1
 
 # create a new 'Clip'
 clip2 = Clip(Input=clip1)
@@ -788,6 +765,7 @@ clip2.ClipType.Offset = 0.0
 clip2.ClipType = 'Scalar'
 clip2.Scalars = ['POINTS', 'solidificationTime']
 clip2.Value = 0.0
+clip2.Invert = 0
 
 # show data in view
 clip2Display = Show(clip2, renderView1)
@@ -838,7 +816,7 @@ clip2Display.OrientationMode = 'Direction'
 clip2Display.SelectOrientationVectors = 'U'
 clip2Display.Scaling = 0
 clip2Display.ScaleMode = 'No Data Scaling Off'
-clip2Display.ScaleFactor = 7.999999797903001e-05
+clip2Display.ScaleFactor = 6.360078987199813e-05
 clip2Display.SelectScaleArray = 'p'
 clip2Display.GlyphType = 'Arrow'
 clip2Display.UseGlyphTable = 0
@@ -847,7 +825,7 @@ clip2Display.UseCompositeGlyphTable = 0
 clip2Display.UseGlyphCullingAndLOD = 0
 clip2Display.LODValues = []
 clip2Display.ColorByLODIndex = 0
-clip2Display.GaussianRadius = 3.999999898951501e-06
+clip2Display.GaussianRadius = 3.1800394935999065e-06
 clip2Display.ShaderPreset = 'Sphere'
 clip2Display.CustomTriangleScale = 3
 clip2Display.CustomShader = """ // This custom shader code define a gaussian blur
@@ -889,7 +867,7 @@ clip2Display.SelectionPointLabelOpacity = 1.0
 clip2Display.SelectionPointLabelShadow = 0
 clip2Display.PolarAxes = 'PolarAxesRepresentation'
 clip2Display.ScalarOpacityFunction = pPWF
-clip2Display.ScalarOpacityUnitDistance = 1.0688822445303068e-05
+clip2Display.ScalarOpacityUnitDistance = 1.896498014614263e-05
 clip2Display.ExtractedBlockIndex = 1
 clip2Display.SelectMapper = 'Projected tetra'
 clip2Display.SamplingDimensions = [128, 128, 128]
@@ -908,11 +886,11 @@ clip2Display.GlyphType.ShaftRadius = 0.03
 clip2Display.GlyphType.Invert = 0
 
 # init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
-clip2Display.ScaleTransferFunction.Points = [-26542.662109375, 0.0, 0.5, 0.0, 851714.0, 1.0, 0.5, 0.0]
+clip2Display.ScaleTransferFunction.Points = [-19480.748046875, 0.0, 0.5, 0.0, 272775.75, 1.0, 0.5, 0.0]
 clip2Display.ScaleTransferFunction.UseLogScale = 0
 
 # init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
-clip2Display.OpacityTransferFunction.Points = [-26542.662109375, 0.0, 0.5, 0.0, 851714.0, 1.0, 0.5, 0.0]
+clip2Display.OpacityTransferFunction.Points = [-19480.748046875, 0.0, 0.5, 0.0, 272775.75, 1.0, 0.5, 0.0]
 clip2Display.OpacityTransferFunction.UseLogScale = 0
 
 # init the 'GridAxesRepresentation' selected for 'DataAxesGrid'
@@ -1098,35 +1076,6 @@ clip2Display.SetScalarBarVisibility(renderView1, True)
 
 # update the view to ensure updated data information
 renderView1.Update()
-
-# Properties modified on clip2
-clip2.Invert = 0
-
-# update the view to ensure updated data information
-renderView1.Update()
-
-# reset view to fit data
-renderView1.ResetCamera()
-
-# create a new 'Slice'
-slice1 = Slice(Input=clip2)
-slice1.SliceType = 'Plane'
-slice1.Crinkleslice = 0
-slice1.Triangulatetheslice = 1
-slice1.Mergeduplicatedpointsintheslice = 1
-slice1.SliceOffsetValues = [0.0]
-
-# init the 'Plane' selected for 'SliceType'
-slice1.SliceType.Origin = [9.799966210266575e-05, 0.0003980009787483141, 0.00011000034282915294]
-slice1.SliceType.Normal = [1.0, 0.0, 0.0]
-slice1.SliceType.Offset = 0.0
-
-# set active source
-SetActiveSource(clip2)
-
-# destroy slice1
-Delete(slice1)
-del slice1
 
 # create a new 'Clip'
 clip3 = Clip(Input=clip2)
@@ -1458,6 +1407,23 @@ clip3Display.SetScalarBarVisibility(renderView1, True)
 # update the view to ensure updated data information
 renderView1.Update()
 
+# set scalar coloring
+ColorBy(clip3Display, ('POINTS', 'T'))
+
+# Hide the scalar bar for this color map if no visible data is colored by it.
+HideScalarBarIfNotNeeded(pLUT, renderView1)
+
+# rescale color and/or opacity maps used to include current data range
+clip3Display.RescaleTransferFunctionToDataRange(True, False)
+
+# show color bar/color legend
+clip3Display.SetScalarBarVisibility(renderView1, True)
+
+animationScene1.GoToLast()
+
+# reset view to fit data
+renderView1.ResetCamera()
+
 # create a new 'Slice'
 slice1 = Slice(Input=clip3)
 slice1.SliceType = 'Plane'
@@ -1470,9 +1436,6 @@ slice1.SliceOffsetValues = [0.0]
 slice1.SliceType.Origin = [9.800020961847622e-05, 0.0003880201111314818, 0.00010999884398188442]
 slice1.SliceType.Normal = [1.0, 0.0, 0.0]
 slice1.SliceType.Offset = 0.0
-
-# Properties modified on slice1.SliceType
-slice1.SliceType.Normal = [0.0, 1.0, 0.0]
 
 # show data in view
 slice1Display = Show(slice1, renderView1)
@@ -1523,7 +1486,7 @@ slice1Display.OrientationMode = 'Direction'
 slice1Display.SelectOrientationVectors = 'U'
 slice1Display.Scaling = 0
 slice1Display.ScaleMode = 'No Data Scaling Off'
-slice1Display.ScaleFactor = 4.9263442633673555e-06
+slice1Display.ScaleFactor = 6.060293671907857e-05
 slice1Display.SelectScaleArray = 'p'
 slice1Display.GlyphType = 'Arrow'
 slice1Display.UseGlyphTable = 0
@@ -1532,7 +1495,7 @@ slice1Display.UseCompositeGlyphTable = 0
 slice1Display.UseGlyphCullingAndLOD = 0
 slice1Display.LODValues = []
 slice1Display.ColorByLODIndex = 0
-slice1Display.GaussianRadius = 2.4631721316836776e-07
+slice1Display.GaussianRadius = 3.0301468359539287e-06
 slice1Display.ShaderPreset = 'Sphere'
 slice1Display.CustomTriangleScale = 3
 slice1Display.CustomShader = """ // This custom shader code define a gaussian blur
@@ -1587,11 +1550,11 @@ slice1Display.GlyphType.ShaftRadius = 0.03
 slice1Display.GlyphType.Invert = 0
 
 # init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
-slice1Display.ScaleTransferFunction.Points = [76838.2734375, 0.0, 0.5, 0.0, 137003.984375, 1.0, 0.5, 0.0]
+slice1Display.ScaleTransferFunction.Points = [39722.33203125, 0.0, 0.5, 0.0, 157800.5, 1.0, 0.5, 0.0]
 slice1Display.ScaleTransferFunction.UseLogScale = 0
 
 # init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
-slice1Display.OpacityTransferFunction.Points = [76838.2734375, 0.0, 0.5, 0.0, 137003.984375, 1.0, 0.5, 0.0]
+slice1Display.OpacityTransferFunction.Points = [39722.33203125, 0.0, 0.5, 0.0, 157800.5, 1.0, 0.5, 0.0]
 slice1Display.OpacityTransferFunction.UseLogScale = 0
 
 # init the 'GridAxesRepresentation' selected for 'DataAxesGrid'
@@ -1809,4 +1772,4 @@ layout1 = GetLayoutByName("Layout #1")
 AssignViewToLayout(view=spreadSheetView1, layout=layout1, hint=0)
 
 # export view
-ExportView('./meltpool_forwidth.csv', view=spreadSheetView1)
+ExportView('./meltpool_forcontinuity.csv', view=spreadSheetView1)
