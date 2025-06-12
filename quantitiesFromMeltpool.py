@@ -27,46 +27,90 @@ Authors
 
 import pandas as pd
 import numpy as np
+import input_data
+from input_data import *
+from joblib import dump, load
 
-csv_file = "meltpool.csv"
+
+print("Checking if the meltpool is continuous")
+# Check continuity
+csv_file = "meltpool_forcontinuity.csv"
 df = pd.read_csv(csv_file)
-x_coords = df["Points:0"]
-z_coords = df["Points:2"]
+x_coords = df["Points_0"]
+y_coords = df["Points_1"]
+z_coords = df["Points_2"]
 
-
-
-width = x_coords.max() - x_coords.min()
-depth = z_coords.max() - z_coords.min()
-
-print(f"Meltpool Depth: {depth:.2e} m")
-print(f"Meltpool Width: {width:.2e} m")
-
+continuous = True
 
 # Sort unique Z-values from top to bottom
-unique_z = np.sort(z_coords.unique())[::-1]
-
-prev_count = 0
-contact_z = None
-
-for i, z_val in enumerate(unique_z):
-    count = (z_coords == z_val).sum()
-
-    if count < prev_count and i > 0:
-        contact_z = unique_z[i - 1]  # The previous Z was the widest
-        break
-
-    prev_count = count
-
-if contact_z is None:
-    raise ValueError("Could not determine contact zone: width may not decrease.")
-
-# Measure width at the contact_z level
-x_at_contact = x_coords[z_coords == contact_z]
-width = x_at_contact.max() - x_at_contact.min()
+unique_x = np.sort(x_coords.unique())[::-1]
+unique_y = np.sort(y_coords.unique())[::-1]
 
 
-height_to_flat = contact_z - z_coords.min()
+min_unique_y = min(unique_y)
+max_unique_y = max(unique_y)
 
-print(f"height_to_flat Width: {height_to_flat:.2e} m")
+sorted_unique_y = np.sort(unique_y)
+# step = CELL_SIZE
+y_point = min_unique_y
+meltpool_is_continuos = True
+
+if ( (max(abs(np.diff(sorted_unique_y))) - CELL_SIZE) > 1e-8 ):
+    continuous = False 
+    
+
+dump(continuous, "./continuous.joblib")
 
 
+if (continuous):
+
+    csv_file = "meltpool_forwidth.csv"
+    df = pd.read_csv(csv_file)
+    x_coords = df["Points_0"]
+    y_coords = df["Points_1"]
+    z_coords = df["Points_2"]
+    
+    
+    
+    width = x_coords.max() - x_coords.min()
+    depth = z_coords.max() - z_coords.min()
+    
+    print(f"Meltpool Depth: {depth:.2e} m")
+    print(f"Meltpool Width: {width:.2e} m")
+    
+    print("Saving width")
+    dump(width, "./width.joblib")
+    
+    print("Saving depth")
+    dump(depth, "./depth.joblib")
+    
+    # Sort unique Z-values from top to bottom
+    unique_z = np.sort(z_coords.unique())[::-1]
+    
+    prev_count = 0
+    contact_z = None
+    
+    for i, z_val in enumerate(unique_z):
+        count = (z_coords == z_val).sum()
+    
+        if count < prev_count and i > 0:
+            contact_z = unique_z[i - 1]  # The previous Z was the widest
+            break
+    
+        prev_count = count
+    
+    if contact_z is None:
+        raise ValueError("Could not determine contact zone: width may not decrease.")
+    
+    # Measure width at the contact_z level
+    x_at_contact = x_coords[z_coords == contact_z]
+    width = x_at_contact.max() - x_at_contact.min()
+    
+    
+    height_to_flat = contact_z - z_coords.min()
+    
+    print("Saving height_to_flat")
+    dump(height_to_flat, "./height_to_flat.joblib")
+    
+    
+    
