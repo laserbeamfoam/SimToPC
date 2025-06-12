@@ -36,11 +36,23 @@ print("Checking if the meltpool is continuous")
 # Check continuity
 csv_file = "meltpool_forcontinuity.csv"
 df = pd.read_csv(csv_file)
+
+# Filtra las filas donde Points_1 (es decir, y) está DENTRO del rango
+y_inf_limit = 100e-6 + LASER_SPOT_SIZE/2
+y_sup_limit = 700e-6 - LASER_SPOT_SIZE/2
+df = df[(df["Points_1"] >= y_inf_limit) & (df["Points_1"] <= y_sup_limit)]
+
 x_coords = df["Points_0"]
 y_coords = df["Points_1"]
 z_coords = df["Points_2"]
 
 continuous = True
+ 
+# Remove the beginning/end effect
+
+
+
+
 
 # Sort unique Z-values from top to bottom
 unique_x = np.sort(x_coords.unique())[::-1]
