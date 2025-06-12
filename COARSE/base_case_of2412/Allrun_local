@@ -12,4 +12,7 @@ runApplication setSolidFraction
 runApplication decomposePar
 #runApplication laserMeltFoam
 mpirun -np 10 laserMeltFoam -parallel > log.laserMeltFoam 2>&1
+runApplication reconstructPar
+rm -r processor*
+touch finished.txt
 #------------------------------------------------------------------------------
