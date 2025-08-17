@@ -64,4 +64,4 @@ for i in range(number_cases):
     terminal(f'cd {name_new_folder} && mkdir images_y_z_slice && mv *png images_y_z_slice/')
     terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && python quantities_from_meltpool.py"')
 
-print("Gemotery measurement finished.")
+print("Geometry measurement finished.")
