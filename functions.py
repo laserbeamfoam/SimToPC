@@ -199,7 +199,7 @@ def update_openfoam_variable(file_path, full_key, new_value):
     with open(file_path, 'w') as f:
         f.writelines(new_lines)
 
-    print(f"✅ '{full_key}' actualizado a {new_value}")
+    print(f"✅ '{full_key}' updated to {new_value}")
 
 
 def set_environment_variables():   
