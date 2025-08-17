@@ -57,9 +57,6 @@ from joblib import dump, load
 import random
 import re
 
-# Seed everything 
-seed_everything(SEED)
-
 # source the correct OpenFOAM, based on the system and OF version
 hostname, run_address, OF_LOCATION = set_environment_variables()
 

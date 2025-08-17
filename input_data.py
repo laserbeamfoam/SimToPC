@@ -51,4 +51,4 @@ CELL_SIZE = 4e-06
 # # n_outputs = 3 # width, depth, depth-to-flat
 
 # SEED = 0
-# STATUS_CHECK_FREQUENCY_IN_MIN = 1 # 15
+STATUS_CHECK_FREQUENCY_IN_MIN = 1 # 15
