@@ -125,6 +125,6 @@ else:
 for i in range(number_cases):  
     name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
     terminal("unzip " + name_new_folder + ".zip -d " + MESH_DENSITY + "/")
-    # terminal("cd " + MESH_DENSITY + "/ && rm *zip")
+    terminal("rm " + name_new_folder +".zip")
 
 print("Data generation completed.")
