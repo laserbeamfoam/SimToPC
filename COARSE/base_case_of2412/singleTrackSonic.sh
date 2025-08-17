@@ -20,8 +20,16 @@ export LD_LIBRARY_PATH=$HOME/Aplic/local-openmpi/lib:$LD_LIBRARY_PATH
 
 source /home/people/srodriguez/OpenFOAM/OpenFOAM-v2412/etc/bashrc
 
+cp -r initial 0
+blockMesh 
+setSolidFraction 
+decomposePar 
+
 # Run simulation in parallel
 mpirun -np 80 laserMeltFoam -parallel
 
 # Reconstruct the files
 reconstructPar
+
+rm -r processor*
+touch finished.txt
