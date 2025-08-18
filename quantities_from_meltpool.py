@@ -30,8 +30,12 @@ import numpy as np
 import input_data
 from input_data import *
 from joblib import dump, load
-import functions_meltpool_geometry
-from functions_meltpool_geometry import *
+# import functions_meltpool_geometry
+# from functions_meltpool_geometry import *
+import functions
+from functions import (is_meltpool_continuous, 
+                       calculate_geometry_middle_sections,
+                       calculate_geometry_full_meltpool)
 
 
 print("Checking if the meltpool is continuous")

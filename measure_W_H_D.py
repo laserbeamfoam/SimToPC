@@ -62,7 +62,10 @@ Authors
 
 '''
 
-from functions import set_environment_variables, terminal
+from functions import (set_environment_variables, terminal, 
+                       is_meltpool_continuous, 
+                       calculate_geometry_middle_sections,
+                       calculate_geometry_full_meltpool) 
 import numpy as np
 import input_data
 from input_data import *
@@ -83,7 +86,8 @@ for i in range(number_cases):
     print("\n Measuring geometry-based quantities for test_case_" + str(i + 1))
     terminal(f'cp extract* {name_new_folder}/')
     terminal(f'cp quantities_from_meltpool.py {name_new_folder}/')
-    terminal(f'cp functions_meltpool_geometry.py {name_new_folder}/')
+    terminal(f'cp functions.py {name_new_folder}/')
+    # terminal(f'cp functions_meltpool_geometry.py {name_new_folder}/')
     terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
     terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
     terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_x_z_slice_meltpool.py"')
