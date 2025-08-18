@@ -56,6 +56,8 @@ import subprocess
 import re
 import time
 import importlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 
 def terminal(command):
@@ -262,9 +264,9 @@ def create_width_depth_height_to_flat_data(good_simulation_cases):
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
         meltpool_i_is_cotinuous = load("./" + name_new_folder + "/continuous.joblib")
         if (meltpool_i_is_cotinuous):
-            width_data.append(load("./" + name_new_folder + "/width.joblib"))
-            depth_data.append(load("./" + name_new_folder + "/depth.joblib"))
-            height_to_flat_data.append(load("./" + name_new_folder + "/height_to_flat.joblib"))
+            width_data.append(load("./" + name_new_folder + "/W.joblib"))
+            depth_data.append(load("./" + name_new_folder + "/H.joblib"))
+            height_to_flat_data.append(load("./" + name_new_folder + "/D.joblib"))
             cases_ran_properly_and_have_continuous_meltpool.append(i)
 
 
@@ -366,5 +368,121 @@ def monitor_job_is_running(id_current_job, hostname):
         else:
             print("Job ", str(id_current_job), " is finished")
         
+def define_good_simulation_cases(MESH_DENSITY, number_cases):
+    good_simulation_cases = [] # List of the cases that ran properly
+    for i in range(1, number_cases + 1):
+        name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
+        files_in_folder_i = os.listdir("./" + name_new_folder)
+    
+        # Verificar si "finished.txt" está en la lista
+        if 'finished.txt' in files_in_folder_i:
+            good_simulation_cases.append(i)
+        #     pass
+        # else:
+        #     print(name_new_folder + " did not run properly")
+        #     print("Check the simulations that failed")
+        #     break
+    if (len(good_simulation_cases) < number_cases):
+        print("Some simulation cases did not run properly.")
+    return good_simulation_cases
+
+def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
+    x_vals = np.linspace(min(parameters_valid_cases[:, x_ind]), 
+                         max(parameters_valid_cases[:, x_ind]), 
+                         n_divisions_for_prediction)
+    y_vals = np.linspace(min(parameters_valid_cases[:, y_ind]), 
+                         max(parameters_valid_cases[:, y_ind]), 
+                         n_divisions_for_prediction)
+    
+    return x_vals, y_vals
+    
+
+def generate_prediction_map(input_variables_for_map, output_variables_for_map,
+                            parameters_valid_cases, x_scaler, y_scaler, model,
+                            POSSIBLE_OUTPUTS, x_name, y_name):
+    
+    for i in range(len(POSSIBLE_OUTPUTS)):
+        # Generate the x and y values that will be used in th predicions 
+        x_vals, y_vals = generate_x_y_levels_for_predictions(parameters_valid_cases, 
+                                                      x_ind=input_variables_for_map[0],
+                                                      y_ind=input_variables_for_map[1])
+    
+        # Generate a grid with x_vals and y_vals
+        x, y = np.meshgrid(x_vals, y_vals)
     
     
+        # Reshape x and y to make predictions with the NN
+        x_for_map = x.reshape((x.shape[0] * x.shape[0], 1, 1))
+        y_for_map = y.reshape((y.shape[0] * y.shape[0], 1, 1))
+        z_for_map = np.zeros(x_for_map.shape) #This initialises z_for_map
+        # Note in this case, there is only 1 Z level in parameters.txt
+        # z_for_map[:, :] =  parameters_valid_cases[:, 2][output_variables_for_map]
+        z_for_map[:, :] =  parameters_valid_cases[:, 2][i]
+    
+    
+    
+        # x_for_predictions is a list. Every element of the list is a numpy array that 
+        # contains all the elements that will be used for predictions. For instance, 
+        # if the parameters.txt file has m columns, x_for_predictions will have 
+        # m elements. Each element is a numpy array of all the values that variable 
+        # will take at predicion time. 
+        x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), axis = 2)
+        x_for_predictions_scaled = x_scaler.transform(x_for_predictions.reshape([x_for_predictions.shape[0],
+                                                                                 x_for_predictions.shape[2]] ))
+        y_predictions_scaled = model.predict(x_for_predictions_scaled[:, np.newaxis, :])
+        y_predictions = y_scaler.inverse_transform(y_predictions_scaled.reshape([y_predictions_scaled.shape[0], 
+                                                                                 y_predictions_scaled.shape[2]]))
+       
+        
+        plt.figure(figsize=(8, 6))
+        plt.pcolormesh(x_for_predictions[:, :, 0].reshape([n_divisions_for_prediction, 
+                                                           n_divisions_for_prediction]), 
+                       x_for_predictions[:, :, 1].reshape([n_divisions_for_prediction, 
+                                                           n_divisions_for_prediction]), 
+                       y_predictions[:, i].reshape([n_divisions_for_prediction, 
+                                                           n_divisions_for_prediction]), shading='auto')
+        plt.colorbar(label="Pedicted " + POSSIBLE_OUTPUTS[i])
+        plt.xlabel(x_name)
+        plt.ylabel(y_name)
+        plt.title("Predictions using the NN")
+        plt.tight_layout()
+        # plt.show()
+        plt.savefig(POSSIBLE_OUTPUTS[i]+ "_predictions.png")
+    
+    
+def generate_processing_map(input_variables_for_map, parameters_valid_cases):
+    # NOTE THIS FUNCTION IS NOT FINISHED, IT IS KEPT HERE TO GENERATE THE
+    # CORRECT PLOT ONCE THE RULE TO DECIDE THE RULE TO DEFINE THE BOUNDARIES OF
+    # THE REGIMES. FOR NOW, THIS FUNCTION JUST SHOWS THE CODE THAT 
+    # GENERATES A SIMILAR COLOUR MAP, USING x_vals, x_vals and a synthetic
+    # r value, calculated as a radius.
+    x_vals, y_vals = generate_x_y_levels_for_predictions(parameters_valid_cases, 
+                                                  x_ind=input_variables_for_map[0],
+                                                  y_ind=input_variables_for_map[1])
+
+    x, y = np.meshgrid(x_vals, x_vals)
+
+
+    # 1. Create a simulated value
+    r = np.sqrt(x**2 + y**2)  # aumenta con x e y
+
+    distances = (x**2 + y**2)**0.5
+    z = np.zeros(distances.shape)
+    z[distances < 1.2] = 0
+    z[(distances >= 1.2) & (distances <= 2)] = 1
+    z[distances > 2] = 2
+
+
+    z = z.astype(int)
+
+    cmap = ListedColormap(['red', 'green', 'blue'])
+    plt.figure(figsize=(8, 6))
+    plt.pcolormesh(x, y, z, cmap=cmap, shading='auto')
+    plt.xlabel('Scanning speed (mm/s)')
+    plt.ylabel('Laser Power (W)')
+    plt.title('Processing map')
+    cbar = plt.colorbar(ticks=[0.5, 1.5, 2.5])
+    cbar.ax.set_yticklabels(['Lack of fusion', 'Optimol', 'Overfusion'])
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig("Processing_map.png")

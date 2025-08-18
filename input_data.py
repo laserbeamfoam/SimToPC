@@ -43,12 +43,12 @@ MESH_DENSITY = "COARSE"  #"FINE" # "COARSE"
 CELL_SIZE = 4e-06
 # LASER_SPOT_SIZE = 80e-6 # 80 microns
 
-# n_epochs = 100
-# n_divisions_for_prediction = 50#10
+n_epochs = 100
+n_divisions_for_prediction = 50# 50#10
 
 
-# POSSIBLE_OUTPUTS = ["width", "depth", "depth-to-flat"]
+POSSIBLE_OUTPUTS = ["W", "H", "D"]
 # # n_outputs = 3 # width, depth, depth-to-flat
 
-# SEED = 0
+SEED = 0
 STATUS_CHECK_FREQUENCY_IN_MIN = 1 # 15
