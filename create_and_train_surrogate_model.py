@@ -13,26 +13,48 @@ License
     received a copy of the GNU General Public License along with this 
     program. If not, see <https://www.gnu.org/licenses/>. 
 
-Description
-    This script automates the generation, execution, and retrieval of 
-    OpenFOAM-based simulations for melt pool analysis. It further trains a 
-    neural network surrogate model on the simulation results to predict 
-    melt pool characteristics (width, depth, height-to-flat) based on input 
-    parameters.
 
-Authors
-    Simon A. Rodriguez, University College Dublin (UCD). All rights reserved
-    Petar Cosic, University College Dublin (UCD). All rights reserved
-    Tom Flint, University of Manchester. All rights reserved
-    Philip Cardiff, University College Dublin (UCD). All rights reserved
+Purpose:
+    This script builds and trains a neural-network surrogate model on the 
+    results of LPBF single-track simulations (run beforehand with 
+    generate_data.py and post-processed with measure_W_H_D.py). 
+    The surrogate learns to predict melt pool characteristics 
+    (W = width, H = depth, D = height to max-width) from input parameters 
+    (e.g., scanning speed, laser power, spot size).
 
 Assumptions:
-    - The base case is correctly configured and mesh is generated.
-    - When using laserMeltFoam, setSolidFraction has already been run locally
-    - decomposePar has been run locally
-    - Passwordless SSH access to the remote server is available.
-    - Required tools (OpenFOAM, pvpython, TensorFlow, etc.) are installed and 
-    sourced properly.
+    - All simulation cases listed in parameters.txt have already been run 
+      and post-processed.
+    - The data files W.joblib, H.joblib, D.joblib, 
+      and continuous.joblib exist in each "test_case_i" folder.
+    - Input parameters are listed in parameters.txt (default: speed, power, 
+      laser spot size).
+    - TensorFlow/Keras, NumPy, scikit-learn, Matplotlib, and joblib are 
+      installed and working properly.
+    - Passwordless SSH is available if remote resources are used upstream, 
+      but this script itself only runs locally.
+
+Method:
+    1. Read parameters from parameters.txt.
+    2. Identify valid cases (successful + continuous melt pool).
+    3. Collect W, H, D metrics from joblib files.
+    4. Scale inputs/outputs and prepare training data.
+    5. Build and train a feed-forward neural network.
+    6. Save the trained model ("NN.h5") and scalers.
+    7. Optionally, generate processing/prediction maps over the parameter 
+       space to visualize model behaviour.
+
+Outputs:
+    - NN.h5 → trained neural-network surrogate
+    - Fitted scalers (via joblib)
+    - Prediction/processing maps (figures)
+    - Console logs of training history
+
+Authors
+    Simon A. Rodriguez, University College Dublin (UCD)
+    Petar Cosic, University College Dublin (UCD)
+    Tom Flint, University of Manchester
+    Philip Cardiff, University College Dublin (UCD)
 '''
 
 import os
@@ -44,7 +66,8 @@ from functions import (create_width_depth_height_to_flat_data, create_NN,
                        fit_scalers, scale_data, seed_everything, 
                        define_good_simulation_cases,
                        generate_x_y_levels_for_predictions, 
-                       generate_prediction_map, generate_processing_map)
+                       generate_prediction_map, generate_processing_map,
+                       terminal)
 
 from input_data import (SEED, MESH_DENSITY, n_epochs, 
                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
@@ -125,6 +148,9 @@ history = model.fit(input_data_scaled, output_data_scaled, epochs = n_epochs,
 # Save the trained neural network
 model.save("NN.h5")
 
+# Save the fitted scalers
+dump(x_scaler, "x_scaler.joblib")
+dump(y_scaler, "y_scaler.joblib")
 
 
 ######### Processing map generation  ###############
@@ -162,5 +188,8 @@ generate_prediction_map(input_variables_for_map, output_variables_for_map,
 # GENERATES A SIMILAR COLOUR MAP, USING x_vals, x_vals and a synthetic
 # r value, calculated as a radius.
 generate_processing_map(input_variables_for_map, parameters_valid_cases)
+
+terminal("mkdir images_from_predictions")
+terminal("mv *png images_from_predictions")
 
 print("Thanks for using this software.")
