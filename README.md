@@ -254,7 +254,7 @@ The workflow in this stage performs the following steps:
    By default, a simple **feedforward neural network** with **10 hidden nodes** is trained to map process parameters → geometric quantities.  
    Conceptually, the current implementation is depicted below:
 
-   ![Neural network architecture](docs/images/nn_architecture.png)
+   ![Neural network architecture](docs/images/nn_architecture.PNG)
 
    - **Inputs**: laser power, scanning speed, laser spot size  
    - **Hidden layer**: 10 nodes (dense, fully connected)  
