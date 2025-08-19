@@ -442,7 +442,7 @@ def generate_prediction_map(input_variables_for_map, output_variables_for_map,
                                                            n_divisions_for_prediction]), 
                        y_predictions[:, i].reshape([n_divisions_for_prediction, 
                                                            n_divisions_for_prediction]), shading='auto')
-        plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + "(m)")
+        plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
         plt.xlabel(x_name)
         plt.ylabel(y_name)
         plt.title("Predictions using the NN")
