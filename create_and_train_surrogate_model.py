@@ -67,7 +67,7 @@ from src.functions import (create_width_depth_height_to_flat_data, create_NN,
                        define_good_simulation_cases,
                        generate_x_y_levels_for_predictions, 
                        generate_prediction_map, generate_processing_map,
-                       terminal)
+                       terminal, plot_history_training)
 
 from input_data import (SEED, MESH_DENSITY, n_epochs, 
                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
@@ -145,13 +145,19 @@ output_data_scaled = output_data_scaled[:, np.newaxis, :]
 history = model.fit(input_data_scaled, output_data_scaled, epochs = n_epochs, 
                     validation_split = 0.01)
 
+terminal("mkdir surrogate_model")
+
 # Save the trained neural network
-model.save("NN.h5")
+model.save("surrogate_model/NN.h5")
 
 # Save the fitted scalers
-dump(x_scaler, "x_scaler.joblib")
-dump(y_scaler, "y_scaler.joblib")
+dump(x_scaler, "surrogate_model/x_scaler.joblib")
+dump(y_scaler, "surrogate_model/y_scaler.joblib")
 
+plot_history_training(history, "surrogate_model")
+
+# terminal("mv *joblib surrogate_model")
+# terminal("mv *h5 surrogate_model")
 
 ######### Processing map generation  ###############
 
