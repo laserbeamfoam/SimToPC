@@ -40,7 +40,7 @@ OPENFOAM_VERSION = "2412" # Or "FE40"
 # FINE for ~2 million cells.
 # COARSE for ~1Million cells. 
 MESH_DENSITY = "COARSE"  #"FINE" # "COARSE"  
-CELL_SIZE = 4e-06
+CELL_SIZE = 2.5e-06
 # LASER_SPOT_SIZE = 80e-6 # 80 microns
 
 n_epochs = 100
