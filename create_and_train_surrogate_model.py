@@ -61,7 +61,7 @@ import os
 import numpy as np
 import random
 import re
-from functions import (create_width_depth_height_to_flat_data, create_NN, 
+from src.functions import (create_width_depth_height_to_flat_data, create_NN, 
                        create_scalers, create_input_data_and_output_data, 
                        fit_scalers, scale_data, seed_everything, 
                        define_good_simulation_cases,

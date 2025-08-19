@@ -48,8 +48,8 @@ Authors
 
 '''
 
-import functions
-from functions import *
+import src.functions
+from src.functions import *
 import numpy as np
 import input_data
 from input_data import *
