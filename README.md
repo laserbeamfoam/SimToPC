@@ -290,10 +290,21 @@ Such visualisations make it possible to:
 
 ### Who do I talk to? ###
 
+## Contact
+
+LPBF-SimDriver is a collaboration between **Philip Cardiff’s group** (University College Dublin) and **Thomas Flint’s group** (University of Manchester).  
+
+For questions, suggestions, or contributions, please feel free to reach out:
+
 - **Simon Rodriguez** – [simon.rodriguezluzardo@ucdconnect.ie](mailto:simon.rodriguezluzardo@ucdconnect.ie) | [LinkedIn](https://www.linkedin.com/in/simonrodriguezl/)  
 - **Petar Cosic** – [petar.cosic@ucdconnect.ie](mailto:petar.cosic@ucdconnect.ie)  
 - **Thomas Flint** – [tom.flint@manchester.ac.uk](mailto:tom.flint@manchester.ac.uk) | [LinkedIn](https://www.linkedin.com/in/tom-flint-87ba9748/)  
 - **Philip Cardiff** – [philip.cardiff@ucd.ie](mailto:philip.cardiff@ucd.ie) | [LinkedIn](https://www.linkedin.com/in/philipcardiff/)  
+
+---
+
+We welcome feedback and collaborations. If you use LPBF-SimDriver in your research, please let us know — and consider citing the relevant papers listed below.
+
 
 ### References
 
