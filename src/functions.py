@@ -701,3 +701,14 @@ def calculate_geometry_full_meltpool(CSV_3D = "meltpool.csv",
         print("Computed Y-sections:", len(out))
         print(out.head(6))
         print("\nSummary:", summary)
+        
+def plot_history_training(history, destination_file):
+    # Plot loss vs. epochs
+    plt.plot(history.history['loss'], label='Training loss')
+    plt.plot(history.history['val_loss'], label='Validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    # plt.show()
+    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  # saves as PNG (high res)
+    
