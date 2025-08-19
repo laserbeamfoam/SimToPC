@@ -206,7 +206,7 @@ def update_openfoam_variable(file_path, full_key, new_value):
 
 
 def set_environment_variables():   
-    variables_import = RUNNING_ON.lower() + "_inp" 
+    variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
     imported = importlib.import_module(variables_import)
     hostname = imported.hostname
     run_address = imported.run_address
