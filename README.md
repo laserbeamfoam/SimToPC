@@ -290,8 +290,6 @@ Such visualisations make it possible to:
 
 ### Who do I talk to? ###
 
-## Contact
-
 LPBF-SimDriver is a collaboration between **Philip Cardiff’s group** (University College Dublin) and **Thomas Flint’s group** (University of Manchester).  
 
 For questions, suggestions, or contributions, please feel free to reach out:
