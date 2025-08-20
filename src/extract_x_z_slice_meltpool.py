@@ -10,6 +10,9 @@ paraview.simple._DisableFirstRenderCameraReset()
 
 from pathlib import Path
 import numpy as np
+from input_data import CELL_SIZE, DOMAIN_SIZE_IN_MICRONS
+
+# print("DOMAIN_SIZE_IN_MICRONS[1] is ", DOMAIN_SIZE_IN_MICRONS[1])
 
 # Read the operational parameters
 parameters = np.loadtxt("../../parameters.txt", skiprows=1)
@@ -2219,7 +2222,7 @@ slice1.Mergeduplicatedpointsintheslice = 1
 slice1.SliceOffsetValues = [0.0]
 
 # init the 'Plane' selected for 'SliceType'
-slice1.SliceType.Origin = [9.500101623416413e-05, 0.0004000000117230229, 0.00011124939192086458]
+slice1.SliceType.Origin = [9.500101623416413e-05, (DOMAIN_SIZE_IN_MICRONS[1]/2)*(1e-6), 0.00011124939192086458]
 slice1.SliceType.Normal = [1.0, 0.0, 0.0]
 slice1.SliceType.Offset = 0.0
 

@@ -34,21 +34,27 @@ Authors
 
 
 RUNNING_ON = "Xenosim" 
-OPENFOAM_VERSION = "2412" # Or "FE40"
+OPENFOAM_VERSION = "2412" 
 
 
 # FINE for ~2 million cells.
 # COARSE for ~1Million cells. 
 MESH_DENSITY = "COARSE"  #"FINE" # "COARSE"  
 CELL_SIZE = 2.5e-06
-# LASER_SPOT_SIZE = 80e-6 # 80 microns
+DOMAIN_SIZE_IN_MICRONS = [200, 800, 200] # x, y, z
 
+# For training the NN
 n_epochs = 100
+
+# How many points will be plotted when predicting with the NN, both in x and y
 n_divisions_for_prediction = 50# 50#10
 
 
 POSSIBLE_OUTPUTS = ["W", "H", "D"]
-# # n_outputs = 3 # width, depth, depth-to-flat
 
+# For reproducibility
 SEED = 0
+
+# This number indicates how often it will be checked if whether a job is being
+# run on the HPC system 
 STATUS_CHECK_FREQUENCY_IN_MIN = 1 # 15
