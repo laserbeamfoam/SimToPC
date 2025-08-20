@@ -14,8 +14,7 @@ License
   program. If not, see <https://www.gnu.org/licenses/>. 
 
 Description
-  Script for calculating geometric quantities from the meltpool extracted
-  via postproc2.py.
+  Script for calculating geometric quantities from the meltpool.
 
 Authors
     Simon A. Rodriguez, University College Dublin (UCD). All rights reserved
