@@ -36,8 +36,6 @@ Authors
 
 
 import os
-# import functions
-# from functions import *
 import input_data
 from input_data import *
 import re
@@ -701,7 +699,232 @@ def calculate_geometry_full_meltpool(CSV_3D = "meltpool.csv",
         print("Computed Y-sections:", len(out))
         print(out.head(6))
         print("\nSummary:", summary)
+
+
+
+def calculate_statistics_rows_meltpool(CSV_3D = "meltpool.csv"):
+    
+    # This function takes the .csv file tht represents the meltpool and 
+    # calculates several metrics for every row in the meltpool. 
+    # The resulting objects are: 
+    # 1. Statistics = [id_row, y_coord, z_coord_ x_min, x_max, 
+    # row_has_pores, number_of_pores_in_row, width_row, 
+    # number_non_void_cells_in_row]
+    # 2. pore_locatios_at_rows = A file with "NA" if the row has no pores. 
+    # Otherwise, it has list with the x_coord of every pore at the row
+    # 3. pores_at_row_are_internal = A file with "NA" if the row has no pores.
+    # Otherwise, it has "True" or "False" for every pore in the row. True if 
+    # the pore is internal, Flase, otherwise
+    
+    df = pd.read_csv(CSV_3D)
+    x = df["Points_0"].to_numpy()
+    y = df["Points_1"].to_numpy()
+    z = df["Points_2"].to_numpy()
+       
+    y0 = 140e-6 #This is the number I have to link to the laser radius
+    y_max = 660e-6 # This number must also be lined to the laser aradius
+    factor = 1000
+    TOL = CELL_SIZE/factor
+
+    iy = y0
+    id_row = 0
+    
+    # Statistics [id_row, y_coord, z_coord_ x_min, x_max, row_has_pores, 
+    # number_of_pores_in_row, width_row, number_non_void_cells_in_row]
+    Statistics = []
+    pore_locatios_at_rows = []
+    pores_at_row_are_internal = []
+    
+    
+    # Iterate over all the y-sections
+    while (iy <= y_max):
+
+        mask = (iy == np.round(y, 8))
+        cells_at_iy = df[mask]
+        x_at_iy = cells_at_iy["Points_0"].to_numpy()
+        y_at_iy = cells_at_iy["Points_1"].to_numpy()
+        z_at_iy = cells_at_iy["Points_2"].to_numpy()
+
+        if (z_at_iy.shape[0] == 0):
+            print("HEREEE")
         
+        z_min_at_iy = np.min(z_at_iy)
+        z_max_at_iy = np.max(z_at_iy)
+        x_min_at_iy = np.min(x_at_iy) 
+        x_max_at_iy = np.max(x_at_iy) 
+        
+        z_min_at_iy_that_is_in_original_mesh = np.round(np.round(z_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+        z_max_at_iy_that_is_in_original_mesh = np.round(np.round(z_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+        x_min_at_iy_that_is_in_original_mesh = np.round(np.round(x_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+        x_max_at_iy_that_is_in_original_mesh = np.round(np.round(x_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+        
+        
+        iz = z_min_at_iy_that_is_in_original_mesh
+        
+        while (iz <= z_max_at_iy_that_is_in_original_mesh):
+            mask2 = ((iz == np.round(z_at_iy, 8)))
+            cells_at_iy_iz = cells_at_iy[mask2]
+            x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
+            if (x_at_iy_iz.shape[0] == 0):
+                iz = z_max_at_iy_that_is_in_original_mesh
+                          
+            else:
+                min_x_at_iy_iz = np.min(x_at_iy_iz)
+                max_x_at_iy_iz = np.max(x_at_iy_iz)
+                
+                
+                min_x_at_iy_iz_that_is_in_original_mesh = np.round(np.round(min_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                max_x_at_iy_iz_that_is_in_original_mesh = np.round(np.round(max_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                
+                distance_minx_max_at_zlevel = np.round(
+                    max_x_at_iy_iz_that_is_in_original_mesh - 
+                    min_x_at_iy_iz_that_is_in_original_mesh, 8)
+                expected_number_cells_at_iy_iz = int(distance_minx_max_at_zlevel/CELL_SIZE)
+               
+                ix = min_x_at_iy_iz_that_is_in_original_mesh
+                init_in = ix
+                number_non_void_cells_in_row = 0
+                
+                row_has_pores = False
+                n_pores_in_row = 0
+                width_row = np.round(max_x_at_iy_iz_that_is_in_original_mesh - 
+                                     min_x_at_iy_iz_that_is_in_original_mesh, 
+                                     8)
+                
+                pore_locations_at_row_i = []
+                pores_at_row_i_are_internal = []
+                if (expected_number_cells_at_iy_iz > 1):
+                    while (ix < max_x_at_iy_iz_that_is_in_original_mesh):
+                        if (np.sum([ix == np.round(x_at_iy_iz, 8)]) > 0):
+                            cell_is_a_pore = False
+                            number_non_void_cells_in_row = (
+                                              number_non_void_cells_in_row + 1)
+                        else:
+                            cell_is_a_pore = True
+                            n_pores_in_row = n_pores_in_row + 1
+                            row_has_pores = True
+                            pore_locations_at_row_i.append(ix)
+                            mask3 = (ix == np.round(x_at_iy, 8))
+                            cells_at_ix_iy = cells_at_iy[mask3]
+                            z_at_ix_iy = cells_at_ix_iy["Points_2"]
+                            pores_at_row_i_are_internal.append(
+                                                   np.sum(iz < z_at_ix_iy) > 0)
+                                                    
+                        ix = np.round(ix + CELL_SIZE, 8)
+                
+                if (n_pores_in_row > 0):
+                    pore_locations_at_row_i.insert(0, id_row)
+                    pore_locatios_at_rows.append(pore_locations_at_row_i)
+                    pores_at_row_i_are_internal.insert(0, id_row)
+                    pores_at_row_are_internal.append(pores_at_row_i_are_internal)
+                else:
+                    pore_locatios_at_rows.append([id_row, "NA"])
+                    pores_at_row_are_internal.append([id_row, "NA"])
+                
+                        
+                new_statistics_row = [id_row, iy, iz, 
+                                      min_x_at_iy_iz_that_is_in_original_mesh, 
+                                      max_x_at_iy_iz_that_is_in_original_mesh, 
+                                      row_has_pores, n_pores_in_row, width_row,
+                                      number_non_void_cells_in_row]
+                
+                Statistics.append(new_statistics_row)
+                print(Statistics[-1])
+                print(" ")
+
+                iz = np.round(iz + CELL_SIZE, 8)
+                id_row = id_row + 1
+        
+        iy = np.round(iy + CELL_SIZE, 8)
+
+
+    row_statistics = pd.DataFrame(Statistics, columns = ["id_row", "y_coord", 
+                                                          "z_coord_", "x_min", 
+                                                          "x_max", 
+                                                          "row_has_pores", 
+                                                      "number_of_pores_in_row", 
+                                                          "width_row",
+                                               "number_non_void_cells_in_row"])
+    row_statistics.to_csv("row_statistics.csv", index=False, encoding="utf-8") 
+    
+    return row_statistics, pore_locatios_at_rows, pores_at_row_are_internal
+
+
+def calculate_cross_sections_statistics(row_statistics, pore_locatios_at_rows, 
+                                        pores_at_row_are_internal):
+    cross_sections_statistics = []
+    y = row_statistics["y_coord"].to_numpy()
+    row_has_pores = row_statistics["row_has_pores"]
+    y_unique = np.unique(y)  
+    
+    for iy in y_unique:
+        mask = (iy == y)
+        cross_section_at_iy = row_statistics[mask]
+        z_at_iy = cross_section_at_iy["z_coord_"]
+        pores_at_iy = cross_section_at_iy["row_has_pores"]
+        id_rows_at_iy = cross_section_at_iy["id_row"]
+        width_rows_at_iy = cross_section_at_iy["width_row"]
+        number_pores_at_iy = cross_section_at_iy["number_of_pores_in_row"]
+        number_non_void_cells_in_row_at_iy = cross_section_at_iy["number_non_void_cells_in_row"]
+        max_height_location_at_iy = 0 # Just initialisation
+        i = min(id_rows_at_iy)
+        
+        if (True not in pores_at_iy.values): # This means there is no holes at this iy section, neither internal nor upper boundaries
+            max_height_location_at_iy = z_at_iy[max(id_rows_at_iy)]
+            height =  max_height_location_at_iy - min(z_at_iy)
+            width = max(width_rows_at_iy)
+            z_location_max_width = width_rows_at_iy.argmax(width)
+            depth = max(z_at_iy) - z_at_iy.to_numpy()[z_location_max_width]
+        
+        else:
+            while (i < max(id_rows_at_iy)):
+                if (pores_at_iy[i]):
+                    if (True not in pores_at_row_are_internal[i]): # This means all the pores are upper boundaries
+                        max_height_location_at_iy = z_at_iy[i]
+                        height =  max_height_location_at_iy - min(z_at_iy)
+                        i = max(id_rows_at_iy) # # Break the loop
+                    elif (False not in pores_at_row_are_internal[i]): #This means all the pores are internal
+                        pass
+                    else:
+                        pass
+                i = i + 1
+            
+            if (max_height_location_at_iy == 0): # This means the iy section has holes, but they are internal 
+                max_height_location_at_iy = z_at_iy[i-1]
+                height =  max_height_location_at_iy - min(z_at_iy)
+                
+            mask2 = (z_at_iy < max_height_location_at_iy)
+            possible_max_widths = width_rows_at_iy[mask2]
+            width = max(possible_max_widths)
+            location_top_depth_level = np.argmax(possible_max_widths)       
+            depth = ((z_at_iy).to_numpy())[location_top_depth_level] -  min(z_at_iy)
+        
+        # print(iy, width, height, depth)
+        porous_volume_at_iy = np.sum(number_pores_at_iy.to_numpy())
+        total_volume_material_at_iy = (np.sum(number_non_void_cells_in_row_at_iy.to_numpy()) + 
+                                             np.sum(number_pores_at_iy.to_numpy()))
+        
+        porosity_at_iy = porous_volume_at_iy/total_volume_material_at_iy
+        cross_sections_statistics.append([iy, width, height, depth, 
+                                          porosity_at_iy])
+          
+    return pd.DataFrame(cross_sections_statistics, columns = ["iy", "width", 
+                                                              "height", 
+                                                              "depth", 
+                                                             "porosity_at_iy"])
+
+
+def calculate_geometry_full_meltpool2(CSV_3D = "meltpool.csv", 
+                                     MIN_POINTS_PER_ZROW = 3, 
+                                     print_summary = False):
+
+    row_statistics, pore_locatios_at_rows, pores_at_row_are_internal = calculate_statistics_rows_meltpool(CSV_3D)
+
+    cross_sections_statistics = calculate_cross_sections_statistics(row_statistics, pore_locatios_at_rows, pores_at_row_are_internal)
+    
+
+
+
 def plot_history_training(history, destination_file):
     # Plot loss vs. epochs
     plt.plot(history.history['loss'], label='Training loss')
