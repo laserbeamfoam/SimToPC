@@ -513,6 +513,53 @@ def is_meltpool_continuous(csv_file = "y_z_slice_meltpool.csv",
     return continuous
 
 
+def is_meltpool_continuous2(CSV_3D = "meltpool.csv", 
+                                     MIN_POINTS_PER_ZROW = 3, 
+                                     print_summary = False):
+    
+    df = pd.read_csv(CSV_3D)
+    x = df["Points_0"].to_numpy()
+    y = df["Points_1"].to_numpy()
+    z = df["Points_2"].to_numpy()
+       
+    y0 = 140e-6 #This is the number I have to link to the laser radius
+    y_max = 660e-6 # This number must also be lined to the laser aradius
+    factor = 1000
+    TOL = CELL_SIZE/factor
+    
+    # Build the y-levels
+    y_levels = []
+    y_level = np.round(y0, 8)
+    while (y_level <= y_max):
+        y_levels.append(y_level)
+        y_level = np.round(y_level + np.round(CELL_SIZE, 8), 8)
+    
+    are_there_material_cells_at_iy = True
+    void_iy_levels = []
+    
+    
+    for iy in y_levels:
+        mask = (iy == np.round(y, 8))
+        if (np.sum(mask) == 0):
+            are_there_material_cells_at_iy = True
+            void_iy_levels.append(iy)
+
+    if (len(void_iy_levels) > 1):
+        meltpool_is_continuous = False
+        dump(void_iy_levels, "./void_iy_levels.joblib")
+    else:
+        meltpool_is_continuous = True
+        
+    dump(meltpool_is_continuous, "./continuous.joblib")
+    
+    return meltpool_is_continuous
+    
+
+    
+    
+
+
+
 def calculate_geometry_middle_sections(CSV_XZ = "x_z_slice_meltpool.csv", 
                                        MIN_POINTS_PER_ROW = 3, 
                                        print_results = False):
@@ -922,6 +969,15 @@ def calculate_geometry_full_meltpool2(CSV_3D = "meltpool.csv",
 
     cross_sections_statistics = calculate_cross_sections_statistics(row_statistics, pore_locatios_at_rows, pores_at_row_are_internal)
     
+    meltpool_is_continuous = is_meltpool_continuous2(CSV_3D)
+    
+    print("HERE")
+    
+
+
+
+
+
 
 
 
