@@ -487,33 +487,33 @@ def generate_processing_map(input_variables_for_map, parameters_valid_cases):
     plt.savefig("Processing_map.png")
     
 
-def is_meltpool_continuous(csv_file = "y_z_slice_meltpool.csv", 
-                           print_missing_columns = False):
-    df = pd.read_csv(csv_file)   
-    continuous = True
-    y = df["Points_1"].to_numpy()
-    y0 = y.min()
-    iy = np.rint((y - y0) / CELL_SIZE).astype(int)   # Y-column index
-    present = np.unique(iy)
-    first_c, last_c = present.min(), present.max()
-    expected = np.arange(first_c, last_c + 1)
+# def is_meltpool_continuous(csv_file = "y_z_slice_meltpool.csv", 
+#                            print_missing_columns = False):
+#     df = pd.read_csv(csv_file)   
+#     continuous = True
+#     y = df["Points_1"].to_numpy()
+#     y0 = y.min()
+#     iy = np.rint((y - y0) / CELL_SIZE).astype(int)   # Y-column index
+#     present = np.unique(iy)
+#     first_c, last_c = present.min(), present.max()
+#     expected = np.arange(first_c, last_c + 1)
     
-    missing = np.setdiff1d(expected, present)  # missing columns
-    continuous = (missing.size == 0)
+#     missing = np.setdiff1d(expected, present)  # missing columns
+#     continuous = (missing.size == 0)
     
-    if (print_missing_columns):
-        print("Continuous (no missing Y columns):", continuous)
-        if missing.size:
-            # Ranges of the missing columns (useful for debugging)
-            gaps = [(y0 + m*CELL_SIZE, y0 + (m+1)*CELL_SIZE) for m in missing]
-            print("Missing Y columns (m):", gaps)
+#     if (print_missing_columns):
+#         print("Continuous (no missing Y columns):", continuous)
+#         if missing.size:
+#             # Ranges of the missing columns (useful for debugging)
+#             gaps = [(y0 + m*CELL_SIZE, y0 + (m+1)*CELL_SIZE) for m in missing]
+#             print("Missing Y columns (m):", gaps)
     
-    dump(continuous, "./continuous.joblib")
+#     dump(continuous, "./continuous.joblib")
     
-    return continuous
+#     return continuous
 
 
-def is_meltpool_continuous2(name_new_folder, CSV_3D = "meltpool.csv", 
+def is_meltpool_continuous(name_new_folder, CSV_3D = "meltpool.csv", 
                                      MIN_POINTS_PER_ZROW = 3, 
                                      print_summary = False):
     
@@ -557,83 +557,83 @@ def is_meltpool_continuous2(name_new_folder, CSV_3D = "meltpool.csv",
 
 
 
-def calculate_geometry_middle_sections(CSV_XZ = "x_z_slice_meltpool.csv", 
-                                       MIN_POINTS_PER_ROW = 3, 
-                                       print_results = False):
-    df = pd.read_csv(CSV_XZ)
-    x = df["Points_0"].to_numpy()
-    z = df["Points_2"].to_numpy()
+# def calculate_geometry_middle_sections(CSV_XZ = "x_z_slice_meltpool.csv", 
+#                                        MIN_POINTS_PER_ROW = 3, 
+#                                        print_results = False):
+#     df = pd.read_csv(CSV_XZ)
+#     x = df["Points_0"].to_numpy()
+#     z = df["Points_2"].to_numpy()
 
-    # --- snap/quantize Z levels using known grid spacing ---
-    DZ = CELL_SIZE  # assume Z spacing equals CELL_SIZE (grid is isotropic)
+#     # --- snap/quantize Z levels using known grid spacing ---
+#     DZ = CELL_SIZE  # assume Z spacing equals CELL_SIZE (grid is isotropic)
 
-    # z = df["Points_2"].to_numpy()
+#     # z = df["Points_2"].to_numpy()
 
-    # Optionally align the origin to the grid (helps if z.min() is slightly off)
-    z0 = z.min()
-    z0_aligned = np.round(z0 / DZ) * DZ  # snap the origin to the nearest grid level
+#     # Optionally align the origin to the grid (helps if z.min() is slightly off)
+#     z0 = z.min()
+#     z0_aligned = np.round(z0 / DZ) * DZ  # snap the origin to the nearest grid level
 
-    # Number of rows from z0_aligned to z.max()
-    nrows = int(np.round((z.max() - z0_aligned) / DZ)) + 1
-    levels = z0_aligned + np.arange(nrows) * DZ  # exact Z levels of the grid
+#     # Number of rows from z0_aligned to z.max()
+#     nrows = int(np.round((z.max() - z0_aligned) / DZ)) + 1
+#     levels = z0_aligned + np.arange(nrows) * DZ  # exact Z levels of the grid
 
-    # This is the CURING/QUANTIZATION step:
-    # Map each raw z to an integer row index (nearest grid level)
-    zi = np.rint((z - z0_aligned) / DZ).astype(int)
-    zi = np.clip(zi, 0, nrows - 1)  # safety in case of tiny rounding overshoots
+#     # This is the CURING/QUANTIZATION step:
+#     # Map each raw z to an integer row index (nearest grid level)
+#     zi = np.rint((z - z0_aligned) / DZ).astype(int)
+#     zi = np.clip(zi, 0, nrows - 1)  # safety in case of tiny rounding overshoots
 
-    # Optional: the "snapped" Z values (purely for inspection/export)
-    z_snapped = levels[zi]
-    # --------------------------------------------------------
+#     # Optional: the "snapped" Z values (purely for inspection/export)
+#     z_snapped = levels[zi]
+#     # --------------------------------------------------------
 
-    # --- sanity checks: look at the *snapped* uniqueness, not raw z ---
-    if (print_results):
-        print("raw unique z:", np.unique(z).size)
-        print("unique row indices (zi):", np.unique(zi).size)
-        print("unique snapped z:", np.unique(z_snapped).size)
+#     # --- sanity checks: look at the *snapped* uniqueness, not raw z ---
+#     if (print_results):
+#         print("raw unique z:", np.unique(z).size)
+#         print("unique row indices (zi):", np.unique(zi).size)
+#         print("unique snapped z:", np.unique(z_snapped).size)
 
 
-    # --- width-by-row using the snapped indices ---
-    rows = []
-    for k in np.unique(zi):              # <--- unique on zi (snapped rows)
-        mask = (zi == k)
-        if mask.sum() < MIN_POINTS_PER_ROW:
-            continue
-        xk = x[mask]
-        wk = xk.max() - xk.min()
-        zk = levels[k]                   # exact snapped Z level for this row
-        rows.append((k, zk, wk))
+#     # --- width-by-row using the snapped indices ---
+#     rows = []
+#     for k in np.unique(zi):              # <--- unique on zi (snapped rows)
+#         mask = (zi == k)
+#         if mask.sum() < MIN_POINTS_PER_ROW:
+#             continue
+#         xk = x[mask]
+#         wk = xk.max() - xk.min()
+#         zk = levels[k]                   # exact snapped Z level for this row
+#         rows.append((k, zk, wk))
 
-    if not rows:
-        raise RuntimeError("No valid Z-rows found. Check MIN_POINTS_PER_ROW or input data.")
+#     if not rows:
+#         raise RuntimeError("No valid Z-rows found. Check MIN_POINTS_PER_ROW or input data.")
 
-    # unpack rows -> arrays
-    idx, z_levels, widths = zip(*rows)
-    z_levels = np.array(z_levels, dtype=float)
-    widths   = np.array(widths, dtype=float)
+#     # unpack rows -> arrays
+#     idx, z_levels, widths = zip(*rows)
+#     z_levels = np.array(z_levels, dtype=float)
+#     widths   = np.array(widths, dtype=float)
 
-    # width: max horizontal chord across Z 
-    max_width = float(widths.max())
-    z_at_max  = float(z_levels[widths.argmax()])
+#     # width: max horizontal chord across Z 
+#     max_width = float(widths.max())
+#     z_at_max  = float(z_levels[widths.argmax()])
 
-    # height: total vertical extent of the (snapped) slice
-    height = float(z_levels.max() - z_levels.min())
+#     # height: total vertical extent of the (snapped) slice
+#     height = float(z_levels.max() - z_levels.min())
 
-    # D
-    D = float(z_at_max - z_levels.min())
+#     # D
+#     D = float(z_at_max - z_levels.min())
 
-    if (print_results):
-        # report
-        print(f"W:      {max_width:.3e} m")
-        print(f"H (total Z span):  {height:.3e} m")
-        print(f"D:        {D:.3e} m")
-        print(f"Z at W_max:             {z_at_max:.3e} m")
-        print(" ")
+#     if (print_results):
+#         # report
+#         print(f"W:      {max_width:.3e} m")
+#         print(f"H (total Z span):  {height:.3e} m")
+#         print(f"D:        {D:.3e} m")
+#         print(f"Z at W_max:             {z_at_max:.3e} m")
+#         print(" ")
 
-    dump(max_width, "./W.joblib")
-    dump(height, "./H.joblib")
-    dump(D, "./D.joblib")
-    dump(z_at_max, "./z_at_max.joblib")
+#     dump(max_width, "./W.joblib")
+#     dump(height, "./H.joblib")
+#     dump(D, "./D.joblib")
+#     dump(z_at_max, "./z_at_max.joblib")
 
 
 
@@ -795,14 +795,10 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
             y_at_iy = cells_at_iy["Points_1"].to_numpy()
             z_at_iy = cells_at_iy["Points_2"].to_numpy()
     
-            if (z_at_iy.shape[0] == 0):
-                print("HEREEE")
-            
             z_min_at_iy = np.min(z_at_iy)
             z_max_at_iy = np.max(z_at_iy)
             x_min_at_iy = np.min(x_at_iy) 
             x_max_at_iy = np.max(x_at_iy) 
-            
             z_min_at_iy_that_is_in_original_mesh = np.round(np.round(z_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
             z_max_at_iy_that_is_in_original_mesh = np.round(np.round(z_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
             x_min_at_iy_that_is_in_original_mesh = np.round(np.round(x_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
@@ -849,7 +845,8 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                             if (np.sum([ix == np.round(x_at_iy_iz, 8)]) > 0):
                                 cell_is_a_pore = False
                                 number_non_void_cells_in_row = (
-                                                  number_non_void_cells_in_row + 1)
+                                                  number_non_void_cells_in_row 
+                                                  + 1)
                             else:
                                 cell_is_a_pore = True
                                 n_pores_in_row = n_pores_in_row + 1
@@ -875,8 +872,6 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                         pore_locatios_at_rows.append([id_row, "NA"])
                         pores_at_row_are_internal.append([id_row, "NA"])
                     
-                            
-                    # volume_non_void_cells = number_non_void_cells_in_row * (CELL_SIZE**3)
                     new_statistics_row = [id_row, iy, iz, 
                                           min_x_at_iy_iz_that_is_in_original_mesh, 
                                           max_x_at_iy_iz_that_is_in_original_mesh, 
@@ -890,29 +885,10 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                     print(" ")
     
                     iz = np.round(iz + CELL_SIZE, 8)
-                    if (id_row == 1013):
-                        print("ANTONIO")
-                    
                     id_row = id_row + 1
-                    
-                    if (iy == 0.0001825):
-                        print("SIMON")
-                        
-                        
-                        
-                
-                        
-                        
-                        
-        
-            # iy = np.round(iy + CELL_SIZE, 8)
-        
+
         iy = np.round(iy + CELL_SIZE, 8)
             
-
-            
-
-
     row_statistics = pd.DataFrame(Statistics, columns = ["id_row", "y_coord", 
                                                           "z_coord_", "x_min", 
                                                           "x_max", 
@@ -1028,7 +1004,7 @@ def calculate_geometry_full_meltpool(name_new_folder, CSV_3D = "meltpool.csv",
                                      MIN_POINTS_PER_ZROW = 3, 
                                      print_summary = False):
 
-    meltpool_is_continuous = is_meltpool_continuous2(name_new_folder, CSV_3D)
+    meltpool_is_continuous = is_meltpool_continuous(name_new_folder, CSV_3D)
     
     if (meltpool_is_continuous):
     

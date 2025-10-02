@@ -63,8 +63,7 @@ Authors
 '''
 
 from src.functions import (set_environment_variables, terminal, 
-                       is_meltpool_continuous, 
-                       calculate_geometry_middle_sections,
+                       is_meltpool_continuous,
                        calculate_geometry_full_meltpool
                        ) 
 import numpy as np
@@ -89,7 +88,7 @@ for i in range(number_cases):
     terminal(f'cp src/quantities_from_meltpool.py {name_new_folder}/')
     terminal(f'cp src/functions.py {name_new_folder}/')
     terminal(f'cp input_data.py {name_new_folder}/')
-    # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
+    terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
     # terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
     # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_x_z_slice_meltpool.py"')
     # terminal(f'cd {name_new_folder} && mkdir images_x_z_slice && mv *png images_x_z_slice/')
