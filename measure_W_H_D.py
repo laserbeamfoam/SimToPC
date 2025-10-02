@@ -65,8 +65,8 @@ Authors
 from src.functions import (set_environment_variables, terminal, 
                        is_meltpool_continuous, 
                        calculate_geometry_middle_sections,
-                       calculate_geometry_full_meltpool,
-                       calculate_geometry_full_meltpool2) 
+                       calculate_geometry_full_meltpool
+                       ) 
 import numpy as np
 import input_data
 from input_data import *
@@ -99,8 +99,8 @@ for i in range(number_cases):
     # terminal(f'cd {name_new_folder} && rm *.py')
     # print("\n Finished measuring geometry-based quantities for test_case_"+ str(i + 1), "\n")
     
-    # calculate_geometry_full_meltpool(CSV_3D = name_new_folder + "/meltpool.csv")
-    calculate_geometry_full_meltpool2(CSV_3D = name_new_folder + "/meltpool.csv")
+    # calculate_geometry_full_meltpool2(name_new_folder, CSV_3D = name_new_folder + "/meltpool.csv")
+    calculate_geometry_full_meltpool(name_new_folder, CSV_3D = name_new_folder + "/meltpool.csv")
     print(" ")
 
 print("Geometry measurement finished.")
