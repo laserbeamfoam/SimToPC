@@ -275,6 +275,61 @@ def create_width_depth_height_to_flat_data(good_simulation_cases):
     cases_ran_properly_and_have_continuous_meltpool = np.array(cases_ran_properly_and_have_continuous_meltpool)
     return width_data, depth_data, height_to_flat_data, \
            cases_ran_properly_and_have_continuous_meltpool
+           
+           
+def create_width_depth_height_to_flat_data2(good_simulation_cases):
+    # Assemble the training set
+    # width_data = []
+    # depth_data = []
+    # height_to_flat_data = []
+    width_mean_data = []
+    width_std_data = []
+    depth_mean_data = []
+    depth_std_data = []
+    height_to_flat_mean_data = []
+    height_to_flat_std_data = []
+    
+    
+    
+    cases_ran_properly_and_have_continuous_meltpool = []
+    for i in good_simulation_cases:
+        name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
+        meltpool_i_is_cotinuous = load("./" + name_new_folder + "/continuous.joblib")
+        if (meltpool_i_is_cotinuous):
+            # Read the data
+            df = pd.read_csv("./" + name_new_folder + "/cross_sections_statistics.csv")
+            width_mean = np.mean(df["width"].to_numpy())
+            width_std = np.std(df["width"].to_numpy())
+            depth_mean = np.mean(df["depth"].to_numpy())
+            depth_std = np.std(df["depth"].to_numpy())
+            height_to_flat_mean = np.mean(df["height"].to_numpy())
+            height_to_flat_std = np.std(df["height"].to_numpy())
+            
+            width_mean_data.append(width_mean)
+            width_std_data.append(width_std)
+            depth_mean_data.append(depth_mean)
+            depth_std_data.append(depth_std)
+            height_to_flat_mean_data.append(height_to_flat_mean)
+            height_to_flat_std_data.append(height_to_flat_std)
+            
+            
+            # width_data.append(load("./" + name_new_folder + "/W.joblib"))
+            # depth_data.append(load("./" + name_new_folder + "/H.joblib"))
+            # height_to_flat_data.append(load("./" + name_new_folder + "/D.joblib"))
+            cases_ran_properly_and_have_continuous_meltpool.append(i)
+
+
+    # width_data = np.array(width_data)
+    # depth_data = np.array(depth_data)
+    # height_to_flat_data = np.array(height_to_flat_data)
+    cases_ran_properly_and_have_continuous_meltpool = np.array(cases_ran_properly_and_have_continuous_meltpool)
+    # return width_data, depth_data, height_to_flat_data, \
+    #        cases_ran_properly_and_have_continuous_meltpool
+    return width_mean_data, width_std_data, depth_mean_data, depth_std_data, \
+           height_to_flat_mean_data, height_to_flat_std_data, cases_ran_properly_and_have_continuous_meltpool
+           
+           
+           
 
 def seed_everything(SEED):
     random.seed(SEED)
@@ -297,7 +352,53 @@ def create_input_data_and_output_data(width_data, depth_data,
                                  axis = 2)
     
     return input_data, output_data, parameters_valid_cases
+
+
+
+
+
+
+
+def create_input_data_and_output_data2(width_mean_data, width_std_data, 
+                                       depth_mean_data, depth_std_data, 
+                                       height_to_flat_mean_data, 
+                                       height_to_flat_std_data, 
+                                       number_useful_cases, 
+                                       cases_ran_properly_and_have_continuous_meltpool,
+                                      parameters):
+    # # Create the data for the NN
+    # width_data = width_data.reshape((number_useful_cases, 1, 1))
+    # depth_data = depth_data.reshape((number_useful_cases, 1, 1))
+    # height_to_flat_data = height_to_flat_data.reshape((number_useful_cases, 1, 1))
     
+    width_mean_data = np.array(width_mean_data).reshape((number_useful_cases, 1, 1))
+    width_std_data = np.array(width_std_data).reshape((number_useful_cases, 1, 1))
+    depth_mean_data = np.array(depth_mean_data).reshape((number_useful_cases, 1, 1))
+    depth_std_data = np.array(depth_std_data).reshape((number_useful_cases, 1, 1))
+    height_to_flat_mean_data = np.array(height_to_flat_mean_data).reshape((number_useful_cases, 1, 1))
+    height_to_flat_std_data = np.array(height_to_flat_std_data).reshape((number_useful_cases, 1, 1))
+    
+    
+    
+
+    parameters_valid_cases = parameters[cases_ran_properly_and_have_continuous_meltpool-1]
+    input_data = parameters_valid_cases.reshape((number_useful_cases, 1, 
+                                                 parameters_valid_cases.shape[1]))
+    # output_data = np.concatenate((width_data, depth_data, height_to_flat_data), 
+    #                              axis = 2)
+    output_data = np.concatenate((width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data), 
+                                 axis = 2)
+    
+    return input_data, output_data, parameters_valid_cases
+    
+
+
+
+
+
+
+
+
 
 def create_simulation_cases(number_cases, base_case_name, parameters):
     # Create the simulation cases
@@ -396,7 +497,7 @@ def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
     return x_vals, y_vals
     
 
-def generate_prediction_map(input_variables_for_map, output_variables_for_map,
+def generate_prediction_map(input_variables_for_map, 
                             parameters_valid_cases, x_scaler, y_scaler, model,
                             POSSIBLE_OUTPUTS, x_name, y_name):
     

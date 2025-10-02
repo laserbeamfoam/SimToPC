@@ -67,7 +67,7 @@ from src.functions import (create_width_depth_height_to_flat_data, create_NN,
                        define_good_simulation_cases,
                        generate_x_y_levels_for_predictions, 
                        generate_prediction_map, generate_processing_map,
-                       terminal, plot_history_training)
+                       terminal, plot_history_training, create_width_depth_height_to_flat_data2, create_input_data_and_output_data2)
 
 from input_data import (SEED, MESH_DENSITY, n_epochs, 
                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
@@ -104,13 +104,15 @@ good_simulation_cases = define_good_simulation_cases(MESH_DENSITY,
 # width_data is a list W from every simulation
 # depth_data is a list H from every simulation
 # height_to_flat_data is a list D from every simulation
-width_data, depth_data, height_to_flat_data, \
-cases_ran_properly_and_have_continuous_meltpool = \
-    create_width_depth_height_to_flat_data(good_simulation_cases)
+# width_data, depth_data, height_to_flat_data, \
+# cases_ran_properly_and_have_continuous_meltpool = \
+#     create_width_depth_height_to_flat_data(good_simulation_cases)
+width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data, cases_ran_properly_and_have_continuous_meltpool = create_width_depth_height_to_flat_data2(good_simulation_cases)
 
 
 # Create and compile a Keras-based fully-connected neural network
-model = create_NN(10, 3, 3)
+# model = create_NN(10, 3, 3)
+model = create_NN(10, 3, 6)
 
 # Count the number of useful cases, this is, cases that ran OK and have
 # continuous meltpools
@@ -122,11 +124,12 @@ x_scaler, y_scaler = create_scalers()
 
 
 # # Create the data for the NN
-input_data, output_data, parameters_valid_cases = \
-    create_input_data_and_output_data(width_data, depth_data, 
-                                      height_to_flat_data, number_useful_cases, 
-                               cases_ran_properly_and_have_continuous_meltpool,
-                               parameters)
+# input_data, output_data, parameters_valid_cases = \
+#     create_input_data_and_output_data(width_data, depth_data, 
+#                                       height_to_flat_data, number_useful_cases, 
+#                                cases_ran_properly_and_have_continuous_meltpool,
+#                                parameters)
+input_data, output_data, parameters_valid_cases = create_input_data_and_output_data2(width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data, number_useful_cases, cases_ran_properly_and_have_continuous_meltpool,parameters)
 
 # Fit the scalers
 fit_scalers(x_scaler, y_scaler, input_data, output_data)
@@ -182,7 +185,12 @@ output_variables_for_map = 0 # [0]  # The index of the variable of interest in
                                 # POSSIBLE_OUTPUTS  
 
 
-generate_prediction_map(input_variables_for_map, output_variables_for_map, 
+# generate_prediction_map(input_variables_for_map, output_variables_for_map, 
+#                         parameters_valid_cases, x_scaler, y_scaler, model, 
+#                         POSSIBLE_OUTPUTS, x_name ="Scanning speed (m/s)", 
+#                         y_name = "Power (W)")
+
+generate_prediction_map(input_variables_for_map, 
                         parameters_valid_cases, x_scaler, y_scaler, model, 
                         POSSIBLE_OUTPUTS, x_name ="Scanning speed (m/s)", 
                         y_name = "Power (W)")

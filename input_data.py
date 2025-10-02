@@ -46,13 +46,14 @@ Y_COORD_BEGIN_TRACK = 100e-6
 Y_COORD_END_TRACK = 700e-6
 
 # For training the NN
-n_epochs = 100
+n_epochs = 500
 
 # How many points will be plotted when predicting with the NN, both in x and y
-n_divisions_for_prediction = 50# 50#10
+n_divisions_for_prediction = 50# 50# 50#10
 
 
-POSSIBLE_OUTPUTS = ["W", "H", "D"]
+# POSSIBLE_OUTPUTS = ["W", "H", "D"]
+POSSIBLE_OUTPUTS = ["W_mean", "W_std", "H_mean", "H_std", "D_mean", "D_std"]
 
 # For reproducibility
 SEED = 0
