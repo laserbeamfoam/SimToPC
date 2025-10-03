@@ -53,7 +53,7 @@ n_divisions_for_prediction = 50# 50# 50#10
 
 
 # POSSIBLE_OUTPUTS = ["W", "H", "D"]
-POSSIBLE_OUTPUTS = ["W_mean", "W_std", "H_mean", "H_std", "D_mean", "D_std"]
+POSSIBLE_OUTPUTS = ["W_mean", "W_std", "H_mean", "H_std", "D_mean", "D_std", "Porosity_mean", "Porosity_std"]
 
 # For reproducibility
 SEED = 0

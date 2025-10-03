@@ -288,6 +288,8 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
     depth_std_data = []
     height_to_flat_mean_data = []
     height_to_flat_std_data = []
+    porosity_mean_data = []
+    porosity_std_data = []
     
     
     
@@ -304,6 +306,9 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
             depth_std = np.std(df["depth"].to_numpy())
             height_to_flat_mean = np.mean(df["height"].to_numpy())
             height_to_flat_std = np.std(df["height"].to_numpy())
+            porosity_mean = np.mean(df["porosity_at_iy"].to_numpy())
+            porosity_std = np.std(df["porosity_at_iy"].to_numpy())            
+            
             
             width_mean_data.append(width_mean)
             width_std_data.append(width_std)
@@ -311,6 +316,8 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
             depth_std_data.append(depth_std)
             height_to_flat_mean_data.append(height_to_flat_mean)
             height_to_flat_std_data.append(height_to_flat_std)
+            porosity_mean_data.append(porosity_mean)
+            porosity_std_data.append(porosity_std)
             
             
             # width_data.append(load("./" + name_new_folder + "/W.joblib"))
@@ -326,7 +333,7 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
     # return width_data, depth_data, height_to_flat_data, \
     #        cases_ran_properly_and_have_continuous_meltpool
     return width_mean_data, width_std_data, depth_mean_data, depth_std_data, \
-           height_to_flat_mean_data, height_to_flat_std_data, cases_ran_properly_and_have_continuous_meltpool
+           height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data, porosity_std_data, cases_ran_properly_and_have_continuous_meltpool
            
            
            
@@ -363,6 +370,7 @@ def create_input_data_and_output_data2(width_mean_data, width_std_data,
                                        depth_mean_data, depth_std_data, 
                                        height_to_flat_mean_data, 
                                        height_to_flat_std_data, 
+                                       porosity_mean_data, porosity_std_data,
                                        number_useful_cases, 
                                        cases_ran_properly_and_have_continuous_meltpool,
                                       parameters):
@@ -377,7 +385,8 @@ def create_input_data_and_output_data2(width_mean_data, width_std_data,
     depth_std_data = np.array(depth_std_data).reshape((number_useful_cases, 1, 1))
     height_to_flat_mean_data = np.array(height_to_flat_mean_data).reshape((number_useful_cases, 1, 1))
     height_to_flat_std_data = np.array(height_to_flat_std_data).reshape((number_useful_cases, 1, 1))
-    
+    porosity_mean_data = np.array(porosity_mean_data).reshape((number_useful_cases, 1, 1))
+    porosity_std_data = np.array(porosity_std_data).reshape((number_useful_cases, 1, 1))
     
     
 
@@ -386,7 +395,7 @@ def create_input_data_and_output_data2(width_mean_data, width_std_data,
                                                  parameters_valid_cases.shape[1]))
     # output_data = np.concatenate((width_data, depth_data, height_to_flat_data), 
     #                              axis = 2)
-    output_data = np.concatenate((width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data), 
+    output_data = np.concatenate((width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data, porosity_std_data), 
                                  axis = 2)
     
     return input_data, output_data, parameters_valid_cases
