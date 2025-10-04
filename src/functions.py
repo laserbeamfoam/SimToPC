@@ -160,7 +160,8 @@ def update_openfoam_variable(file_path, full_key, new_value):
             continue
 
         # Detect if we are within the correct block or out of any block
-        # in_scope = (current_blocks == block_path) if block_path else (len(current_blocks) == 0)
+        # in_scope = (current_blocks == block_path) if block_path else 
+        # (len(current_blocks) == 0)
         in_scope = (
                     (current_blocks == block_path)
                     if block_path
@@ -210,7 +211,6 @@ def set_environment_variables():
     run_address = imported.run_address
     OF_LOCATION = imported.OF_LOCATION
     
-    
     return hostname, run_address, OF_LOCATION
 
 
@@ -230,8 +230,8 @@ def create_NN(n_nodes, n_input_variables, n_output_variables):
                     kernel_initializer = 'he_normal', 
                     activation = 'relu', input_shape = (None, 
                                                         n_input_variables)))
-    model.add(Dense(units = n_output_variables, kernel_initializer = 'he_normal', 
-                    activation = 'linear'))
+    model.add(Dense(units = n_output_variables, 
+                    kernel_initializer = 'he_normal', activation = 'linear'))
     model.compile(optimizer=Adam(lr = 0.01), loss='mse')
     
     return model
@@ -253,35 +253,9 @@ def scale_data(x_scaler, y_scaler, input_data, output_data):
     
     return input_data_scaled, output_data_scaled
 
+           
 def create_width_depth_height_to_flat_data(good_simulation_cases):
     # Assemble the training set
-    width_data = []
-    depth_data = []
-    height_to_flat_data = []
-    cases_ran_properly_and_have_continuous_meltpool = []
-    for i in good_simulation_cases:
-        name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
-        meltpool_i_is_cotinuous = load("./" + name_new_folder + "/continuous.joblib")
-        if (meltpool_i_is_cotinuous):
-            width_data.append(load("./" + name_new_folder + "/W.joblib"))
-            depth_data.append(load("./" + name_new_folder + "/H.joblib"))
-            height_to_flat_data.append(load("./" + name_new_folder + "/D.joblib"))
-            cases_ran_properly_and_have_continuous_meltpool.append(i)
-
-
-    width_data = np.array(width_data)
-    depth_data = np.array(depth_data)
-    height_to_flat_data = np.array(height_to_flat_data)
-    cases_ran_properly_and_have_continuous_meltpool = np.array(cases_ran_properly_and_have_continuous_meltpool)
-    return width_data, depth_data, height_to_flat_data, \
-           cases_ran_properly_and_have_continuous_meltpool
-           
-           
-def create_width_depth_height_to_flat_data2(good_simulation_cases):
-    # Assemble the training set
-    # width_data = []
-    # depth_data = []
-    # height_to_flat_data = []
     width_mean_data = []
     width_std_data = []
     depth_mean_data = []
@@ -291,15 +265,15 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
     porosity_mean_data = []
     porosity_std_data = []
     
-    
-    
     cases_ran_properly_and_have_continuous_meltpool = []
     for i in good_simulation_cases:
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
-        meltpool_i_is_cotinuous = load("./" + name_new_folder + "/continuous.joblib")
+        meltpool_i_is_cotinuous = load("./" + name_new_folder + 
+                                       "/continuous.joblib")
         if (meltpool_i_is_cotinuous):
             # Read the data
-            df = pd.read_csv("./" + name_new_folder + "/cross_sections_statistics.csv")
+            df = pd.read_csv("./" + name_new_folder + 
+                             "/cross_sections_statistics.csv")
             width_mean = np.mean(df["width"].to_numpy())
             width_std = np.std(df["width"].to_numpy())
             depth_mean = np.mean(df["depth"].to_numpy())
@@ -318,22 +292,15 @@ def create_width_depth_height_to_flat_data2(good_simulation_cases):
             height_to_flat_std_data.append(height_to_flat_std)
             porosity_mean_data.append(porosity_mean)
             porosity_std_data.append(porosity_std)
-            
-            
-            # width_data.append(load("./" + name_new_folder + "/W.joblib"))
-            # depth_data.append(load("./" + name_new_folder + "/H.joblib"))
-            # height_to_flat_data.append(load("./" + name_new_folder + "/D.joblib"))
             cases_ran_properly_and_have_continuous_meltpool.append(i)
 
-
-    # width_data = np.array(width_data)
-    # depth_data = np.array(depth_data)
-    # height_to_flat_data = np.array(height_to_flat_data)
-    cases_ran_properly_and_have_continuous_meltpool = np.array(cases_ran_properly_and_have_continuous_meltpool)
-    # return width_data, depth_data, height_to_flat_data, \
-    #        cases_ran_properly_and_have_continuous_meltpool
+    cases_ran_properly_and_have_continuous_meltpool = np.array(
+                               cases_ran_properly_and_have_continuous_meltpool
+                                                              )
     return width_mean_data, width_std_data, depth_mean_data, depth_std_data, \
-           height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data, porosity_std_data, cases_ran_properly_and_have_continuous_meltpool
+           height_to_flat_mean_data, height_to_flat_std_data, \
+           porosity_mean_data, porosity_std_data, \
+           cases_ran_properly_and_have_continuous_meltpool
            
            
            
@@ -343,70 +310,49 @@ def seed_everything(SEED):
     np.random.seed(SEED)
     tf.random.set_seed(SEED)
     
-def create_input_data_and_output_data(width_data, depth_data, 
-                                      height_to_flat_data, number_useful_cases,
-                               cases_ran_properly_and_have_continuous_meltpool,
-                                      parameters):
-    # # Create the data for the NN
-    width_data = width_data.reshape((number_useful_cases, 1, 1))
-    depth_data = depth_data.reshape((number_useful_cases, 1, 1))
-    height_to_flat_data = height_to_flat_data.reshape((number_useful_cases, 1, 1))
 
-    parameters_valid_cases = parameters[cases_ran_properly_and_have_continuous_meltpool-1]
-    input_data = parameters_valid_cases.reshape((number_useful_cases, 1, 
-                                                 parameters_valid_cases.shape[1]))
-    output_data = np.concatenate((width_data, depth_data, height_to_flat_data), 
-                                 axis = 2)
-    
-    return input_data, output_data, parameters_valid_cases
-
-
-
-
-
-
-
-def create_input_data_and_output_data2(width_mean_data, width_std_data, 
+def create_input_data_and_output_data(width_mean_data, width_std_data, 
                                        depth_mean_data, depth_std_data, 
                                        height_to_flat_mean_data, 
                                        height_to_flat_std_data, 
                                        porosity_mean_data, porosity_std_data,
                                        number_useful_cases, 
-                                       cases_ran_properly_and_have_continuous_meltpool,
+                               cases_ran_properly_and_have_continuous_meltpool,
                                       parameters):
-    # # Create the data for the NN
-    # width_data = width_data.reshape((number_useful_cases, 1, 1))
-    # depth_data = depth_data.reshape((number_useful_cases, 1, 1))
-    # height_to_flat_data = height_to_flat_data.reshape((number_useful_cases, 1, 1))
     
-    width_mean_data = np.array(width_mean_data).reshape((number_useful_cases, 1, 1))
-    width_std_data = np.array(width_std_data).reshape((number_useful_cases, 1, 1))
-    depth_mean_data = np.array(depth_mean_data).reshape((number_useful_cases, 1, 1))
-    depth_std_data = np.array(depth_std_data).reshape((number_useful_cases, 1, 1))
-    height_to_flat_mean_data = np.array(height_to_flat_mean_data).reshape((number_useful_cases, 1, 1))
-    height_to_flat_std_data = np.array(height_to_flat_std_data).reshape((number_useful_cases, 1, 1))
-    porosity_mean_data = np.array(porosity_mean_data).reshape((number_useful_cases, 1, 1))
-    porosity_std_data = np.array(porosity_std_data).reshape((number_useful_cases, 1, 1))
-    
-    
+    width_mean_data = np.array(width_mean_data).reshape((number_useful_cases, 
+                                                         1, 1))
+    width_std_data = np.array(width_std_data).reshape((number_useful_cases, 
+                                                       1, 1))
+    depth_mean_data = np.array(depth_mean_data).reshape((number_useful_cases, 
+                                                         1, 1))
+    depth_std_data = np.array(depth_std_data).reshape((number_useful_cases, 
+                                                       1, 1))
+    height_to_flat_mean_data = np.array(height_to_flat_mean_data).reshape(
+                                                    (number_useful_cases, 1, 1)
+                                                                         )
+    height_to_flat_std_data = np.array(height_to_flat_std_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                                       )
+    porosity_mean_data = np.array(porosity_mean_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                             )
+    porosity_std_data = np.array(porosity_std_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                           )
 
-    parameters_valid_cases = parameters[cases_ran_properly_and_have_continuous_meltpool-1]
+    parameters_valid_cases = parameters[
+                             cases_ran_properly_and_have_continuous_meltpool-1]
     input_data = parameters_valid_cases.reshape((number_useful_cases, 1, 
-                                                 parameters_valid_cases.shape[1]))
-    # output_data = np.concatenate((width_data, depth_data, height_to_flat_data), 
-    #                              axis = 2)
-    output_data = np.concatenate((width_mean_data, width_std_data, depth_mean_data, depth_std_data, height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data, porosity_std_data), 
-                                 axis = 2)
+                                              parameters_valid_cases.shape[1]))
+    output_data = np.concatenate((width_mean_data, width_std_data, 
+                                  depth_mean_data, depth_std_data, 
+                                  height_to_flat_mean_data, 
+                                  height_to_flat_std_data, porosity_mean_data, 
+                                  porosity_std_data), axis = 2)
     
     return input_data, output_data, parameters_valid_cases
     
-
-
-
-
-
-
-
 
 
 def create_simulation_cases(number_cases, base_case_name, parameters):
@@ -597,32 +543,6 @@ def generate_processing_map(input_variables_for_map, parameters_valid_cases):
     plt.savefig("Processing_map.png")
     
 
-# def is_meltpool_continuous(csv_file = "y_z_slice_meltpool.csv", 
-#                            print_missing_columns = False):
-#     df = pd.read_csv(csv_file)   
-#     continuous = True
-#     y = df["Points_1"].to_numpy()
-#     y0 = y.min()
-#     iy = np.rint((y - y0) / CELL_SIZE).astype(int)   # Y-column index
-#     present = np.unique(iy)
-#     first_c, last_c = present.min(), present.max()
-#     expected = np.arange(first_c, last_c + 1)
-    
-#     missing = np.setdiff1d(expected, present)  # missing columns
-#     continuous = (missing.size == 0)
-    
-#     if (print_missing_columns):
-#         print("Continuous (no missing Y columns):", continuous)
-#         if missing.size:
-#             # Ranges of the missing columns (useful for debugging)
-#             gaps = [(y0 + m*CELL_SIZE, y0 + (m+1)*CELL_SIZE) for m in missing]
-#             print("Missing Y columns (m):", gaps)
-    
-#     dump(continuous, "./continuous.joblib")
-    
-#     return continuous
-
-
 def is_meltpool_continuous(name_new_folder, CSV_3D = "meltpool.csv", 
                                      MIN_POINTS_PER_ZROW = 3, 
                                      print_summary = False):
@@ -664,198 +584,6 @@ def is_meltpool_continuous(name_new_folder, CSV_3D = "meltpool.csv",
     
     return meltpool_is_continuous
     
-
-
-
-# def calculate_geometry_middle_sections(CSV_XZ = "x_z_slice_meltpool.csv", 
-#                                        MIN_POINTS_PER_ROW = 3, 
-#                                        print_results = False):
-#     df = pd.read_csv(CSV_XZ)
-#     x = df["Points_0"].to_numpy()
-#     z = df["Points_2"].to_numpy()
-
-#     # --- snap/quantize Z levels using known grid spacing ---
-#     DZ = CELL_SIZE  # assume Z spacing equals CELL_SIZE (grid is isotropic)
-
-#     # z = df["Points_2"].to_numpy()
-
-#     # Optionally align the origin to the grid (helps if z.min() is slightly off)
-#     z0 = z.min()
-#     z0_aligned = np.round(z0 / DZ) * DZ  # snap the origin to the nearest grid level
-
-#     # Number of rows from z0_aligned to z.max()
-#     nrows = int(np.round((z.max() - z0_aligned) / DZ)) + 1
-#     levels = z0_aligned + np.arange(nrows) * DZ  # exact Z levels of the grid
-
-#     # This is the CURING/QUANTIZATION step:
-#     # Map each raw z to an integer row index (nearest grid level)
-#     zi = np.rint((z - z0_aligned) / DZ).astype(int)
-#     zi = np.clip(zi, 0, nrows - 1)  # safety in case of tiny rounding overshoots
-
-#     # Optional: the "snapped" Z values (purely for inspection/export)
-#     z_snapped = levels[zi]
-#     # --------------------------------------------------------
-
-#     # --- sanity checks: look at the *snapped* uniqueness, not raw z ---
-#     if (print_results):
-#         print("raw unique z:", np.unique(z).size)
-#         print("unique row indices (zi):", np.unique(zi).size)
-#         print("unique snapped z:", np.unique(z_snapped).size)
-
-
-#     # --- width-by-row using the snapped indices ---
-#     rows = []
-#     for k in np.unique(zi):              # <--- unique on zi (snapped rows)
-#         mask = (zi == k)
-#         if mask.sum() < MIN_POINTS_PER_ROW:
-#             continue
-#         xk = x[mask]
-#         wk = xk.max() - xk.min()
-#         zk = levels[k]                   # exact snapped Z level for this row
-#         rows.append((k, zk, wk))
-
-#     if not rows:
-#         raise RuntimeError("No valid Z-rows found. Check MIN_POINTS_PER_ROW or input data.")
-
-#     # unpack rows -> arrays
-#     idx, z_levels, widths = zip(*rows)
-#     z_levels = np.array(z_levels, dtype=float)
-#     widths   = np.array(widths, dtype=float)
-
-#     # width: max horizontal chord across Z 
-#     max_width = float(widths.max())
-#     z_at_max  = float(z_levels[widths.argmax()])
-
-#     # height: total vertical extent of the (snapped) slice
-#     height = float(z_levels.max() - z_levels.min())
-
-#     # D
-#     D = float(z_at_max - z_levels.min())
-
-#     if (print_results):
-#         # report
-#         print(f"W:      {max_width:.3e} m")
-#         print(f"H (total Z span):  {height:.3e} m")
-#         print(f"D:        {D:.3e} m")
-#         print(f"Z at W_max:             {z_at_max:.3e} m")
-#         print(" ")
-
-#     dump(max_width, "./W.joblib")
-#     dump(height, "./H.joblib")
-#     dump(D, "./D.joblib")
-#     dump(z_at_max, "./z_at_max.joblib")
-
-
-
-# def calculate_geometry_full_meltpool(CSV_3D = "meltpool.csv", 
-#                                      MIN_POINTS_PER_ZROW = 3, 
-#                                      print_summary = False):
-   
-#     df = pd.read_csv(CSV_3D)
-#     x = df["Points_0"].to_numpy()
-#     y = df["Points_1"].to_numpy()
-#     z = df["Points_2"].to_numpy()
-    
-#     DX = DY = DZ = CELL_SIZE
-    
-#     # snap Y and Z to grid indices (like part 2 for Z)
-#     y0 = float(np.floor(y.min() / DY) * DY)
-#     # z0 = float(np.floor(z.min() / DZ) * DZ)
-#     z0_aligned = float(np.round(z.min() / DZ) * DZ)   # same as Part 2
-#     iy = np.rint((y - y0) / DY).astype(int)
-#     # iz = np.rint((z - z0) / DZ).astype(int)
-#     iz = np.rint((z - z0_aligned) / DZ).astype(int)
-        
-#     def xz_metrics_for_section(x_sec, iz_sec, DZ, z0_aligned, min_pts_per_row=3):
-#         """
-#         Replicates Pprevious function on an XZ slice at fixed Y, using snapped Z semantics:
-#           - W: max horizontal chord in X across snapped Z rows
-#           - height:    (kz_max - kz_min) * DZ               [snapped]
-#           - Z_at_D:    z0_aligned + kz_at_max_width * DZ          [snapped]
-#           - D:         (kz_at_max_width - kz_min) * DZ            [snapped]
-#         """
-#         if x_sec.size == 0 or iz_sec.size == 0:
-#             return np.nan, np.nan, np.nan, np.nan
-    
-#         # Build w(z) over snapped rows
-#         widths = []
-#         for kz in np.unique(iz_sec):
-#             m = (iz_sec == kz)
-#             if m.sum() < min_pts_per_row:
-#                 continue
-#             xk = x_sec[m]
-#             wk = float(xk.max() - xk.min())
-#             widths.append((kz, wk))
-    
-#         if not widths:
-#             # No valid rows: we can still report height from iz indices (0 if empty)
-#             if iz_sec.size == 0:
-#                 return np.nan, np.nan, np.nan, np.nan
-#             kz_min = int(np.min(iz_sec))
-#             kz_max = int(np.max(iz_sec))
-#             height = float((kz_max - kz_min) * DZ)
-#             return np.nan, height, np.nan, np.nan
-    
-#         kz_list, w_vals = map(np.array, zip(*widths))
-#         kmax = int(np.argmax(w_vals))
-#         W = float(w_vals[kmax])
-    
-#         # Snapped indices for bottom/top
-#         kz_at_max_width = int(kz_list[kmax])
-#         kz_min   = int(np.min(iz_sec))
-#         kz_max   = int(np.max(iz_sec))
-    
-#         # Snapped outputs (match Part 2)
-#         Z_at_D = float(z0_aligned + kz_at_max_width * DZ)
-#         height = float((kz_max - kz_min) * DZ)
-#         D      = float((kz_at_max_width - kz_min) * DZ)
-    
-#         return W, height, Z_at_D, D
-    
-    
-#     # iterate all Y sections
-#     records = []
-#     for ky in np.unique(iy):
-#         mY = (iy == ky)
-#         width, height, Z_at_D, D = xz_metrics_for_section(
-#             x_sec=x[mY], iz_sec=iz[mY],
-#             DZ=DZ, z0_aligned=z0_aligned,
-#             min_pts_per_row=MIN_POINTS_PER_ZROW
-#         )
-#         y_pos = float(y0 + ky * DY)  # snapped Y position
-#         records.append({
-#             "y_m": y_pos,
-#             "width_m": width,
-#             "height_m": height,
-#             "Z_at_D_m": Z_at_D,
-#             "D_m": D,
-#             "n_points": int(mY.sum())
-#         })
-    
-#     out = pd.DataFrame.from_records(records).sort_values("y_m").reset_index(drop=True)
-#     out.to_csv("section_metrics_along_y.csv", index=False)
-#     dump(out, "section_metrics_along_y.joblib")
-    
-#     # global mean/std across sections (skip NaNs)
-#     summary = {
-#         "width_mean_m": float(out["width_m"].mean(skipna=True)),
-#         "width_std_m":  float(out["width_m"].std(skipna=True, ddof=1)),
-#         "height_mean_m":    float(out["height_m"].mean(skipna=True)),
-#         "height_std_m":     float(out["height_m"].std(skipna=True, ddof=1)),
-#         "D_mean_m": float(out["D_m"].mean(skipna=True)),
-#         "D_std_m":  float(out["D_m"].std(skipna=True, ddof=1)),
-#         "n_sections": int(len(out))
-#     }
-#     pd.Series(summary).to_csv("section_metrics_summary_y.csv")
-#     dump(summary, "section_metrics_summary_y.joblib")
-    
-#     if (print_summary):
-#         print("Computed Y-sections:", len(out))
-#         print(out.head(6))
-#         print("\nSummary:", summary)
-
-
-
 
 def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
     
@@ -909,11 +637,14 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
             z_max_at_iy = np.max(z_at_iy)
             x_min_at_iy = np.min(x_at_iy) 
             x_max_at_iy = np.max(x_at_iy) 
-            z_min_at_iy_that_is_in_original_mesh = np.round(np.round(z_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
-            z_max_at_iy_that_is_in_original_mesh = np.round(np.round(z_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
-            x_min_at_iy_that_is_in_original_mesh = np.round(np.round(x_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
-            x_max_at_iy_that_is_in_original_mesh = np.round(np.round(x_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
-            
+            z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                         z_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+            z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                         z_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+            x_min_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                         x_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+            x_max_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                         x_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
             
             iz = z_min_at_iy_that_is_in_original_mesh
             
@@ -930,13 +661,16 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                     max_x_at_iy_iz = np.max(x_at_iy_iz)
                     
                     
-                    min_x_at_iy_iz_that_is_in_original_mesh = np.round(np.round(min_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
-                    max_x_at_iy_iz_that_is_in_original_mesh = np.round(np.round(max_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                    min_x_at_iy_iz_that_is_in_original_mesh = np.round(
+                             np.round(min_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                    max_x_at_iy_iz_that_is_in_original_mesh = np.round(
+                             np.round(max_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
                     
                     distance_minx_max_at_zlevel = np.round(
                         max_x_at_iy_iz_that_is_in_original_mesh - 
                         min_x_at_iy_iz_that_is_in_original_mesh, 8)
-                    expected_number_cells_at_iy_iz = int(distance_minx_max_at_zlevel/CELL_SIZE)
+                    expected_number_cells_at_iy_iz = int(
+                                         distance_minx_max_at_zlevel/CELL_SIZE)
                    
                     ix = min_x_at_iy_iz_that_is_in_original_mesh
                     init_in = ix
@@ -944,8 +678,9 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                     
                     row_has_pores = False
                     n_pores_in_row = 0
-                    width_row = np.round(max_x_at_iy_iz_that_is_in_original_mesh - 
-                                         min_x_at_iy_iz_that_is_in_original_mesh, 
+                    width_row = np.round(
+                                      max_x_at_iy_iz_that_is_in_original_mesh - 
+                                       min_x_at_iy_iz_that_is_in_original_mesh, 
                                          8)
                     
                     pore_locations_at_row_i = []
@@ -966,7 +701,7 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                                 cells_at_ix_iy = cells_at_iy[mask3]
                                 z_at_ix_iy = cells_at_ix_iy["Points_2"]
                                 pores_at_row_i_are_internal.append(
-                                                       np.sum(iz < z_at_ix_iy) > 0)
+                                                   np.sum(iz < z_at_ix_iy) > 0)
                                                         
                             ix = np.round(ix + CELL_SIZE, 8)
                             
@@ -977,22 +712,21 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
                         pore_locations_at_row_i.insert(0, id_row)
                         pore_locatios_at_rows.append(pore_locations_at_row_i)
                         pores_at_row_i_are_internal.insert(0, id_row)
-                        pores_at_row_are_internal.append(pores_at_row_i_are_internal)
+                        pores_at_row_are_internal.append(
+                                                   pores_at_row_i_are_internal)
                     else:
                         pore_locatios_at_rows.append([id_row, "NA"])
                         pores_at_row_are_internal.append([id_row, "NA"])
                     
                     new_statistics_row = [id_row, iy, iz, 
-                                          min_x_at_iy_iz_that_is_in_original_mesh, 
-                                          max_x_at_iy_iz_that_is_in_original_mesh, 
-                                          row_has_pores, n_pores_in_row, width_row,
-                                          number_non_void_cells_in_row]
-                    
-                    
+                                       min_x_at_iy_iz_that_is_in_original_mesh, 
+                                       max_x_at_iy_iz_that_is_in_original_mesh, 
+                                      row_has_pores, n_pores_in_row, width_row,
+                                                  number_non_void_cells_in_row]
                     
                     Statistics.append(new_statistics_row)
-                    print(Statistics[-1])
-                    print(" ")
+                    # print(Statistics[-1])
+                    # print(" ")
     
                     iz = np.round(iz + CELL_SIZE, 8)
                     id_row = id_row + 1
@@ -1034,12 +768,14 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
             id_rows_at_iy = cross_section_at_iy["id_row"]
             width_rows_at_iy = cross_section_at_iy["width_row"]
             number_pores_at_iy = cross_section_at_iy["number_of_pores_in_row"]
-            number_non_void_cells_in_row_at_iy = cross_section_at_iy["number_non_void_cells_in_row"]
-            # volume_non_void_cells_in_row_at_iy = cross_section_at_iy["volume_non_void_cells"]
+            number_non_void_cells_in_row_at_iy = cross_section_at_iy[
+                                                "number_non_void_cells_in_row"]
             max_height_location_at_iy = 0 # Just initialisation
             i = min(id_rows_at_iy)
             
-            if (True not in pores_at_iy.values): # This means there is no holes at this iy section, neither internal nor upper boundaries
+            if (True not in pores_at_iy.values): # This means there is no holes
+                                                 # at this iy section, neither 
+                                                # internal nor upper boundaries
                 max_height_location_at_iy = z_at_iy[max(id_rows_at_iy)]
                 height =  max_height_location_at_iy - min(z_at_iy)
                 width = max(width_rows_at_iy)
@@ -1049,17 +785,20 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
             else:
                 while (i < max(id_rows_at_iy)):
                     if (pores_at_iy[i]):
-                        if (True not in pores_at_row_are_internal[i]): # This means all the pores are upper boundaries
+                        if (True not in pores_at_row_are_internal[i]): # This 
+                                     # means all the pores are upper boundaries
                             max_height_location_at_iy = z_at_iy[i]
                             height =  max_height_location_at_iy - min(z_at_iy)
                             i = max(id_rows_at_iy) # # Break the loop
-                        elif (False not in pores_at_row_are_internal[i]): #This means all the pores are internal
+                        elif (False not in pores_at_row_are_internal[i]): #This
+                                             # means all the pores are internal
                             pass
                         else:
                             pass
                     i = i + 1
                 
-                if (max_height_location_at_iy == 0): # This means the iy section has holes, but they are internal 
+                if (max_height_location_at_iy == 0): # This means the iy 
+                                     # section has holes, but they are internal 
                     max_height_location_at_iy = z_at_iy[i-1]
                     height =  max_height_location_at_iy - min(z_at_iy)
                     
@@ -1067,45 +806,33 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                 possible_max_widths = width_rows_at_iy[mask2]
                 width = max(possible_max_widths)
                 location_top_depth_level = np.argmax(possible_max_widths)       
-                depth = ((z_at_iy).to_numpy())[location_top_depth_level] -  min(z_at_iy)
+                depth = ((z_at_iy).to_numpy())[location_top_depth_level] - min(
+                                                                       z_at_iy)
             
             # print(iy, width, height, depth)
-            porous_volume_at_iy = np.sum(number_pores_at_iy.to_numpy()) * (CELL_SIZE**3)
-            total_volume_material_at_iy = (np.sum(number_non_void_cells_in_row_at_iy.to_numpy()) + 
-                                                 np.sum(number_pores_at_iy.to_numpy())) * (CELL_SIZE**3)
+            porous_volume_at_iy = np.sum(number_pores_at_iy.to_numpy()) * (
+                                                                  CELL_SIZE**3)
+            total_volume_material_at_iy = (np.sum(
+                               number_non_void_cells_in_row_at_iy.to_numpy()) + 
+                        np.sum(number_pores_at_iy.to_numpy())) * (CELL_SIZE**3)
             
             porosity_at_iy = porous_volume_at_iy/total_volume_material_at_iy
             
         cross_sections_statistics.append([iy, width, height, depth, 
-                                          porosity_at_iy, total_volume_material_at_iy])
+                                  porosity_at_iy, total_volume_material_at_iy])
 
-        print(cross_sections_statistics[-1])
-        
-        # print("\n  ")
-        
-    # if (len(void_iy_levels) > 0): # This means, if the menltpool is not continuous
-    #     pseudo_sections = []
-        
-    #     for iy in void_iy_levels:
-    #         mask = (iy > y)
-    #         pseudo_sections
-            
-    
-
+        # print(cross_sections_statistics[-1])
                
-    cross_sections_statistics_df = pd.DataFrame(cross_sections_statistics, columns = ["iy", "width", 
-                                                              "height", 
-                                                              "depth", 
-                                                             "porosity_at_iy", 
-                                                             "total_volume_material_at_iy"])
+    cross_sections_statistics_df = pd.DataFrame(cross_sections_statistics, 
+                                                columns = ["iy", "width", 
+                                                           "height", "depth", 
+                                                           "porosity_at_iy", 
+                                                "total_volume_material_at_iy"])
     
-    cross_sections_statistics_df.to_csv(name_new_folder + "/cross_sections_statistics.csv", index=False, encoding="utf-8") 
+    cross_sections_statistics_df.to_csv(name_new_folder + 
+                                        "/cross_sections_statistics.csv", 
+                                        index=False, encoding="utf-8") 
         
-          
-    # return pd.DataFrame(cross_sections_statistics, columns = ["iy", "width", 
-    #                                                           "height", 
-    #                                                           "depth", 
-    #                                                          "porosity_at_iy"])
 
     return cross_sections_statistics_df
 
@@ -1117,22 +844,16 @@ def calculate_geometry_full_meltpool(name_new_folder, CSV_3D = "meltpool.csv",
     meltpool_is_continuous = is_meltpool_continuous(name_new_folder, CSV_3D)
     
     if (meltpool_is_continuous):
-    
-        row_statistics, pore_locatios_at_rows, pores_at_row_are_internal = calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous)
-    
-        cross_sections_statistics = calculate_cross_sections_statistics(name_new_folder, row_statistics, pore_locatios_at_rows, pores_at_row_are_internal, meltpool_is_continuous)
+        row_statistics, pore_locatios_at_rows, \
+        pores_at_row_are_internal = calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous)
+        cross_sections_statistics = calculate_cross_sections_statistics(
+                                               name_new_folder, row_statistics,
+                                               pore_locatios_at_rows, 
+                                               pores_at_row_are_internal, 
+                                               meltpool_is_continuous)
         
-        # print("SIMON")
-        # meltpool_is_continuous = is_meltpool_continuous2(CSV_3D)
     else:
-        print("HERE")
-    
-
-
-
-
-
-
+        print("Meltpool is not continuous")
 
 
 def plot_history_training(history, destination_file):

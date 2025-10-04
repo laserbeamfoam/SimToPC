@@ -89,17 +89,11 @@ for i in range(number_cases):
     terminal(f'cp src/functions.py {name_new_folder}/')
     terminal(f'cp input_data.py {name_new_folder}/')
     terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
-    # terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
-    # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_x_z_slice_meltpool.py"')
-    # terminal(f'cd {name_new_folder} && mkdir images_x_z_slice && mv *png images_x_z_slice/')
-    # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_y_z_slice_meltpool.py"')
-    # terminal(f'cd {name_new_folder} && mkdir images_y_z_slice && mv *png images_y_z_slice/')
-    # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && python quantities_from_meltpool.py"')
-    # terminal(f'cd {name_new_folder} && rm *.py')
-    # print("\n Finished measuring geometry-based quantities for test_case_"+ str(i + 1), "\n")
-    
-    # calculate_geometry_full_meltpool2(name_new_folder, CSV_3D = name_new_folder + "/meltpool.csv")
+    terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
+    # In case mkdir does not work
+    terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
+    terminal(f'cd {name_new_folder} && rm *.py')    
     calculate_geometry_full_meltpool(name_new_folder, CSV_3D = name_new_folder + "/meltpool.csv")
-    print(" ")
+    print("\n Finished measuring geometry-based quantities for test_case_"+ str(i + 1), "\n")
 
 print("Geometry measurement finished.")
