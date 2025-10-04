@@ -61,13 +61,8 @@ import os
 import numpy as np
 import random
 import re
-from src.functions import (create_NN, create_scalers, fit_scalers, scale_data, 
-                           seed_everything, define_good_simulation_cases, 
-                           generate_x_y_levels_for_predictions, 
-                           generate_prediction_map, generate_processing_map, 
-                           terminal, plot_history_training,  
-                           create_width_depth_height_to_flat_data, 
-                           create_input_data_and_output_data)
+from src.functions_create_and_train_surrogate_model import *
+from src.functions_measure_W_H_D import terminal
 
 from input_data import (SEED, MESH_DENSITY, n_epochs, 
                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
