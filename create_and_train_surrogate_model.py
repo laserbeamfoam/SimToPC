@@ -1,54 +1,81 @@
 '''
 License
-    This program is free software: you can redistribute it and/or modify 
+    This programme is free software: you can redistribute it and/or modify 
     it under the terms of the GNU General Public License as published 
     by the Free Software Foundation, either version 3 of the License, 
     or (at your option) any later version.
     
-    This program is distributed in the hope that it will be useful, 
+    This programme is distributed in the hope that it will be useful, 
     but WITHOUT ANY WARRANTY; without even the implied warranty of 
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
     
     See the GNU General Public License for more details. You should have 
     received a copy of the GNU General Public License along with this 
-    program. If not, see <https://www.gnu.org/licenses/>. 
+    programme. If not, see <https://www.gnu.org/licenses/>. 
 
 
 Purpose:
-    This script builds and trains a neural-network surrogate model on the 
-    results of LPBF single-track simulations (run beforehand with 
-    generate_data.py and post-processed with measure_W_H_D.py). 
-    The surrogate learns to predict melt pool characteristics 
-    (W = width, H = depth, D = height to max-width) from input parameters 
-    (e.g., scanning speed, laser power, spot size).
+  This script builds and trains a neural network surrogate model using results 
+  from LPBF single-track simulations that were generated with 
+  `generate_data.py` and post-processed with "measure_W_H_D.py". The surrogate 
+  maps input process parameters — laser power, scanning speed, and laser spot 
+  radius — to **aggregate** melt pool characteristics computed 
+  across cross-sections:
+      - W_mean, W_std        
+      - H_mean, H_std        
+      - D_mean, D_std        
+      - Porosity_mean, Porosity_std
+
+  Definitions (consistent with the preprocessing script):
+    • W (width): maximum horizontal extent within a cross-section.  
+    • H (height): vertical extent of the track within a cross-section (rule 
+      accounts for surface vs. internal pores as defined in the preprocessing).  
+    • D (depth): vertical distance between the lowest material row and the row 
+    where the maximum horizontal width occurs.
 
 Assumptions:
-    - All simulation cases listed in parameters.txt have already been run 
-      and post-processed.
-    - The data files W.joblib, H.joblib, D.joblib, 
-      and continuous.joblib exist in each "test_case_i" folder.
-    - Input parameters are listed in parameters.txt (default: speed, power, 
-      laser spot size).
-    - TensorFlow/Keras, NumPy, scikit-learn, Matplotlib, and joblib are 
-      installed and working properly.
-    - Passwordless SSH is available if remote resources are used upstream, 
-      but this script itself only runs locally.
+  - All simulation cases listed in `parameters.txt` have been run and 
+  post-processed.
+  - Each `test_case_i` directory contains:
+      • `cross_sections_statistics.csv`  (per cross-section records for W, H, 
+                                          D, Porosity, etc.)
+      • `continuous.joblib`              (boolean flag; only continuous tracks 
+                                          are used)
+  - Input parameters (power, speed, spot radius) are listed in 
+  `parameters.txt`.
+  - Required Python packages are installed: TensorFlow/Keras, NumPy, 
+  scikit-learn, Matplotlib, joblib.
 
 Method:
-    1. Read parameters from parameters.txt.
-    2. Identify valid cases (successful + continuous melt pool).
-    3. Collect W, H, D metrics from joblib files.
-    4. Scale inputs/outputs and prepare training data.
-    5. Build and train a feed-forward neural network.
-    6. Save the trained model ("NN.h5") and scalers.
-    7. Optionally, generate processing/prediction maps over the parameter 
-       space to visualize model behaviour.
+  1. Read input parameters from `parameters.txt`.
+  2. Identify simulation cases and include only those marked as continuous via 
+  `continuous.joblib`.
+  3. For each valid case, load `cross_sections_statistics.csv` and compute 
+  aggregate targets:
+       - W_mean, W_std; H_mean, H_std; D_mean, D_std; Porosity_mean, Porosity_std
+         (aggregated over all available cross-sections for that case).
+  4. Assemble the dataset:
+       - Features: [power, scanning speed, laser spot radius]
+       - Targets:  [W_mean, W_std, H_mean, H_std, D_mean, D_std, Porosity_mean, 
+                    Porosity_std]
+       - Scale or normalise features and targets as appropriate for training.
+  5. Build and train a feed-forward neural network using TensorFlow/Keras.
+  6. Save trained artefacts:
+       - Model as `NN.h5`
+       - Fitted input and output scalers (saved via joblib)
+  7. (Optional) Generate prediction/processing maps over the parameter space and
+     plot training history and performance metrics.
 
 Outputs:
-    - NN.h5 → trained neural-network surrogate
-    - Fitted scalers (via joblib)
-    - Prediction/processing maps (figures)
-    - Console logs of training history
+  - `NN.h5` → trained neural network surrogate
+  - `input_scaler.joblib`, `output_scaler.joblib` (or equivalent) → fitted 
+     preprocessing scalers
+  - Prediction/processing maps (figures)
+  - Console logs containing training history and metrics
+
+Notes:
+  - Aggregates (means and standard deviations) are derived from per-section 
+    entries in `cross_sections_statistics.csv`.
 
 Authors
     Simon A. Rodriguez, University College Dublin (UCD)
