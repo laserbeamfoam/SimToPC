@@ -85,7 +85,7 @@ for i in range(number_cases):
     terminal(f'cp src/quantities_from_meltpool.py {name_new_folder}/')
     terminal(f'cp src/functions.py {name_new_folder}/')
     terminal(f'cp input_data.py {name_new_folder}/')
-    # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
+    terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
     terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
     # In case mkdir does not work
     terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
