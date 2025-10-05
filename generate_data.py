@@ -48,8 +48,7 @@ Authors
 
 '''
 
-import src.functions
-from src.functions import *
+from src.functions_generate_data import * 
 import numpy as np
 import input_data
 from input_data import *
