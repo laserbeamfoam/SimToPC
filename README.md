@@ -1,9 +1,9 @@
 ## Description
 
-**LPBF-SimDriver** is a collection of Python scripts that automate **single-track laser powder bed fusion (LPBF) simulations** using solvers from the **LaserbeamFoam** family in OpenFOAM.  
+**SimToPc** is a collection of Python scripts that automate **single-track laser powder bed fusion (LPBF) simulations** using solvers from the **LaserbeamFoam** family in OpenFOAM.  
 It is designed to make it easy to study how process parameters—such as laser power, scanning speed, and laser spot size—affect the morphology of melt tracks in a systematic and reproducible way.  
 
-Given a table of parameter sets, LPBF-SimDriver will:
+Given a table of parameter sets, SimToPc will:
 
 1. **Generate and run cases**  
    Create one simulation case per parameter combination, patch the relevant OpenFOAM dictionaries, and run the simulations either locally or on the HPC system of your choice (via SSH/Slurm).
@@ -18,15 +18,15 @@ Given a table of parameter sets, LPBF-SimDriver will:
 
 ### Current scope and future directions
 
-- **Solver support**: LPBF-SimDriver currently runs with **laserMeltFoam**. In future versions, **laserBeamFoam** will also be selectable, allowing users to choose the solver best suited to their study.  
+- **Solver support**: SimToPc currently runs with **laserMeltFoam**. In future versions, **laserBeamFoam** will also be selectable, allowing users to choose the solver best suited to their study.  
 - **Simulation type**: the present version is tailored for **single-track simulations**. The structure of the workflow is designed to be extensible, with planned support for more complex setups (e.g. multi-track or layer-by-layer builds).
 
 ## Prerequisites
 
-Before using **LPBF-SimDriver**, make sure the following software and environments are available:
+Before using **SimToPc**, make sure the following software and environments are available:
 
 - **LaserMeltFoam (OpenFOAM v2412)**  
-  The current version of LPBF-SimDriver supports **only** the `laserMeltFoam` solver, which has been ported to **OpenFOAM v2412**.  
+  The current version of SimToPc supports **only** the `laserMeltFoam` solver, which has been ported to **OpenFOAM v2412**.  
   Other solvers (e.g. `laserBeamFoam`) and OpenFOAM versions will be supported in future releases.
 
 - **ParaView**  
@@ -55,7 +55,7 @@ If you want to run your simulations on an HPC system, you will need:
 
 ## Instructions
 
-Once the prerequisites are installed and configured, you can run **LPBF-SimDriver** in three main stages.
+Once the prerequisites are installed and configured, you can run **SimToPc** in three main stages.
 
 ### 1. Run the simulations
 
@@ -92,7 +92,7 @@ Scanning Speed (m/s) | Power (W)  | Spot size (m)    # Taken from Parivendhan Ph
 #### 1.2 Configure the driver
 
 Next, open the file `input_data.py` and adjust its fields to match your setup.  
-This file contains the **global settings** that LPBF-SimDriver uses when generating and running cases.
+This file contains the **global settings** that SimToPc uses when generating and running cases.
 
 The most important fields are:
 
@@ -116,7 +116,7 @@ The most important fields are:
 In the **example code included in this repository**, we set up `RUNNING_ON` to use an HPC system available at **University College Dublin**, called **Xenosim**.  
 This demonstrates how the driver can be adapted to specific clusters through host-specific configuration files.
 
-The convention used in LPBF-SimDriver is that files in the `input_files/` folder must follow the structure: <name_of_hpc_system>_inp.py
+The convention used in SimToPc is that files in the `input_files/` folder must follow the structure: <name_of_hpc_system>_inp.py
 
 For example:
 
@@ -130,7 +130,7 @@ For example:
 
 #### 1.3 Create the base OpenFOAM case (template)
 
-LPBF-SimDriver needs a **template case** that it will copy and modify to produce each simulation.  
+SimToPc needs a **template case** that it will copy and modify to produce each simulation.  
 By convention, the template must live at <MESH_DENSITY>/base_case_of2412/ where `MESH_DENSITY` is the value you set in `input_data.py` (e.g., `COARSE`, `FINE`).
 
 **Examples**
@@ -144,7 +144,7 @@ The current driver supports **laserMeltFoam ported to OpenFOAM v2412**, so the t
 Future versions may add templates for other OpenFOAM releases.
 
 **What the driver will do with this template**
-- For each row in `parameters.txt`, LPBF-SimDriver copies `.../base_case_of2412/` to a new `test_case_<i>/`.
+- For each row in `parameters.txt`, SimToPc copies `.../base_case_of2412/` to a new `test_case_<i>/`.
 - It then **patches the dictionaries** (e.g., scan speed, laser power, spot size) according to that row.
 - Finally, it **runs** each case (locally or on HPC, depending on your configuration).
 
@@ -285,7 +285,7 @@ Such visualisations make it possible to:
 
 ### Who do I talk to? ###
 
-LPBF-SimDriver is a collaboration between **Philip Cardiff’s group** (University College Dublin) and **Thomas Flint’s group** (University of Manchester).  
+SimToPc is a collaboration between **Philip Cardiff’s group** (University College Dublin) and **Thomas Flint’s group** (University of Manchester).  
 
 For questions, suggestions, or contributions, please feel free to reach out:
 
@@ -296,7 +296,7 @@ For questions, suggestions, or contributions, please feel free to reach out:
 
 ---
 
-We welcome feedback and collaborations. If you use LPBF-SimDriver in your research, please let us know — and consider citing the relevant papers listed below.
+We welcome feedback and collaborations. If you use SimToPc in your research, please let us know — and consider citing the relevant papers listed below.
 
 
 ### References
