@@ -9,9 +9,9 @@ Given a table of parameter sets, LPBF-SimDriver will:
    Create one simulation case per parameter combination, patch the relevant OpenFOAM dictionaries, and run the simulations either locally or on the HPC system of your choice (via SSH/Slurm).
 
 2. **Post-process results**  
-   Use ParaView (`pvpython`) scripts to extract geometric quantities of the melt tracks, including width, depth, height-to-flat ratio, and continuity.
+   Use ParaView (`pvpython`) to extract geometric quantities along the entire track: width (W), height (H), depth (D), and porosity, with a mesh-aware continuity check performed first.
 
-3. **(Optional) Train a surrogate model**  
+4. **(Optional) Train a surrogate model**  
    Train a simple neural network to predict geometry-related quantities for new combinations of input parameters, enabling rapid design-space exploration.
 
 ---
@@ -189,8 +189,7 @@ COARSE/
 
 ### 2. Measure the geometry of the resulting tracks
 
-Once the simulations have finished, the next step is to extract the **geometrical characteristics** of the melt tracks from the OpenFOAM results.  
-LPBF-SimDriver provides the script `measure_W_H_D.py` for this purpose.
+After the simulations finish, extract W (width), H (height), D (depth) and porosity along the entire track using the provided post-processing script `measure_W_H_D.py`.
 
 Run it with:
 
@@ -201,11 +200,11 @@ python measure_W_H_D.py
 The workflow in this stage performs the following steps:
 
 a. **Continuity check**  
-   A slice is taken along the middle section of the track.  
-   If material is present along the full trajectory in this plane, the track is considered continuous.
+   Using the known regular mesh spacing, the script enumerates expected cross-sections.
+   If any expected cross-section has no material cells, the track is non-continuous and the case is skipped (only a boolean is saved).
 
-b. **Geometric quantities at the mid-plane**  
-   If the track passes the continuity check, a transverse plane is taken at the middle of the track.  
+b. **Per-section metrics (only if continuous)**  
+  For every cross-section along the track, compute: 
    The main geometrical quantities are then calculated:  
    - **W** (width)  
    - **H** (height)  
@@ -215,25 +214,21 @@ These quantities are illustrated conceptually in the figure below:
 
 ![Melt pool geometry](docs/images/meltpool_geometry.png)
 
-- **W** – track width  
-- **H** – track height  
-- **D** – track depth
+- **W (width)**: maximum horizontal extent in the section
+- **H (height)**: vertical extent, with rules that account for surface vs internal pores
+- **D (depth)**: vertical distance from the lowest material row to the row of maximum width
+- **Porosity**: pore cells / (pore + material cells); equals volume fraction if cell volumes are uniform
 
-These values are saved as separate files:  
-- `W.joblib`  
-- `H.joblib`  
-- `D.joblib`
-
-c. **Cross-section analysis along the track**  
-   The same calculation is repeated at multiple cross-sections along the track.  
-   - Results for each section are stored in `section_metrics_along_y.csv` (and a corresponding joblib file).  
-   - A summary file `section_metrics_summary_y.csv` (with joblib) contains the **mean** and **standard deviation** of the measured quantities across all sections.
+c. **Outputs (per test_case_i/)**  
+- `continuous.joblib` — boolean continuity flag
+- `cross_sections_statistics.csv` — one row per cross-section with W, H, D, Porosity
 ---
 
 
 ### 3. (Optional) Train a surrogate model  
 
-Once the simulation results and geometric measurements are available, you can use them to train a **neural network surrogate model**.  
+Train a feed-forward neural network to predict **aggregate** melt-pool metrics from process inputs.
+
 This step is optional, but it enables rapid exploration of the design space without running additional simulations.  
 
 Run the script with:  
@@ -245,7 +240,7 @@ python create_and_train_surrogate_model.py
 The workflow in this stage performs the following steps:
 
 1. **Collect training data**  
-   Gather the input parameters from `parameters.txt` and the measured outputs (`W`, `H`, `D`, and continuity`) stored in the processed results.
+   Gather the input parameters from `parameters.txt` and the measured outputs (`W`, `H`, `D`, `porosity`, and continuity`) stored in the processed results.
 
 2. **Preprocess the inputs**  
    Normalise the data and split it into training/validation sets.
@@ -258,7 +253,7 @@ The workflow in this stage performs the following steps:
 
    - **Inputs**: laser power, scanning speed, laser spot size  
    - **Hidden layer**: 10 nodes (dense, fully connected)  
-   - **Outputs**: predicted track width (**W**), height (**H**), and depth (**D**)  
+   - **Outputs**: Mean and standard deviations for: predicted track width (**W**), height (**H**), depth (**D**) and **porosity**.
 
    The number of nodes, layers, and other hyperparameters can be **easily modified** in the script to explore different network architectures.
 
@@ -270,11 +265,11 @@ The workflow in this stage performs the following steps:
 5. **Use the surrogate**  
    Once trained, the surrogate can predict melt track geometry for **new combinations of parameters** without running full CFD simulations.
 
-For example, the figure below shows the **predicted track width (W)** as a function of laser power and scanning speed, obtained from the trained neural network surrogate:
+For example, the figure below shows the **predicted mean track width (W)** as a function of laser power and scanning speed, obtained from the trained neural network surrogate:
 
 ![NN predictions](docs/images/nn_predictions.png)
 
-Similar figures are generated for the predicted **track depth (D)** and **track height (H)**, allowing for a complete visualisation of how process parameters influence melt track geometry.  
+Similar figures are generated for the predicted mean and standard deviations of the **depth (D)**, **height (H)**, and **porosity** allowing for a complete visualisation of how process parameters influence melt track geometry.  
 
 Such visualisations make it possible to:  
 - Explore the design space efficiently  
