@@ -170,6 +170,14 @@ def update_openfoam_variable(file_path, full_key, new_value):
             new_line = f"{prefix}{new_value}{suffix}\n"
             new_lines.append(new_line)
             continue
+        
+        # Case 4: Qualifier + value: "h uniform 0;" or "Ta constant 298;"
+        pattern_qual = rf'^(\s*{key}\s+)(uniform|constant)\s+([^\s;]+)(\s*;.*)$'
+        m_qual = re.match(pattern_qual, line)
+        if m_qual:
+            prefix, qualifier, _, suffix = m_qual.groups()
+            new_lines.append(f"{prefix}{qualifier} {new_value}{suffix}\n")
+            continue
 
         # If it does no coincide with anything, maintain the original line
         new_lines.append(line)
@@ -225,7 +233,23 @@ def replace_power(value, test_case_number, speed):
 
 
 
-
+def calculate_h_from_Biot_number(Biot, keff, DOMAIN_SIZE_IN_MICRONS):
+    domain_volume = (DOMAIN_SIZE_IN_MICRONS[0] * DOMAIN_SIZE_IN_MICRONS[1] * 
+                     DOMAIN_SIZE_IN_MICRONS[2])
+    
+    domain_area_sums = (2 * DOMAIN_SIZE_IN_MICRONS[0] * 
+                        DOMAIN_SIZE_IN_MICRONS[1] + 
+                        2 * DOMAIN_SIZE_IN_MICRONS[1] * 
+                        DOMAIN_SIZE_IN_MICRONS[2] + 
+                        2 * DOMAIN_SIZE_IN_MICRONS[0] * 
+                        DOMAIN_SIZE_IN_MICRONS[2])
+    
+    L_characteristic = domain_volume / domain_area_sums  # In microns
+    
+    h_convection = Biot * keff / (L_characteristic * 1e-6)
+    
+    return  h_convection
+    
 
 
 
@@ -246,6 +270,23 @@ def create_simulation_cases(number_cases, base_case_name, parameters):
     
         #Replace the correct values for power
         replace_power(parameters[i, 1], i, parameters[i, 0])
+
+        h_convection = calculate_h_from_Biot_number(parameters[i, 3], K_at_T_solidus, 
+                                                    DOMAIN_SIZE_IN_MICRONS)
+
+        #Replace the correct values for radius,
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "leftWall.h", h_convection)
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "rightWall.h", h_convection)
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "topWall.h", h_convection)
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "bottomWall.h", h_convection)
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "front.h", h_convection)
+        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+                                 "back.h", h_convection)
         # To replace a variable in the constant/laserProperties file, this is the 
         # sample:
         # update_openfoam_variable("./" + name_new_folder + "/constant/laserProperties", "ray_tracing_on", "true")

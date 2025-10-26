@@ -15,6 +15,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+libs
+(
+    "libfiniteVolume.so"
+    "libfluidThermophysicalModels.so"
+    "libregionModels.so"
+    "libfvOptions.so"
+    "$FOAM_LIBBIN/libthermoTools.so"   // <— portable
+);
+
+
+
+
 application     laserMeltFoam;
 
 startFrom       latestTime;
@@ -51,5 +63,111 @@ maxAlphaCo	    0.9;
 
 maxDeltaT       5e-7;
 
+
+
+functions
+{
+
+wallHeatFlux_all
+{
+    type                wallHeatFlux;
+   // functionObjectLibs  ("libfieldFunctionObjects.so");
+    // Si usas multirregión, descomenta e indica la región sólida:
+    // region            solid;
+
+    patches             (leftWall rightWall topWall bottomWall front back);
+
+    // Frecuencia (puedes ajustarla):
+    executeControl      timeStep;
+    executeInterval     1;
+    writeControl        writeTime;
+    writeInterval       1;
+}
+
+    qLeft_total
+    {
+        type                surfaceFieldValue;
+     //   functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                leftWall;
+    }
+
+    qRightWall
+    {
+        type                surfaceFieldValue;
+     //   functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                rightWall;
+    }
+
+    qTopWall
+    {
+        type                surfaceFieldValue;
+    //    functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                topWall;
+    }
+
+    qBottomWall
+    {
+        type                surfaceFieldValue;
+    //    functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                bottomWall;
+    }   
+
+    qFront
+    {
+        type                surfaceFieldValue;
+     //   functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                front;
+    }   
+
+    qBack
+    {
+        type                surfaceFieldValue;
+    //    functionObjectLibs  ("libfieldFunctionObjects.so");
+        // region           solid;
+        operation           areaIntegrate;
+        fields              (wallHeatFlux);
+        writeFields         false;
+
+        // Selección del parche:
+        regionType          patch;
+        name                back;
+    }   
+
+}
 
 // ************************************************************************* //
