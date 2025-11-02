@@ -73,8 +73,8 @@ def set_environment_variables():
 
 
 def is_meltpool_continuous(name_new_folder, CSV_3D = "meltpool.csv", 
-                                     MIN_POINTS_PER_ZROW = 3, 
-                                     print_summary = False):
+                                      MIN_POINTS_PER_ZROW = 3, 
+                                      print_summary = False):
     
     df = pd.read_csv(CSV_3D)
     x = df["Points_0"].to_numpy()
@@ -85,33 +85,209 @@ def is_meltpool_continuous(name_new_folder, CSV_3D = "meltpool.csv",
     y_max = 660e-6 # This number must also be lined to the laser aradius
     factor = 1000
     TOL = CELL_SIZE/factor
+    # mid_plane_is_continuous = True
+    meltpool_is_continuous = True
     
     # Build the y-levels
     y_levels = []
     y_level = np.round(y0, 8)
-    while (y_level <= y_max):
-        y_levels.append(y_level)
-        y_level = np.round(y_level + np.round(CELL_SIZE, 8), 8)
-    
-    are_there_material_cells_at_iy = True
-    void_iy_levels = []
     
     
-    for iy in y_levels:
-        mask = (iy == np.round(y, 8))
-        if (np.sum(mask) == 0):
-            are_there_material_cells_at_iy = False
-            void_iy_levels.append(iy)
+    # First, check if a y-z slice at x = 100 microns is continuous
+    x_mid_section = 100e-6
+    mask_x_mid_section = (x == x_mid_section)
+    mid_plane_x = df[mask_x_mid_section]
+    y_at_mid_plane_x = mid_plane_x["Points_1"]
+    z_at_mid_plane_x = mid_plane_x["Points_2"]
 
-    if (len(void_iy_levels) > 0):
-        meltpool_is_continuous = False
-        dump(void_iy_levels, name_new_folder + "/void_iy_levels.joblib")
-    else:
-        meltpool_is_continuous = True
+
+    # This loop answers the question: are there cells with less than 3 cells
+    # (or 4 points) aligned along the z-axis for every y-location in the 
+    # x_mid_plane?
+    while (y_level <= y_max):
+        # Check if there are cells at every y_level
+        mask_y_section_at_y_level_and_x_mid_plane = np.isclose(np.round(y_level, 8), y_at_mid_plane_x)
         
+        z_at_y_level_and_x_mid_plane = z_at_mid_plane_x[mask_y_section_at_y_level_and_x_mid_plane]
+        
+        
+        z_min_at_y_level_and_x_mid_plane = np.min(z_at_y_level_and_x_mid_plane)
+        z_max_at_y_level_and_x_mid_plane = np.max(z_at_y_level_and_x_mid_plane)
+        z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                      z_min_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+        z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
+                                      z_max_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+    
+    
+        z0_at_y_level = z_min_at_iy_that_is_in_original_mesh.copy()
+        expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh -
+                                  z_min_at_iy_that_is_in_original_mesh) / CELL_SIZE)
+        
+        levels_count = 0
+        while (z0_at_y_level <= z_max_at_iy_that_is_in_original_mesh):
+            mask = (np.round(z0_at_y_level, 8) == np.round(z_at_y_level_and_x_mid_plane, 8))    
+            if (np.sum(mask) == 1):
+                levels_count = levels_count + 1
+            
+            z0_at_y_level = np.round(z0_at_y_level + CELL_SIZE, 8)
+        
+        if (levels_count < 4): # 4
+            # mid_plane_is_continuous = False
+            meltpool_is_continuous = False
+            break
+            
+            
+        # if (mid_plane_is_continuous):
+        if (meltpool_is_continuous):            
+            y_level = np.round(y_level + CELL_SIZE, 8)
+    
+        elif (y_level < y_max):
+            y_level =  2 * y_max
+            
     dump(meltpool_is_continuous, name_new_folder + "/continuous.joblib")
+
+                
+    if (not meltpool_is_continuous): 
+      # Build the y-levels
+        y_levels = []
+        y_level = np.round(y0, 8)
+        # This loop answers the question: "Are there y_levels that are completely 
+        # void. If so, where are they?
+        while (y_level <= y_max):
+            y_levels.append(y_level)
+            y_level = np.round(y_level + np.round(CELL_SIZE, 8), 8)
+        
+        are_there_material_cells_at_iy = True
+        void_iy_levels = []
+        
+        for iy in y_levels:
+            mask = (iy == np.round(y, 8))
+            if (np.sum(mask) == 0):
+                are_there_material_cells_at_iy = False
+                void_iy_levels.append(iy)
+    
+        if (len(void_iy_levels) > 0):
+            dump(void_iy_levels, name_new_folder + "/void_iy_levels.joblib")
+    
+        if (len(void_iy_levels) > 0):
+            dump(void_iy_levels, name_new_folder + "/void_iy_levels.joblib")
     
     return meltpool_is_continuous
+
+
+# def is_meltpool_continuous(name_new_folder, parameters, i, CSV_3D = "meltpool.csv"):
+    
+#     df = pd.read_csv(CSV_3D)
+#     x = df["Points_0"].to_numpy()
+#     y = df["Points_1"].to_numpy()
+#     z = df["Points_2"].to_numpy()
+       
+#     y0 = Y_COORD_BEGIN_TRACK + parameters[i, 2] / 2 
+#     y_max = Y_COORD_END_TRACK - parameters[i, 2] / 2 
+#     factor = 1000
+#     TOL = CELL_SIZE/factor
+#     # mid_plane_is_continuous = True
+#     meltpool_is_continuous = True
+    
+#     # Build the y-levels
+#     y_levels = []
+#     y_level = np.round(y0, 8)
+    
+    
+#     # First, check if a y-z slice at x = x_mid_section is continuous
+#     x_mid_section = (X_MIN_AND_MAX_DOMAIN[0] + X_MIN_AND_MAX_DOMAIN[1])/2
+#     mask_x_mid_section = (x == x_mid_section)
+#     mid_plane_x = df[mask_x_mid_section]
+#     y_at_mid_plane_x = mid_plane_x["Points_1"]
+#     z_at_mid_plane_x = mid_plane_x["Points_2"]
+
+
+#     # This loop answers the question: are there cells with less than 3 cells
+#     # (or 4 points) aligned along the z-axis for every y-location in the 
+#     # x_mid_plane?
+#     while (y_level <= y_max):
+#         # Check if there are cells at every y_level
+#         mask_y_section_at_y_level_and_x_mid_plane = np.isclose(np.round(y_level, 8), y_at_mid_plane_x)
+        
+#         z_at_y_level_and_x_mid_plane = z_at_mid_plane_x[mask_y_section_at_y_level_and_x_mid_plane]
+        
+        
+#         z_min_at_y_level_and_x_mid_plane = np.min(z_at_y_level_and_x_mid_plane)
+#         z_max_at_y_level_and_x_mid_plane = np.max(z_at_y_level_and_x_mid_plane)
+#         z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
+#                                       z_min_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+#         z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
+#                                       z_max_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+    
+    
+#         z0_at_y_level = z_min_at_iy_that_is_in_original_mesh.copy()
+#         expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh -
+#                                   z_min_at_iy_that_is_in_original_mesh) / CELL_SIZE)
+        
+#         levels_count = 0
+#         while (z0_at_y_level <= z_max_at_iy_that_is_in_original_mesh):
+#             mask = (np.round(z0_at_y_level, 8) == np.round(z_at_y_level_and_x_mid_plane, 8))    
+#             # if (np.sum(mask) == 1):
+#             if (np.sum(mask) >= 1):
+#                 levels_count = levels_count + 1
+            
+#             z0_at_y_level = np.round(z0_at_y_level + CELL_SIZE, 8)
+        
+#         if (levels_count < 4): # 4
+#             # mid_plane_is_continuous = False
+#             meltpool_is_continuous = False
+#             break
+            
+            
+#         # if (mid_plane_is_continuous):
+#         if (meltpool_is_continuous):            
+#             y_level = np.round(y_level + CELL_SIZE, 8)
+    
+#         elif (y_level < y_max):
+#             y_level =  2 * y_max
+            
+#     dump(meltpool_is_continuous, name_new_folder + "/continuous.joblib")
+
+                
+#     if (not meltpool_is_continuous): 
+#       # Build the y-levels
+#         y_levels = []
+#         y_level = np.round(y0, 8)
+#         # This loop answers the question: "Are there y_levels that are completely 
+#         # void. If so, where are they?
+#         while (y_level <= y_max):
+#             y_levels.append(y_level)
+#             y_level = np.round(y_level + np.round(CELL_SIZE, 8), 8)
+        
+#         are_there_material_cells_at_iy = True
+#         void_iy_levels = []
+        
+#         for iy in y_levels:
+#             mask = (iy == np.round(y, 8))
+#             if (np.sum(mask) == 0):
+#                 are_there_material_cells_at_iy = False
+#                 void_iy_levels.append(iy)
+    
+#         if (len(void_iy_levels) > 0):
+#             dump(void_iy_levels, name_new_folder + "/void_iy_levels.joblib")
+    
+#         if (len(void_iy_levels) > 0):
+#             dump(void_iy_levels, name_new_folder + "/void_iy_levels.joblib")
+    
+#     return meltpool_is_continuous
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def calculate_cross_sections_statistics(name_new_folder, row_statistics, 
@@ -130,6 +306,8 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
     
     for iy in y_unique:
         if (iy not in void_iy_levels):
+            if (iy == 0.00037):
+                print("SIMON")
             mask = (iy == y)
             cross_section_at_iy = row_statistics[mask]
             z_at_iy = cross_section_at_iy["z_coord_"]
@@ -145,7 +323,8 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
             if (True not in pores_at_iy.values): # This means there is no holes
                                                  # at this iy section, neither 
                                                 # internal nor upper boundaries
-                max_height_location_at_iy = z_at_iy[max(id_rows_at_iy)]
+            
+                max_height_location_at_iy = z_at_iy[max(id_rows_at_iy)] #AQUI
                 height =  max_height_location_at_iy - min(z_at_iy)
                 width = max(width_rows_at_iy)
                 z_location_max_width = width_rows_at_iy.argmax(width)
@@ -173,7 +352,13 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                     
                 mask2 = (z_at_iy < max_height_location_at_iy)
                 possible_max_widths = width_rows_at_iy[mask2]
-                width = max(possible_max_widths)
+                try:
+                    # Código que podría lanzar un ValueError
+                    width = max(possible_max_widths)
+                except ValueError as e:
+                    print("Ocurrió un ValueError:", e)
+                    print("HERE")
+                # width = max(possible_max_widths)
                 location_top_depth_level = np.argmax(possible_max_widths)       
                 depth = ((z_at_iy).to_numpy())[location_top_depth_level] - min(
                                                                        z_at_iy)
@@ -234,6 +419,8 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
     
     y0 = 140e-6 #This is the number I have to link to the laser radius
     y_max = 660e-6 # This number must also be lined to the laser aradius
+    # y0 = Y_COORD_BEGIN_TRACK + LASER_DIAMETER / 2 
+    # y_max = Y_COORD_END_TRACK - LASER_DIAMETER / 2  
     factor = 1000
     TOL = CELL_SIZE/factor
 
@@ -369,10 +556,12 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
 
 
 
-def calculate_geometry_full_meltpool(name_new_folder, CSV_3D = "meltpool.csv", 
+def calculate_geometry_full_meltpool(name_new_folder, 
+                                     CSV_3D = "meltpool.csv", 
                                      MIN_POINTS_PER_ZROW = 3, 
                                      print_summary = False):
 
+    # meltpool_is_continuous = is_meltpool_continuous(name_new_folder, parameters, i, CSV_3D)
     meltpool_is_continuous = is_meltpool_continuous(name_new_folder, CSV_3D)
     
     if (meltpool_is_continuous):
