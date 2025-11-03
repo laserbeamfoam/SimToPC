@@ -44,6 +44,8 @@ CELL_SIZE = 2.5e-06
 DOMAIN_SIZE_IN_MICRONS = [200, 800, 200] # x, y, z
 Y_COORD_BEGIN_TRACK = 100e-6
 Y_COORD_END_TRACK = 700e-6
+X_MIN_AND_MAX_DOMAIN = [0, 0.0002]
+
 
 # For training the NN
 n_epochs = 500
