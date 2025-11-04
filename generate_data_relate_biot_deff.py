@@ -63,7 +63,7 @@ hostname, run_address, OF_LOCATION = set_environment_variables()
 BASE_CASE_NAME = set_base_case_name()
 
 # Read the operational parameters
-parameters = np.loadtxt("./parameters.txt", skiprows=1)
+parameters = np.loadtxt("./parameters_relate_biot_deff.txt", skiprows=1)
 
 # Count the total number of cases
 number_cases = parameters.shape[0]
