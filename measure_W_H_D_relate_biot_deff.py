@@ -101,8 +101,8 @@ Authors
 
 from src.functions_measure_W_H_D import *
 import numpy as np
-import input_data
-from input_data import *
+import input_data_relate_biot_deff
+from input_data_relate_biot_deff import *
 
 
 # source the correct OpenFOAM, based on the system and OF version
