@@ -162,7 +162,7 @@ def update_openfoam_variable(file_path, full_key, new_value):
             new_lines.append(new_line)
             continue
 
-        # Caso 3: clave sin dimensiones (e.g. "ray_tracing_on false;")
+        # Caso 3: Keys with no dimensions (e.g. "ray_tracing_on false;")
         pattern_nodims = rf'^(\s*{key}\s+)([^\s;]+)(\s*;.*)$'
         match_nodims = re.match(pattern_nodims, line)
         if in_scope and match_nodims:
@@ -271,22 +271,22 @@ def create_simulation_cases(number_cases, base_case_name, parameters):
         #Replace the correct values for power
         replace_power(parameters[i, 1], i, parameters[i, 0])
 
-        h_convection = calculate_h_from_Biot_number(parameters[i, 3], K_at_T_solidus, 
-                                                    DOMAIN_SIZE_IN_MICRONS)
+        # h_convection = calculate_h_from_Biot_number(parameters[i, 3], K_at_T_solidus, 
+        #                                             DOMAIN_SIZE_IN_MICRONS)
 
         #Replace the correct values for radius,
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "leftWall.h", h_convection)
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "rightWall.h", h_convection)
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "topWall.h", h_convection)
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "bottomWall.h", h_convection)
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "front.h", h_convection)
-        update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-                                 "back.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "leftWall.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "rightWall.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "topWall.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "bottomWall.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "front.h", h_convection)
+        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
+        #                          "back.h", h_convection)
         # To replace a variable in the constant/laserProperties file, this is the 
         # sample:
         # update_openfoam_variable("./" + name_new_folder + "/constant/laserProperties", "ray_tracing_on", "true")
