@@ -1,0 +1,3 @@
+mesh_density: COARSE
+parameters_file: parameters.txt
+output_dir: results

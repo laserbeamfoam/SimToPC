@@ -48,7 +48,7 @@ X_MIN_AND_MAX_DOMAIN = [0, 0.0002]
 
 
 # For training the NN
-n_epochs = 500
+n_epochs = 5000
 
 # How many points will be plotted when predicting with the NN, both in x and y
 n_divisions_for_prediction = 50# 50# 50#10

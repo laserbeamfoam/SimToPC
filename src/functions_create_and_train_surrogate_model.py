@@ -250,19 +250,19 @@ def generate_prediction_map(input_variables_for_map,
         # will take at predicion time. 
         x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), axis = 2)
         x_for_predictions_scaled = x_scaler.transform(x_for_predictions.reshape([x_for_predictions.shape[0],
-                                                                                 x_for_predictions.shape[2]] ))
+                                                                                  x_for_predictions.shape[2]] ))
         y_predictions_scaled = model.predict(x_for_predictions_scaled[:, np.newaxis, :])
         y_predictions = y_scaler.inverse_transform(y_predictions_scaled.reshape([y_predictions_scaled.shape[0], 
-                                                                                 y_predictions_scaled.shape[2]]))
+                                                                                  y_predictions_scaled.shape[2]]))
        
         
         plt.figure(figsize=(8, 6))
         plt.pcolormesh(x_for_predictions[:, :, 0].reshape([n_divisions_for_prediction, 
-                                                           n_divisions_for_prediction]), 
-                       x_for_predictions[:, :, 1].reshape([n_divisions_for_prediction, 
-                                                           n_divisions_for_prediction]), 
-                       y_predictions[:, i].reshape([n_divisions_for_prediction, 
-                                                           n_divisions_for_prediction]), shading='auto')
+                                                            n_divisions_for_prediction]), 
+                        x_for_predictions[:, :, 1].reshape([n_divisions_for_prediction, 
+                                                            n_divisions_for_prediction]), 
+                        y_predictions[:, i].reshape([n_divisions_for_prediction, 
+                                                            n_divisions_for_prediction]), shading='auto', cmap='jet')
         plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
         plt.xlabel(x_name)
         plt.ylabel(y_name)
@@ -271,7 +271,77 @@ def generate_prediction_map(input_variables_for_map,
         # plt.show()
         plt.savefig(POSSIBLE_OUTPUTS[i]+ "_predictions.png")
     
+
+# def generate_prediction_map(input_variables_for_map, 
+#                             parameters_valid_cases, x_scaler, y_scaler, model,
+#                             POSSIBLE_OUTPUTS, x_name, y_name):
     
+#     for i in range(len(POSSIBLE_OUTPUTS)):
+#         # 1) Generate the x and y values that will be used in the predictions 
+#         x_vals, y_vals = generate_x_y_levels_for_predictions(
+#             parameters_valid_cases, 
+#             x_ind=input_variables_for_map[0],
+#             y_ind=input_variables_for_map[1]
+#         )
+    
+#         # 2) Grid for map
+#         X_grid, Y_grid = np.meshgrid(x_vals, y_vals)
+#         n_points = X_grid.size
+    
+#         # 3) Prepare NN input
+#         x_for_map = X_grid.reshape((n_points, 1, 1))
+#         y_for_map = Y_grid.reshape((n_points, 1, 1))
+#         z_for_map = np.zeros_like(x_for_map)
+#         z_for_map[:, :] = parameters_valid_cases[:, 2][i]
+    
+#         x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), axis=2)
+
+#         x_for_predictions_scaled = x_scaler.transform(
+#             x_for_predictions.reshape([x_for_predictions.shape[0],
+#                                        x_for_predictions.shape[2]])
+#         )
+#         y_predictions_scaled = model.predict(x_for_predictions_scaled[:, np.newaxis, :])
+#         y_predictions = y_scaler.inverse_transform(
+#             y_predictions_scaled.reshape([y_predictions_scaled.shape[0],
+#                                           y_predictions_scaled.shape[2]])
+#         )
+
+#         # 4) Reshape predictions back into grid
+#         Z_grid = y_predictions[:, i].reshape(X_grid.shape)
+
+#         # 5) ---- MASK THE UNSAFE RECTANGLE ----
+#         # rectangle defined by:
+#         # speed in [1.75, 2.25]
+#         # power in [125, 175]
+#         invalid_mask = (
+#             (X_grid >= 1.75) & (X_grid <= 2.25) &
+#             (Y_grid >= 125.0) & (Y_grid <= 175.0)
+#         )
+
+#         Z_masked = np.ma.array(Z_grid, mask=invalid_mask)
+
+#         # 6) Plot
+#         plt.figure(figsize=(8, 6))
+#         pcm = plt.pcolormesh(
+#             X_grid,
+#             Y_grid,
+#             Z_masked,
+#             shading='auto',
+#             cmap='jet'
+#         )
+#         plt.colorbar(pcm, label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
+#         plt.xlabel(x_name)
+#         plt.ylabel(y_name)
+#         plt.title("Predictions using the NN")
+#         plt.tight_layout()
+#         plt.savefig(POSSIBLE_OUTPUTS[i] + "_predictions.png")
+
+
+
+
+
+
+
 def generate_processing_map(input_variables_for_map, parameters_valid_cases):
     # NOTE THIS FUNCTION IS NOT FINISHED, IT IS KEPT HERE TO GENERATE THE
     # CORRECT PLOT ONCE THE RULE TO DECIDE THE RULE TO DEFINE THE BOUNDARIES OF

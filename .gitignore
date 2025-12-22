@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Outputs
+results/
+data/
+*.csv
+*.json
+*.npy
+*.npz
+
+# ML artifacts
+*.h5
+*.joblib
+*.pkl
+
+# OpenFOAM / simulations
+case*/
+run*/
+processor*/
+constant/
+system/
+log.*
+
+# OS
+.DS_Store
