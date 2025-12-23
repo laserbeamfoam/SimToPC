@@ -1,9 +1,13 @@
 ## Description
 
-**SimToPc** is a collection of Python scripts that automate **single-track laser powder bed fusion (LPBF) simulations** using solvers from the **LaserbeamFoam** family in OpenFOAM.  
-It is designed to make it easy to study how process parameters—such as laser power, scanning speed, and laser spot size—affect the morphology of melt tracks in a systematic and reproducible way.  
+**SimToPC** is an open-source Python package for the automated post-processing and analysis of **single-track Laser Powder Bed Fusion (LPBF) simulations**.
 
-Given a table of parameter sets, SimToPc will:
+It provides a reproducible workflow to extract **melt-pool geometry and porosity metrics along the entire scan track**, enabling full-field analysis beyond conventional centreline measurements.
+
+SimToPC is designed to work with **OpenFOAM-based LPBF solvers** and is demonstrated using **laserMeltFoam**. The software produces structured, machine-learning-ready outputs and can optionally be used to generate surrogate models for rapid exploration of process-parameter spaces.
+
+
+Given a table of parameter sets, SimToPc can:
 
 1. **Generate and run cases**  
    Create one simulation case per parameter combination, patch the relevant OpenFOAM dictionaries, and run the simulations either locally or on the HPC system of your choice (via SSH/Slurm).
@@ -33,29 +37,46 @@ Before using **SimToPc**, make sure the following software and environments are 
   ParaView with `pvpython` must be installed and available on your `PATH`. ParaView ≥ 5.7 is recommended.
 
 - **Python 3.8.12**  
-  With the following key packages:  
+  With the following key packages (installed automatically when using `pip`): :  
   - `numpy`, `pandas`, `joblib`  
   - `matplotlib` (for plotting)  
-  - `scikit-learn`, `tensorflow/keras` (for surrogate model training)  
-
-  The exact Python environment used in development can be recreated from the file included in this repository:
-  ```bash
-  # with conda
-  conda env create -f environment.yml
-  conda activate lpbfsimdriver
-
-  # or with pip
-  pip install -r requirements.txt
+  - `scikit-learn`, `tensorflow/keras` (only required for surrogate model training)  
 
 
-If you want to run your simulations on an HPC system, you will need:
+> ℹ️ Importing SimToPC or running `simtopc --help` does **not** require OpenFOAM or ParaView.
+
+If you want to run your simulations on an HPC system, you will also need:
 
 - Access to a cluster running **Slurm**  
 - Passwordless **SSH** set up between your local machine and the cluster
 
+---
+
+## Installation
+
+It is recommended to install SimToPC in a clean virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Verify the installation:
+
+```bash
+simtopc --help
+```
+
 ## Instructions
 
-Once the prerequisites are installed and configured, you can run **SimToPc** in three main stages.
+Once the prerequisites are installed and the package is available, SimToPC can be executed via its **command-line interface (CLI)**.
+
+The typical workflow consists of three stages:
+1. Running the simulations
+2. Post-processing the melt-track geometry
+3. (Optional) Training a surrogate model
+
 
 ### 1. Run the simulations
 
@@ -89,29 +110,19 @@ Scanning Speed (m/s) | Power (W)  | Spot size (m)    # Taken from Parivendhan Ph
 2                         300             80e-6
 ```
 
-#### 1.2 Configure the driver
+#### 1.2 Configure the workflow
 
-Next, open the file `input_data.py` and adjust its fields to match your setup.  
-This file contains the **global settings** that SimToPc uses when generating and running cases.
+SimToPC is configured using a YAML configuration file (e.g. `config.yml`).  
+This file specifies how simulations are executed and post-processed.
 
-The most important fields are:
+The configuration includes, among others:
 
-- `RUNNING_ON`  
-  Set this to `"LOCAL"` if you want to run the cases on your own machine,  
-  or to the name of your HPC system (e.g., `"Meluxina"`) if you plan to run remotely.
+- execution mode (local or HPC)
+- solver and mesh settings
+- paths to the parameter table
+- post-processing options
 
-- `MESH_DENSITY`  
-  Choose the mesh resolution you want to use for your simulations (e.g., `"coarse"` or `"fine"`).  
-  The code will look for the corresponding base case in this folder.
-
-- `OPENFOAM_VERSION`  
-  Currently, only `2412` is supported (because this is the version where `laserMeltFoam` has been ported).  
-  Other versions will be supported in future releases.
-
-- `SEED`, `n_epochs`, and other optional parameters  
-  Used for surrogate model training; can be left as default if you are not training a neural network.
-
----
+Some legacy scripts internally rely on `input_data.py`. These are being progressively migrated to the unified YAML-based configuration system.
 
 In the **example code included in this repository**, we set up `RUNNING_ON` to use an HPC system available at **University College Dublin**, called **Xenosim**.  
 This demonstrates how the driver can be adapted to specific clusters through host-specific configuration files.
@@ -137,8 +148,6 @@ By convention, the template must live at <MESH_DENSITY>/base_case_of2412/ where 
 - If `MESH_DENSITY = "COARSE"` → `COARSE/base_case_of2412/`
 - If `MESH_DENSITY = "FINE"`   → `FINE/base_case_of2412/`
 
-A minimal directory layout might look like:
-
 **Why “of2412”?**  
 The current driver supports **laserMeltFoam ported to OpenFOAM v2412**, so the template name reflects the version.  
 Future versions may add templates for other OpenFOAM releases.
@@ -162,13 +171,17 @@ The submission script is where you specify those commands.
 **Example**  
 In this repository, we provide singleTrackXenosim.sh which is used when submitting jobs to the **Xenosim** cluster at University College Dublin.
 
+
 #### 1.4 Run the simulations
 
-Once the parameter table (`parameters.txt`), the driver configuration (`input_data.py`), and the base case template are in place, you can generate and run all simulations with:
+Once the parameter table (`parameters.txt`) and the configuration file (`config.yml`) are prepared, simulations can be launched with:
 
 ```bash
-python generate_data.py    
+simtopc generate config.yml
 ```
+
+This command generates one simulation case per parameter combination, executes the solver, and post-processes the results automatically.
+
 
 After this step, you will have one simulation folder per parameter combination inside your chosen `MESH_DENSITY` folder.  
 
@@ -187,14 +200,13 @@ COARSE/
 ---
 
 
+
 ### 2. Measure the geometry of the resulting tracks
 
-After the simulations finish, extract W (width), H (height), D (depth) and porosity along the entire track using the provided post-processing script `measure_W_H_D.py`.
-
-Run it with:
+For each completed simulation, SimToPC extracts melt-pool geometry along the entire scan track. Run it with:
 
 ```bash
-python measure_W_H_D.py
+simtopc run config.yml
 ```
 
 The workflow in this stage performs the following steps:
@@ -234,7 +246,7 @@ This step is optional, but it enables rapid exploration of the design space with
 Run the script with:  
 
 ```bash
-python create_and_train_surrogate_model.py
+simtopc surrogate config.yml
 ```
 
 The workflow in this stage performs the following steps:
@@ -310,3 +322,6 @@ Flint, T. F., et al. A fundamental analysis of factors affecting chemical homoge
 Flint, T. F., T. Dutilleul, and W. Kyffin. A fundamental investigation into the role of beam focal point, and beam divergence, on thermo-capillary stability and evolution in electron beam welding applications. International Journal of Heat and Mass Transfer 212 (2023): 124262.
 
 Parivendhan, G., Cardiff, P., Flint, T., Tuković, Ž., Obeidi, M., Brabazon, D., Ivanković, A. (2023) A numerical study of processing parameters and their effect on the melt-track profile in Laser Powder Bed Fusion processes, Additive Manufacturing, 67, 10.1016/j.addma.2023.103482.
+
+
+
