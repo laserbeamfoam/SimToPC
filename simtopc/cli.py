@@ -5,8 +5,10 @@ def main():
     p = argparse.ArgumentParser(prog="simtopc")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    run_p = sub.add_parser("run", help="Run SimToPC pipeline")
-    run_p.add_argument("config", help="Path to config.yml")
+    # run_p = sub.add_parser("run", help="Run SimToPC pipeline")
+    # run_p.add_argument("config", help="Path to config.yml")
+    run_measure = sub.add_parser("measure", help="Run SimToPC pipeline")
+    run_measure.add_argument("config", help="Path to config.yml")
 
     p_sur = sub.add_parser("surrogate", help="Train surrogate model (requires TensorFlow)")
     p_sur.add_argument("config", help="Path to config.yml")
@@ -19,7 +21,9 @@ def main():
 
 
     args = p.parse_args()
-    if args.cmd == "run":
+    # if args.cmd == "run":
+    #     run(args.config)
+    if args.cmd == "measure":
         run(args.config)
         
     if args.cmd == "surrogate":
