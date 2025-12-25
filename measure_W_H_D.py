@@ -99,36 +99,64 @@ Authors
 
 '''
 
+import sys
+from simtopc.config import load_config
+from simtopc.measure_config import MeasureConfig
+
+if len(sys.argv) < 2:
+    raise SystemExit("Uso: python measure_W_H_D.py config.yml")
+
+config_path = sys.argv[1]
+cfg_all = load_config(config_path)
+m = cfg_all.measure
+
+
+measure_cfg = MeasureConfig(
+    y_begin=float(m["y_begin"]),
+    y_end=float(m["y_end"]),
+    x_min=float(m["x_min"]),
+    x_max=float(m["x_max"]),
+    cell_size=float(m["cell_size"]),
+    min_points_per_zrow=int(m.get("min_points_per_zrow", 4)),
+)
+
+
 from src.functions_measure_W_H_D import *
 import numpy as np
-import input_data
-from input_data import *
 
 
 # source the correct OpenFOAM, based on the system and OF version
-hostname, run_address, OF_LOCATION = set_environment_variables()
+# hostname, run_address, OF_LOCATION = set_environment_variables()
+hostname, run_address, OF_LOCATION = set_environment_variables(cfg_all.running_on)
+
 
 # Read the operational parameters
-parameters = np.loadtxt("./parameters.txt", skiprows=1)
+# parameters = np.loadtxt("./parameters.txt", skiprows=1)
+parameters = np.loadtxt(cfg_all.parameters_file, skiprows=1)
+
 
 # Count the total number of cases
 number_cases = parameters.shape[0]
 
 # Calculate results (width, depth, etc)
 for i in range(number_cases):
-    name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
+    name_new_folder = cfg_all.mesh_density + "/test_case_" + str(i + 1)
+
     print("\n Measuring geometry-based quantities for test_case_" + str(i + 1))
     terminal(f'cp src/extract* {name_new_folder}/')
     terminal(f'cp src/quantities_from_meltpool.py {name_new_folder}/')
     terminal(f'cp src/functions.py {name_new_folder}/')
-    terminal(f'cp input_data.py {name_new_folder}/')
     # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
     # terminal(f'cd {name_new_folder} && mkdir images_full_meltpool && mv *png images_full_meltpool/')
     # In case mkdir does not work
     laser_radius_i = parameters[i, 2]/2
     terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
     terminal(f'cd {name_new_folder} && rm *.py')    
-    calculate_geometry_full_meltpool(name_new_folder, laser_radius_i, CSV_3D = name_new_folder + "/meltpool.csv")
+    # calculate_geometry_full_meltpool(name_new_folder, laser_radius_i, CSV_3D = name_new_folder + "/meltpool.csv")
+    calculate_geometry_full_meltpool(name_new_folder, laser_radius_i, 
+                                     measure_cfg, 
+                                     CSV_3D=name_new_folder + "/meltpool.csv")
+
     print("\n Finished measuring geometry-based quantities for test_case_"+ str(i + 1), "\n")
     # print("Generating profiles for the variables")
     # plotResults(name_new_folder, CSV_CROSS_SECTIONS = name_new_folder + "/cross_sections_statistics.csv")

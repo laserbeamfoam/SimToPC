@@ -36,8 +36,7 @@ Authors
 
 
 import os
-import input_data
-from input_data import *
+
 import re
 
 # import tensorflow as tf
@@ -62,8 +61,9 @@ from matplotlib.colors import ListedColormap
 def terminal(command):
     os.system(command)
 
-def set_environment_variables():   
-    variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
+# def set_environment_variables():   
+def set_environment_variables(running_on: str):
+    variables_import = "input_files." + running_on.lower() + "_inp"
     imported = importlib.import_module(variables_import)
     hostname = imported.hostname
     run_address = imported.run_address
@@ -72,21 +72,31 @@ def set_environment_variables():
     return hostname, run_address, OF_LOCATION
 
 
+# def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i, 
+#                            CSV_3D = "meltpool.csv", MIN_POINTS_PER_ZROW = 4):
 def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i, 
-                           CSV_3D = "meltpool.csv", MIN_POINTS_PER_ZROW = 4):
+                            measure_cfg, CSV_3D="meltpool.csv"):
+
+    y_begin = measure_cfg.y_begin
+    y_end = measure_cfg.y_end
+    x_min = measure_cfg.x_min
+    x_max = measure_cfg.x_max
+    cell_size = measure_cfg.cell_size
+
+
     df = pd.read_csv(CSV_3D)
     x = df["Points_0"].to_numpy()
     y = df["Points_1"].to_numpy()
     z = df["Points_2"].to_numpy()
-    y0 = Y_COORD_BEGIN_TRACK + laser_radius_test_case_i
-    y_max = Y_COORD_END_TRACK - laser_radius_test_case_i
+    y0 = y_begin + laser_radius_test_case_i
+    y_max = y_end - laser_radius_test_case_i
     meltpool_is_continuous = True
     # Build the y-levels
     y_levels = []
     y_level = np.round(y0, 8)
     # First, check if a y-z slice at x = 100 microns is continuous
     # x_mid_section = 100e-6
-    x_mid_section = (X_MIN_AND_MAX_DOMAIN[0] + X_MIN_AND_MAX_DOMAIN[1])/2
+    x_mid_section = (x_min + x_max)/2
     mask_x_mid_section = (x == x_mid_section)
     mid_plane_x = df[mask_x_mid_section]
     y_at_mid_plane_x = mid_plane_x["Points_1"]
@@ -105,24 +115,25 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
         z_min_at_y_level_and_x_mid_plane = np.min(z_at_y_level_and_x_mid_plane)
         z_max_at_y_level_and_x_mid_plane = np.max(z_at_y_level_and_x_mid_plane)
         z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                    z_min_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+                    z_min_at_y_level_and_x_mid_plane/cell_size) * cell_size, 8)
         z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                    z_max_at_y_level_and_x_mid_plane/CELL_SIZE) * CELL_SIZE, 8)
+                    z_max_at_y_level_and_x_mid_plane/cell_size) * cell_size, 8)
         z0_at_y_level = z_min_at_iy_that_is_in_original_mesh.copy()
         expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh 
-                           - z_min_at_iy_that_is_in_original_mesh) / CELL_SIZE)
+                           - z_min_at_iy_that_is_in_original_mesh) / cell_size)
         levels_count = 0
         while (z0_at_y_level <= z_max_at_iy_that_is_in_original_mesh):
             mask = (np.round(z0_at_y_level, 8) == np.round(
                                               z_at_y_level_and_x_mid_plane, 8))    
             if (np.sum(mask) >= 1):
                 levels_count = levels_count + 1
-            z0_at_y_level = np.round(z0_at_y_level + CELL_SIZE, 8)
-        if (levels_count < MIN_POINTS_PER_ZROW):
+            z0_at_y_level = np.round(z0_at_y_level + cell_size, 8)
+        # if (levels_count < MIN_POINTS_PER_ZROW):
+        if levels_count < measure_cfg.min_points_per_zrow:
             meltpool_is_continuous = False
             break
         if (meltpool_is_continuous):            
-            y_level = np.round(y_level + CELL_SIZE, 8)
+            y_level = np.round(y_level + cell_size, 8)
         elif (y_level < y_max):
             y_level =  2 * y_max
     dump(meltpool_is_continuous, name_new_folder + "/continuous.joblib")
@@ -135,7 +146,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
         # void. If so, where are they?
         while (y_level <= y_max):
             y_levels.append(y_level)
-            y_level = np.round(y_level + np.round(CELL_SIZE, 8), 8)
+            y_level = np.round(y_level + np.round(cell_size, 8), 8)
         are_there_material_cells_at_iy = True
         void_iy_levels = []
         for iy in y_levels:
@@ -148,10 +159,17 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     return meltpool_is_continuous
 
 
+# def calculate_cross_sections_statistics(name_new_folder, row_statistics, 
+#                                         pore_locatios_at_rows, 
+#                                         pores_at_row_are_internal, 
+#                                         meltpool_is_continuous):
 def calculate_cross_sections_statistics(name_new_folder, row_statistics, 
                                         pore_locatios_at_rows, 
                                         pores_at_row_are_internal, 
-                                        meltpool_is_continuous):
+                                        meltpool_is_continuous,
+                                        measure_cfg):
+    cell_size = measure_cfg.cell_size
+
     cross_sections_statistics = []
     y = row_statistics["y_coord"].to_numpy()
     row_has_pores = row_statistics["row_has_pores"]
@@ -215,10 +233,10 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                                                                        z_at_iy)
             
             porous_volume_at_iy = np.sum(number_pores_at_iy.to_numpy()) * (
-                                                                  CELL_SIZE**3)
+                                                                  cell_size**3)
             total_volume_material_at_iy = (np.sum(
                                number_non_void_cells_in_row_at_iy.to_numpy()) + 
-                        np.sum(number_pores_at_iy.to_numpy())) * (CELL_SIZE**3)
+                        np.sum(number_pores_at_iy.to_numpy())) * (cell_size**3)
             
             porosity_at_iy = porous_volume_at_iy/total_volume_material_at_iy
             
@@ -241,8 +259,11 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
 
 
 
+# def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_test_case_i, 
+#                                        meltpool_is_continuous):
 def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_test_case_i, 
-                                       meltpool_is_continuous):
+                                       meltpool_is_continuous, measure_cfg):
+
     
     # This function takes the .csv file tht represents the meltpool and 
     # calculates several metrics for every row in the meltpool. 
@@ -256,6 +277,12 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
     # Otherwise, it has "True" or "False" for every pore in the row. True if 
     # the pore is internal, Flase, otherwise
     
+
+    y_begin = measure_cfg.y_begin
+    y_end = measure_cfg.y_end
+    cell_size = measure_cfg.cell_size
+
+
     df = pd.read_csv(CSV_3D)
     x = df["Points_0"].to_numpy()
     y = df["Points_1"].to_numpy()
@@ -265,8 +292,8 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
     if (not meltpool_is_continuous):
         void_iy_levels = load("void_iy_levels.joblib")
     
-    y0 = Y_COORD_BEGIN_TRACK + laser_radius_test_case_i
-    y_max = Y_COORD_END_TRACK - laser_radius_test_case_i
+    y0 = y_begin + laser_radius_test_case_i
+    y_max = y_end - laser_radius_test_case_i
 
     iy = y0
     id_row = 0
@@ -288,13 +315,13 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
             x_min_at_iy = np.min(x_at_iy) 
             x_max_at_iy = np.max(x_at_iy) 
             z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         z_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+                                         z_min_at_iy/cell_size) * cell_size, 8)
             z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         z_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+                                         z_max_at_iy/cell_size) * cell_size, 8)
             x_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         x_min_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+                                         x_min_at_iy/cell_size) * cell_size, 8)
             x_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         x_max_at_iy/CELL_SIZE) * CELL_SIZE, 8)
+                                         x_max_at_iy/cell_size) * cell_size, 8)
             
             iz = z_min_at_iy_that_is_in_original_mesh
             
@@ -304,7 +331,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
                 x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
                 if (x_at_iy_iz.shape[0] == 0):
                     iz = z_max_at_iy_that_is_in_original_mesh
-                    iz = np.round(iz + CELL_SIZE, 8) # THIS LINE
+                    iz = np.round(iz + cell_size, 8) # THIS LINE
                               
                 else:
                     min_x_at_iy_iz = np.min(x_at_iy_iz)
@@ -312,15 +339,15 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
                     
                     
                     min_x_at_iy_iz_that_is_in_original_mesh = np.round(
-                             np.round(min_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                             np.round(min_x_at_iy_iz/cell_size) * cell_size, 8)
                     max_x_at_iy_iz_that_is_in_original_mesh = np.round(
-                             np.round(max_x_at_iy_iz/CELL_SIZE) * CELL_SIZE, 8)
+                             np.round(max_x_at_iy_iz/cell_size) * cell_size, 8)
                     
                     distance_minx_max_at_zlevel = np.round(
                         max_x_at_iy_iz_that_is_in_original_mesh - 
                         min_x_at_iy_iz_that_is_in_original_mesh, 8)
                     expected_number_cells_at_iy_iz = int(
-                                         distance_minx_max_at_zlevel/CELL_SIZE)
+                                         distance_minx_max_at_zlevel/cell_size)
                    
                     ix = min_x_at_iy_iz_that_is_in_original_mesh
                     init_in = ix
@@ -353,7 +380,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
                                 pores_at_row_i_are_internal.append(
                                                    np.sum(iz < z_at_ix_iy) > 0)
                                                         
-                            ix = np.round(ix + CELL_SIZE, 8)
+                            ix = np.round(ix + cell_size, 8)
                             
                     if (expected_number_cells_at_iy_iz == 1):
                         number_non_void_cells_in_row = 1
@@ -375,10 +402,10 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
                                                   number_non_void_cells_in_row]
                     
                     Statistics.append(new_statistics_row)
-                    iz = np.round(iz + CELL_SIZE, 8)
+                    iz = np.round(iz + cell_size, 8)
                     id_row = id_row + 1
 
-        iy = np.round(iy + CELL_SIZE, 8)
+        iy = np.round(iy + cell_size, 8)
             
     row_statistics = pd.DataFrame(Statistics, columns = ["id_row", "y_coord", 
                                                           "z_coord_", "x_min", 
@@ -438,23 +465,50 @@ def plotResults(name_new_folder, CSV_CROSS_SECTIONS = "./cross_sections_statisti
                     "D/W","D/W vs. y-coordinate", "DByW", name_new_folder, 0.5)
             
 
+# def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
+#                                      CSV_3D = "meltpool.csv", 
+#                                      MIN_POINTS_PER_ZROW = 4):
 def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
-                                     CSV_3D = "meltpool.csv", 
-                                     MIN_POINTS_PER_ZROW = 4):
-    meltpool_is_continuous = is_meltpool_continuous(name_new_folder, 
-                                                    laser_radius_test_case_i, 
-                                                    CSV_3D)
+                                     measure_cfg, CSV_3D="meltpool.csv"):
+
+    # meltpool_is_continuous = is_meltpool_continuous(name_new_folder, 
+    #                                                 laser_radius_test_case_i, 
+    #                                                 CSV_3D)
+
+    meltpool_is_continuous = is_meltpool_continuous(name_new_folder,
+                                                    laser_radius_test_case_i,
+                                                    measure_cfg, CSV_3D=CSV_3D
+                                                    )
+
+
     
     if (meltpool_is_continuous):
+        # row_statistics, pore_locatios_at_rows, \
+        # pores_at_row_are_internal = calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, 
+        #                                               laser_radius_test_case_i, 
+        #                                                 meltpool_is_continuous)
         row_statistics, pore_locatios_at_rows, \
-        pores_at_row_are_internal = calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, 
-                                                      laser_radius_test_case_i, 
-                                                        meltpool_is_continuous)
+        pores_at_row_are_internal = calculate_statistics_rows_meltpool(
+                                                               name_new_folder,
+                                                               CSV_3D,
+                                                      laser_radius_test_case_i,
+                                                      meltpool_is_continuous, 
+                                                      measure_cfg)
+
+        # cross_sections_statistics = calculate_cross_sections_statistics(
+        #                                        name_new_folder, row_statistics,
+        #                                        pore_locatios_at_rows, 
+        #                                        pores_at_row_are_internal, 
+        #                                        meltpool_is_continuous)
         cross_sections_statistics = calculate_cross_sections_statistics(
-                                               name_new_folder, row_statistics,
-                                               pore_locatios_at_rows, 
-                                               pores_at_row_are_internal, 
-                                               meltpool_is_continuous)
+            name_new_folder,
+            row_statistics,
+            pore_locatios_at_rows,
+            pores_at_row_are_internal,
+            meltpool_is_continuous,
+            measure_cfg,
+        )
+
         print("Generating profiles for the variables")
         plotResults(name_new_folder, CSV_CROSS_SECTIONS = name_new_folder + "/cross_sections_statistics.csv")
         

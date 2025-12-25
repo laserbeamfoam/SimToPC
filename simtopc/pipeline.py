@@ -9,7 +9,9 @@ def run(config_path: str) -> None:
 
     # TODO: reemplaza estos nombres por tus scripts reales
     #subprocess.run(["python", "generate_data.py"], check=True)
-    subprocess.run(["python", "measure_W_H_D.py"], check=True)
+    # subprocess.run(["python", "measure_W_H_D.py"], check=True)
+    subprocess.run(["python", "measure_W_H_D.py", config_path], check=True)
+
 
 
 def surrogate(config_path: str) -> None:
