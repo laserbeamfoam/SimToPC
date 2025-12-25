@@ -2,6 +2,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 from simtopc.config import load_config
+import sys
+
 
 def run(config_path: str) -> None:
     cfg = load_config(config_path)
@@ -35,7 +37,9 @@ def surrogate(config_path: str) -> None:
     if not script.exists():
         raise FileNotFoundError(f"No encuentro el script: {script}")
 
-    subprocess.run(["python", str(script)], check=True, cwd=str(repo_root))
+    # subprocess.run(["python", str(script)], check=True, cwd=str(repo_root))
+    subprocess.run([sys.executable, str(script), config_path], check=True, cwd=str(repo_root))
+
 
 
 def generate(config_path: str) -> None:

@@ -91,8 +91,8 @@ import re
 from src.functions_create_and_train_surrogate_model import *
 from src.functions_measure_W_H_D import terminal
 
-from input_data import (SEED, MESH_DENSITY, n_epochs, 
-                       n_divisions_for_prediction, POSSIBLE_OUTPUTS)
+# from input_data import (SEED, MESH_DENSITY, n_epochs, 
+#                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
 from joblib import dump, load
 
 import tensorflow as tf
@@ -106,11 +106,39 @@ from sklearn.preprocessing import MinMaxScaler
 from itertools import combinations
 
 
+
+
+import sys
+from simtopc.config import load_config
+
+config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yml"
+cfg = load_config(config_path)
+
+MESH_DENSITY = cfg.mesh_density
+SEED = cfg.surrogate.seed
+print("SEED is ", SEED)
+n_epochs = cfg.surrogate.n_epochs
+n_divisions_for_prediction = cfg.surrogate.n_divisions_for_prediction
+POSSIBLE_OUTPUTS = cfg.surrogate.possible_outputs
+
+
+
+
+
+
+
+
+
+
+
+
 # Seed everything 
 seed_everything(SEED)
 
 # Read the operational parameters
-parameters = np.loadtxt("./parameters.txt", skiprows=1)
+# parameters = np.loadtxt("./parameters.txt", skiprows=1)
+parameters = np.loadtxt(cfg.parameters_file, skiprows=1)
+
 
 # Count the total number of cases
 number_cases = parameters.shape[0]
@@ -134,7 +162,7 @@ good_simulation_cases = define_good_simulation_cases(MESH_DENSITY,
 width_mean_data, width_std_data, depth_mean_data, depth_std_data, \
 height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data, \
 porosity_std_data, cases_ran_properly_and_have_continuous_meltpool \
-    = create_width_depth_height_to_flat_data(good_simulation_cases)
+    = create_width_depth_height_to_flat_data(good_simulation_cases, MESH_DENSITY)
 
 
 # Create and compile a Keras-based fully-connected neural network
@@ -215,10 +243,14 @@ output_variables_for_map = 0 # [0]  # The index of the variable of interest in
                                 # POSSIBLE_OUTPUTS  
 
 
-generate_prediction_map(input_variables_for_map, 
-                        parameters_valid_cases, x_scaler, y_scaler, model, 
-                        POSSIBLE_OUTPUTS, x_name ="Scanning speed (m/s)", 
-                        y_name = "Power (W)")
+# generate_prediction_map(input_variables_for_map, 
+#                         parameters_valid_cases, x_scaler, y_scaler, model, 
+#                         POSSIBLE_OUTPUTS, x_name ="Scanning speed (m/s)", 
+#                         y_name = "Power (W)")
+generate_prediction_map(input_variables_for_map, parameters_valid_cases, 
+                        x_scaler, y_scaler, model, POSSIBLE_OUTPUTS, 
+                        "Scanning speed (m/s)", "Power (W)", 
+                        n_divisions_for_prediction)
 
 
 # NOTE THIS FUNCTION IS NOT FINISHED, IT IS KEPT HERE TO GENERATE THE
@@ -226,7 +258,7 @@ generate_prediction_map(input_variables_for_map,
 # THE REGIMES. FOR NOW, THIS FUNCTION JUST SHOWS THE CODE THAT 
 # GENERATES A SIMILAR COLOUR MAP, USING x_vals, x_vals and a synthetic
 # r value, calculated as a radius.
-generate_processing_map(input_variables_for_map, parameters_valid_cases)
+generate_processing_map(input_variables_for_map, parameters_valid_cases, n_divisions_for_prediction)
 
 terminal("mkdir images_from_predictions")
 terminal("mv *png images_from_predictions")

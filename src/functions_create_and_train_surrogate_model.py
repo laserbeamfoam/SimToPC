@@ -36,8 +36,8 @@ Authors
 
 
 import os
-import input_data
-from input_data import *
+# import input_data
+# from input_data import *
 import re
 
 import tensorflow as tf
@@ -90,7 +90,9 @@ def scale_data(x_scaler, y_scaler, input_data, output_data):
     return input_data_scaled, output_data_scaled
 
            
-def create_width_depth_height_to_flat_data(good_simulation_cases):
+# def create_width_depth_height_to_flat_data(good_simulation_cases):
+def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
+
     # Assemble the training set
     width_mean_data = []
     width_std_data = []
@@ -103,7 +105,7 @@ def create_width_depth_height_to_flat_data(good_simulation_cases):
     
     cases_ran_properly_and_have_continuous_meltpool = []
     for i in good_simulation_cases:
-        name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
+        name_new_folder = mesh_density + "/test_case_" + str(i)
         meltpool_i_is_cotinuous = load("./" + name_new_folder + 
                                        "/continuous.joblib")
         if (meltpool_i_is_cotinuous):
@@ -190,10 +192,10 @@ def create_input_data_and_output_data(width_mean_data, width_std_data,
     return input_data, output_data, parameters_valid_cases
     
 
-def define_good_simulation_cases(MESH_DENSITY, number_cases):
+def define_good_simulation_cases(mesh_density, number_cases):
     good_simulation_cases = [] # List of the cases that ran properly
     for i in range(1, number_cases + 1):
-        name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
+        name_new_folder = mesh_density + "/test_case_" + str(i)
         files_in_folder_i = os.listdir("./" + name_new_folder)
     
         # Verificar si "finished.txt" está en la lista
@@ -208,7 +210,9 @@ def define_good_simulation_cases(MESH_DENSITY, number_cases):
         print("Some simulation cases did not run properly.")
     return good_simulation_cases
 
-def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
+# def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
+def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind, n_divisions_for_prediction):
+
     x_vals = np.linspace(min(parameters_valid_cases[:, x_ind]), 
                          max(parameters_valid_cases[:, x_ind]), 
                          n_divisions_for_prediction)
@@ -219,15 +223,19 @@ def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
     return x_vals, y_vals
     
 
+# def generate_prediction_map(input_variables_for_map, 
+#                             parameters_valid_cases, x_scaler, y_scaler, model,
+#                             possible_outputs, x_name, y_name):
 def generate_prediction_map(input_variables_for_map, 
                             parameters_valid_cases, x_scaler, y_scaler, model,
-                            POSSIBLE_OUTPUTS, x_name, y_name):
+                            possible_outputs, x_name, y_name, n_divisions_for_prediction):
+
     
-    for i in range(len(POSSIBLE_OUTPUTS)):
+    for i in range(len(possible_outputs)):
         # Generate the x and y values that will be used in th predicions 
         x_vals, y_vals = generate_x_y_levels_for_predictions(parameters_valid_cases, 
-                                                      x_ind=input_variables_for_map[0],
-                                                      y_ind=input_variables_for_map[1])
+                                                      input_variables_for_map[0],
+                                                      input_variables_for_map[1], n_divisions_for_prediction)
     
         # Generate a grid with x_vals and y_vals
         x, y = np.meshgrid(x_vals, y_vals)
@@ -263,20 +271,20 @@ def generate_prediction_map(input_variables_for_map,
                                                             n_divisions_for_prediction]), 
                         y_predictions[:, i].reshape([n_divisions_for_prediction, 
                                                             n_divisions_for_prediction]), shading='auto', cmap='jet')
-        plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
+        plt.colorbar(label="Predicted " + possible_outputs[i] + " (m)")
         plt.xlabel(x_name)
         plt.ylabel(y_name)
         plt.title("Predictions using the NN")
         plt.tight_layout()
         # plt.show()
-        plt.savefig(POSSIBLE_OUTPUTS[i]+ "_predictions.png")
+        plt.savefig(possible_outputs[i]+ "_predictions.png")
     
 
 # def generate_prediction_map(input_variables_for_map, 
 #                             parameters_valid_cases, x_scaler, y_scaler, model,
-#                             POSSIBLE_OUTPUTS, x_name, y_name):
+#                             possible_outputs, x_name, y_name):
     
-#     for i in range(len(POSSIBLE_OUTPUTS)):
+#     for i in range(len(possible_outputs)):
 #         # 1) Generate the x and y values that will be used in the predictions 
 #         x_vals, y_vals = generate_x_y_levels_for_predictions(
 #             parameters_valid_cases, 
@@ -329,12 +337,12 @@ def generate_prediction_map(input_variables_for_map,
 #             shading='auto',
 #             cmap='jet'
 #         )
-#         plt.colorbar(pcm, label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
+#         plt.colorbar(pcm, label="Predicted " + possible_outputs[i] + " (m)")
 #         plt.xlabel(x_name)
 #         plt.ylabel(y_name)
 #         plt.title("Predictions using the NN")
 #         plt.tight_layout()
-#         plt.savefig(POSSIBLE_OUTPUTS[i] + "_predictions.png")
+#         plt.savefig(possible_outputs[i] + "_predictions.png")
 
 
 
@@ -342,15 +350,15 @@ def generate_prediction_map(input_variables_for_map,
 
 
 
-def generate_processing_map(input_variables_for_map, parameters_valid_cases):
+def generate_processing_map(input_variables_for_map, parameters_valid_cases, n_divisions_for_prediction):
     # NOTE THIS FUNCTION IS NOT FINISHED, IT IS KEPT HERE TO GENERATE THE
     # CORRECT PLOT ONCE THE RULE TO DECIDE THE RULE TO DEFINE THE BOUNDARIES OF
     # THE REGIMES. FOR NOW, THIS FUNCTION JUST SHOWS THE CODE THAT 
     # GENERATES A SIMILAR COLOUR MAP, USING x_vals, x_vals and a synthetic
     # r value, calculated as a radius.
     x_vals, y_vals = generate_x_y_levels_for_predictions(parameters_valid_cases, 
-                                                  x_ind=input_variables_for_map[0],
-                                                  y_ind=input_variables_for_map[1])
+                                                  input_variables_for_map[0],
+                                                  input_variables_for_map[1], n_divisions_for_prediction)
 
     x, y = np.meshgrid(x_vals, x_vals)
 

@@ -10,3 +10,17 @@ measure:
   x_max : 0.0002
   cell_size : 2.5e-06
   min_points_per_zrow: 4
+
+surrogate:
+  seed: 0
+  n_epochs: 5000
+  n_divisions_for_prediction: 50
+  possible_outputs:
+    - W_mean
+    - W_std
+    - H_mean
+    - H_std
+    - D_mean
+    - D_std
+    - porosity_mean
+    - porosity_std
