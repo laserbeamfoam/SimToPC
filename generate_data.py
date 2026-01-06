@@ -32,7 +32,7 @@ Outputs:
     Each "test_case_i" folder contains the corresponding simulation setup
     and results for that evaluated case.
 
-
+por q
 Description
     This script automates the generation, execution, and retrieval of 
     OpenFOAM-based simulations for melt pool analysis. It further trains a 
@@ -48,19 +48,44 @@ Authors
 
 '''
 
+import sys
+from simtopc.config import load_config
+
+if len(sys.argv) < 2:
+    raise SystemExit("Uso: python generate_data.py config.yml")
+
+config_path = sys.argv[1] # if len(sys.argv) > 1 else None
+cfg_all = load_config(config_path) # if config_path else None
+
+
+if cfg_all is not None:
+    # Estos dos sí existen en tu Config (por lo que veo)
+    RUNNING_ON = cfg_all.running_on
+    MESH_DENSITY = cfg_all.mesh_density
+
+    # Fallback: si Config no trae openfoam_version, usa uno seguro
+    # (idealmente 2412 si ese es tu assumption actual)
+    OPENFOAM_VERSION = getattr(cfg_all, "openfoam_version", "2412")
+
+# print(OPENFOAM_VERSION)
+# exit()
+
+
 from src.functions_generate_data import * 
 import numpy as np
-import input_data
-from input_data import *
+# import input_data
+# from input_data import *
 from joblib import dump, load
 import random
 import re
 
 # source the correct OpenFOAM, based on the system and OF version
-hostname, run_address, OF_LOCATION = set_environment_variables()
+# hostname, run_address, OF_LOCATION = set_environment_variables()
+hostname, run_address, OF_LOCATION = set_environment_variables(RUNNING_ON)
 
 # Select the proper base case
-BASE_CASE_NAME = set_base_case_name()
+# BASE_CASE_NAME = set_base_case_name()
+BASE_CASE_NAME = set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION)
 
 # Read the operational parameters
 parameters = np.loadtxt("./parameters.txt", skiprows=1)
@@ -72,7 +97,8 @@ number_cases = parameters.shape[0]
 number_of_variables = parameters.shape[1]
 
 # Create the simulation cases, locally        
-create_simulation_cases(number_cases, BASE_CASE_NAME, parameters)
+# create_simulation_cases(number_cases, BASE_CASE_NAME, parameters)
+create_simulation_cases(number_cases, BASE_CASE_NAME, parameters, MESH_DENSITY, OPENFOAM_VERSION)
 
 # Execute the simulations
 if (RUNNING_ON == "LOCAL"):

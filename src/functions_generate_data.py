@@ -36,8 +36,8 @@ Authors
 
 
 import os
-import input_data
-from input_data import *
+# import input_data
+# from input_data import *
 import re
 
 import tensorflow as tf
@@ -62,8 +62,10 @@ from matplotlib.colors import ListedColormap
 def terminal(command):
     os.system(command)
 
-def set_environment_variables():   
+# def set_environment_variables():   
+def set_environment_variables(RUNNING_ON):   
     variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
+    # variables_import = "input_files." + running_on.lower() + "_inp" 
     imported = importlib.import_module(variables_import)
     hostname = imported.hostname
     run_address = imported.run_address
@@ -72,7 +74,8 @@ def set_environment_variables():
     return hostname, run_address, OF_LOCATION
 
 
-def set_base_case_name():
+# def set_base_case_name():
+def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
     BASE_CASE_NAME = ""
     if (OPENFOAM_VERSION == "2412"):
         BASE_CASE_NAME = MESH_DENSITY + "/base_case_of2412"
@@ -80,9 +83,11 @@ def set_base_case_name():
         BASE_CASE_NAME = MESH_DENSITY + "base_case_fe40"
         
     return BASE_CASE_NAME
+    
 
 
-def create_test_case(base_case_name, test_case_number):
+# def create_test_case(base_case_name, test_case_number):
+def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
     terminal("mkdir -p "  + name_new_folder)
     terminal("cp -r " + base_case_name + "/* " + name_new_folder)
@@ -188,7 +193,8 @@ def update_openfoam_variable(file_path, full_key, new_value):
     print(f"✅ '{full_key}' updated to {new_value}")
 
 
-def replace_speed(value, test_case_number):
+# def replace_speed(value, test_case_number):
+def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
     file_name = "./" + name_new_folder + "/constant/timeVsLaserPosition"
     # Read all lines in the file
@@ -210,7 +216,8 @@ def replace_speed(value, test_case_number):
             
 
 
-def replace_power(value, test_case_number, speed):
+# def replace_power(value, test_case_number, speed):
+def replace_power(value, test_case_number, speed, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
     file_name = "./" + name_new_folder + "/constant/timeVsLaserPower"
     # Read all lines in the file
@@ -253,12 +260,14 @@ def calculate_h_from_Biot_number(Biot, keff, DOMAIN_SIZE_IN_MICRONS):
 
 
 
-def create_simulation_cases(number_cases, base_case_name, parameters):
+# def create_simulation_cases(number_cases, base_case_name, parameters):
+def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSITY, OPENFOAM_VERSION):
     # Create the simulation cases
     for i in range(number_cases):    
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
         # Create the test cases
-        create_test_case(base_case_name, i)
+        # create_test_case(base_case_name, i)
+        create_test_case(base_case_name, i, MESH_DENSITY)
         
         #Replace the correct values for radius,
         update_openfoam_variable("./" + name_new_folder + 
@@ -266,10 +275,12 @@ def create_simulation_cases(number_cases, base_case_name, parameters):
                                   parameters[i, 2]/2)
     
         #Replace the correct values for scanning speed
-        replace_speed(parameters[i, 0], i)
+        # replace_speed(parameters[i, 0], i)
+        replace_speed(parameters[i, 0], i, MESH_DENSITY, OPENFOAM_VERSION)
     
         #Replace the correct values for power
-        replace_power(parameters[i, 1], i, parameters[i, 0])
+        # replace_power(parameters[i, 1], i, parameters[i, 0])
+        replace_power(parameters[i, 1], i, parameters[i, 0], MESH_DENSITY, OPENFOAM_VERSION)
 
         # h_convection = calculate_h_from_Biot_number(parameters[i, 3], K_at_T_solidus, 
         #                                             DOMAIN_SIZE_IN_MICRONS)

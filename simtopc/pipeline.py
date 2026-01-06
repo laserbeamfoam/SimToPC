@@ -56,8 +56,15 @@ def generate(config_path: str) -> None:
     if not script.exists():
         raise FileNotFoundError(f"No encuentro el script: {script}")
 
+    # subprocess.run(
+    #     ["python", str(script)],
+    #     check=True,
+    #     cwd=str(repo_root),
+    # )
+
     subprocess.run(
-        ["python", str(script)],
+        [sys.executable, str(script), config_path],
         check=True,
         cwd=str(repo_root),
     )
+
