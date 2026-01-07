@@ -58,6 +58,8 @@ import importlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
+from pathlib import Path
+
 
 def create_NN(n_nodes, n_input_variables, n_output_variables):
     # Set the neural network up
@@ -106,12 +108,15 @@ def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
     cases_ran_properly_and_have_continuous_meltpool = []
     for i in good_simulation_cases:
         name_new_folder = mesh_density + "/test_case_" + str(i)
-        meltpool_i_is_cotinuous = load("./" + name_new_folder + 
-                                       "/continuous.joblib")
+        # meltpool_i_is_cotinuous = load("./" + name_new_folder + 
+        #                                "/continuous.joblib")
+        meltpool_i_is_cotinuous = load(str(Path(name_new_folder) / "continuous.joblib"))
+        
         if (meltpool_i_is_cotinuous):
             # Read the data
-            df = pd.read_csv("./" + name_new_folder + 
-                             "/cross_sections_statistics.csv")
+            # df = pd.read_csv("./" + name_new_folder + 
+            #                  "/cross_sections_statistics.csv")
+            df = pd.read_csv(str(Path(name_new_folder) / "cross_sections_statistics.csv"))
             width_mean = np.mean(df["width"].to_numpy())
             width_std = np.std(df["width"].to_numpy())
             depth_mean = np.mean(df["depth"].to_numpy())
@@ -196,7 +201,10 @@ def define_good_simulation_cases(mesh_density, number_cases):
     good_simulation_cases = [] # List of the cases that ran properly
     for i in range(1, number_cases + 1):
         name_new_folder = mesh_density + "/test_case_" + str(i)
-        files_in_folder_i = os.listdir("./" + name_new_folder)
+        # files_in_folder_i = os.listdir("./" + name_new_folder)
+        # files_in_folder_i = os.listdir(name_new_folder)
+        files_in_folder_i = os.listdir(str(Path(name_new_folder)))
+
     
         # Verificar si "finished.txt" está en la lista
         if 'finished.txt' in files_in_folder_i:

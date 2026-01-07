@@ -48,8 +48,8 @@ X_MIN_AND_MAX_DOMAIN = [0, 0.0002]
 
 relate_biot_and_effective_distance = True
 
-T_solidus = 1658
-K_at_T_solidus = 6.31 + (27.2e-3) * T_solidus - 7e-6 * T_solidus**2
+T_solidus = 1658 # in K
+K_at_T_solidus = 6.31 + (27.2e-3) * T_solidus - 7e-6 * T_solidus**2 #in W/(m * K)
 
 # For training the NN
 n_epochs = 500
