@@ -88,8 +88,10 @@ import os
 import numpy as np
 import random
 import re
-from src.functions_create_and_train_surrogate_model import *
-from src.functions_measure_W_H_D import terminal
+# from src.functions_create_and_train_surrogate_model import *
+from simtopc.surrogate.impl import *
+
+# from src.functions_measure_W_H_D import terminal
 
 # from input_data import (SEED, MESH_DENSITY, n_epochs, 
 #                        n_divisions_for_prediction, POSSIBLE_OUTPUTS)
@@ -116,7 +118,7 @@ cfg = load_config(config_path)
 
 MESH_DENSITY = cfg.mesh_density
 SEED = cfg.surrogate.seed
-print("SEED is ", SEED)
+# print("SEED is ", SEED)
 n_epochs = cfg.surrogate.n_epochs
 n_divisions_for_prediction = cfg.surrogate.n_divisions_for_prediction
 POSSIBLE_OUTPUTS = cfg.surrogate.possible_outputs
