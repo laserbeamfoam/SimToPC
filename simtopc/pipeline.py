@@ -16,13 +16,38 @@ def run(config_path: str) -> None:
 
 
 
+# def surrogate(config_path: str) -> None:
+#     # (Opcional) validar que el config existe; si ya lo haces en otra parte, perfecto.
+#     # cfg_path = Path(config_path)
+#     cfg_path = Path(config_path).expanduser().resolve()
+
+#     if not cfg_path.exists():
+#         raise FileNotFoundError(cfg_path)
+
+#     # Chequeo “amable” de TensorFlow (solo para este comando)
+#     try:
+#         import tensorflow  # noqa: F401
+#     except ModuleNotFoundError:
+#         raise SystemExit(
+#             "TensorFlow no está instalado. Para usar el surrogate instala con:\n"
+#             "  pip install -e '.[ml]'"
+#         )
+
+#     # Ejecutar el script desde la raíz del repo aunque el usuario llame simtopc desde otro directorio
+#     repo_root = Path(__file__).resolve().parents[1]  # .../SimToPC/
+#     script = repo_root / "create_and_train_surrogate_model.py"
+#     if not script.exists():
+#         raise FileNotFoundError(f"No encuentro el script: {script}")
+
+#     # subprocess.run(["python", str(script)], check=True, cwd=str(repo_root))
+#     # subprocess.run([sys.executable, str(script), config_path], check=True, cwd=str(repo_root))
+#     subprocess.run([sys.executable, str(script), str(cfg_path)], check=True, cwd=str(repo_root))
+
 def surrogate(config_path: str) -> None:
-    # (Opcional) validar que el config existe; si ya lo haces en otra parte, perfecto.
-    cfg_path = Path(config_path)
+    cfg_path = Path(config_path).expanduser().resolve()
     if not cfg_path.exists():
         raise FileNotFoundError(cfg_path)
 
-    # Chequeo “amable” de TensorFlow (solo para este comando)
     try:
         import tensorflow  # noqa: F401
     except ModuleNotFoundError:
@@ -31,14 +56,18 @@ def surrogate(config_path: str) -> None:
             "  pip install -e '.[ml]'"
         )
 
-    # Ejecutar el script desde la raíz del repo aunque el usuario llame simtopc desde otro directorio
-    repo_root = Path(__file__).resolve().parents[1]  # .../SimToPC/
+    repo_root = Path(__file__).resolve().parents[1]
     script = repo_root / "create_and_train_surrogate_model.py"
     if not script.exists():
         raise FileNotFoundError(f"No encuentro el script: {script}")
 
-    # subprocess.run(["python", str(script)], check=True, cwd=str(repo_root))
-    subprocess.run([sys.executable, str(script), config_path], check=True, cwd=str(repo_root))
+    subprocess.run(
+        [sys.executable, str(script), str(cfg_path)],
+        check=True,
+        cwd=str(repo_root),
+    )
+
+
 
 
 
