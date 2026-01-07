@@ -58,6 +58,9 @@ import importlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
+import shutil
+from pathlib import Path
+
 
 def terminal(command):
     os.system(command)
@@ -87,12 +90,34 @@ def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
 
 
 # def create_test_case(base_case_name, test_case_number):
+# def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
+#     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
+#     terminal("mkdir -p "  + name_new_folder)
+#     terminal("cp -r " + base_case_name + "/* " + name_new_folder)
+#     terminal("cp -r *py " + "./" + name_new_folder)
 def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
-    name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-    terminal("mkdir -p "  + name_new_folder)
-    terminal("cp -r " + base_case_name + "/* " + name_new_folder)
-    terminal("cp -r *py " + "./" + name_new_folder)
-    
+    """
+    Create a test case directory and copy the contents of the base case into it.
+    This version is portable (doesn't depend on the current working directory).
+    """
+    name_new_folder = str(Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}")
+    case_dir = Path(name_new_folder).resolve()
+    base_case = Path(base_case_name).resolve()
+
+    if not base_case.exists():
+        raise FileNotFoundError(f"Base case folder not found: {base_case}")
+
+    case_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy contents of base_case into case_dir
+    for item in base_case.iterdir():
+        dest = case_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, dest, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, dest)
+
+
 
 
 def update_openfoam_variable(file_path, full_key, new_value):
@@ -196,7 +221,9 @@ def update_openfoam_variable(file_path, full_key, new_value):
 # def replace_speed(value, test_case_number):
 def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-    file_name = "./" + name_new_folder + "/constant/timeVsLaserPosition"
+    # file_name = "./" + name_new_folder + "/constant/timeVsLaserPosition"
+    file_name = str(Path(name_new_folder) / "constant" / "timeVsLaserPosition")
+
     # Read all lines in the file
     with open(file_name, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -219,7 +246,9 @@ def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
 # def replace_power(value, test_case_number, speed):
 def replace_power(value, test_case_number, speed, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-    file_name = "./" + name_new_folder + "/constant/timeVsLaserPower"
+    # file_name = "./" + name_new_folder + "/constant/timeVsLaserPower"
+    file_name = str(Path(name_new_folder) / "constant" / "timeVsLaserPower")
+
     # Read all lines in the file
     with open(file_name, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -265,14 +294,20 @@ def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSI
     # Create the simulation cases
     for i in range(number_cases):    
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
+        os.makedirs(name_new_folder, exist_ok=True)
+
         # Create the test cases
         # create_test_case(base_case_name, i)
         create_test_case(base_case_name, i, MESH_DENSITY)
         
         #Replace the correct values for radius,
-        update_openfoam_variable("./" + name_new_folder + 
+        # update_openfoam_variable("./" + name_new_folder + 
+        #                           "/constant/laserProperties", "laserRadius", 
+        #                           parameters[i, 2]/2)
+        update_openfoam_variable(name_new_folder + 
                                   "/constant/laserProperties", "laserRadius", 
                                   parameters[i, 2]/2)
+
     
         #Replace the correct values for scanning speed
         # replace_speed(parameters[i, 0], i)
