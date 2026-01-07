@@ -2,6 +2,7 @@ mesh_density: COARSE
 parameters_file: parameters.txt
 output_dir: results
 running_on : Xenosim
+status_check_frquency_in_min : 1
 
 measure:
   y_begin : 100e-6

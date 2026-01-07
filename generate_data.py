@@ -66,6 +66,7 @@ if cfg_all is not None:
     # Fallback: si Config no trae openfoam_version, usa uno seguro
     # (idealmente 2412 si ese es tu assumption actual)
     OPENFOAM_VERSION = getattr(cfg_all, "openfoam_version", "2412")
+    STATUS_CHECK_FREQUENCY_IN_MIN = int(getattr(cfg_all, "status_check_frquency_in_min", "2"))
 
 # print(OPENFOAM_VERSION)
 # exit()
@@ -126,10 +127,14 @@ else:
         terminal("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder)
     
         # Submit the job
+        # id_current_job = submit_remote_job(hostname, 
+        #       f"{run_address}{name_new_folder}", 
+        #       name_new_folder)
         id_current_job = submit_remote_job(hostname, 
               f"{run_address}{name_new_folder}", 
-              name_new_folder)
-        monitor_job_is_running(id_current_job, hostname)
+              name_new_folder, RUNNING_ON)
+        # monitor_job_is_running(id_current_job, hostname)
+        monitor_job_is_running(id_current_job, hostname, STATUS_CHECK_FREQUENCY_IN_MIN)
         
         # Some HPC systems, like Meluxina, impose a limit on the number of 
         # files, therefore, in this script, the resulting files are 

@@ -313,7 +313,8 @@ def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSI
         # Note there are particular functions for replacing the speed and power
 
 
-def submit_remote_job(remote_host, remote_case_path, local_case_path):
+# def submit_remote_job(remote_host, remote_case_path, local_case_path):
+def submit_remote_job(remote_host, remote_case_path, local_case_path, RUNNING_ON):
     # Submit job on HPC via SSH
     # cmd = f'ssh {remote_host} "cd {remote_case_path} && sbatch singleTracksonic.sh"'
     cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
@@ -342,7 +343,8 @@ def is_job_in_queue(job_id, hpc_host="sonicstaff"):
 
 
 
-def monitor_job_is_running(id_current_job, hostname):
+# def monitor_job_is_running(id_current_job, hostname):
+def monitor_job_is_running(id_current_job, hostname, STATUS_CHECK_FREQUENCY_IN_MIN):
     is_current_job_in_queue = True
     while (is_current_job_in_queue):
         is_current_job_in_queue = is_job_in_queue(id_current_job, hostname)
