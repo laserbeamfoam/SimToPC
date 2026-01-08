@@ -10,7 +10,12 @@ paraview.simple._DisableFirstRenderCameraReset()
 
 from pathlib import Path
 import numpy as np
-from input_data import DOMAIN_SIZE_IN_MICRONS, Y_COORD_BEGIN_TRACK, Y_COORD_END_TRACK
+# from input_data import DOMAIN_SIZE_IN_MICRONS, Y_COORD_BEGIN_TRACK, Y_COORD_END_TRACK
+import json
+cfg = json.loads(Path("measure_inputs.json").read_text())
+
+Y_COORD_BEGIN_TRACK = cfg["Y_COORD_BEGIN_TRACK"]
+Y_COORD_END_TRACK = cfg["Y_COORD_END_TRACK"]
 
 # Read the operational parameters
 parameters = np.loadtxt("../../parameters.txt", skiprows=1)

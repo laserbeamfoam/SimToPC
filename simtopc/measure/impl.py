@@ -14,6 +14,7 @@ if hasattr(_stdlib_resources, "files") and hasattr(_stdlib_resources, "as_file")
 else:
     import importlib_resources as resources  # type: ignore
 
+import json
 
 
 def copy_measure_resources(case_dir: Path) -> None:
@@ -53,6 +54,19 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
     for i in range(number_cases):
         name_new_folder = cfg_all.mesh_density + "/test_case_" + str(i + 1)
 
+        case_dir = Path(name_new_folder)
+        case_dir.mkdir(parents=True, exist_ok=True)
+
+        payload = {
+            "Y_COORD_BEGIN_TRACK": float(measure_cfg.y_begin),
+            "Y_COORD_END_TRACK": float(measure_cfg.y_end),
+        }
+
+
+       
+        (case_dir / "measure_inputs.json").write_text(json.dumps(payload, indent=2))
+
+
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")
 
         # NOTA: estos "cp src/..." los vamos a cambiar pronto por "copiar desde package"
@@ -62,12 +76,17 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
         # terminal(f'cp src/functions.py {name_new_folder}/')
         copy_measure_resources(Path(name_new_folder))
 
+        # print("HERE")
+        # exit()
 
         laser_radius_i = parameters[i, 2] / 2
-        terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
+        # terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
         # terminal(f'cd {name_new_folder} && rm *.py')
-        terminal(f'cd {name_new_folder} && rm -f *.py')
+        # terminal(f'cd {name_new_folder} && rm -f *.py')
 
+        # print(OF_LOCATION)
+        terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
+        # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
 
         calculate_geometry_full_meltpool(
             name_new_folder,
@@ -75,6 +94,9 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             measure_cfg,
             CSV_3D=name_new_folder + "/meltpool.csv"
         )
+
+        terminal(f'cd {name_new_folder} && mkdir images_full_meltpool')
+        terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
 
         print(f"\n Finished measuring geometry-based quantities for test_case_{i+1}\n")
 
