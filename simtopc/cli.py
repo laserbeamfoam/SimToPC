@@ -64,7 +64,10 @@ def main():
 
     if args.cmd == "measure":
         run_measure_cmd(args.config)
+    # elif args.cmd == "surrogate":
+    #     surrogate(args.config)
     elif args.cmd == "surrogate":
-        surrogate(args.config)
+        from simtopc.surrogate.main import run as run_surrogate_cmd
+        run_surrogate_cmd(args.config)
     elif args.cmd == "generate":
         generate(args.config)

@@ -407,4 +407,108 @@ def plot_history_training(history, destination_file):
     plt.legend()
     # plt.show()
     plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  # saves as PNG (high res)
-    
+
+
+def run_surrogate(config_path: str) -> None:
+    """
+    Train surrogate model (replaces create_and_train_surrogate_model.py script).
+    """
+    # Import TensorFlow only when running surrogate
+    import tensorflow as tf  # noqa: F401
+
+    from simtopc.config import load_config
+
+    cfg_path = Path(config_path).expanduser().resolve()
+    cfg = load_config(str(cfg_path))
+
+    MESH_DENSITY = cfg.mesh_density
+    SEED = cfg.surrogate.seed
+    n_epochs = cfg.surrogate.n_epochs
+    n_divisions_for_prediction = cfg.surrogate.n_divisions_for_prediction
+    POSSIBLE_OUTPUTS = cfg.surrogate.possible_outputs
+
+    # Seed
+    seed_everything(SEED)
+
+    # Load parameters
+    parameters = np.loadtxt(cfg.parameters_file, skiprows=1)
+    number_cases = parameters.shape[0]
+
+    # Select good cases
+    good_simulation_cases = define_good_simulation_cases(MESH_DENSITY, number_cases)
+
+    # Build dataset from measure outputs
+    (width_mean_data, width_std_data, depth_mean_data, depth_std_data,
+     height_to_flat_mean_data, height_to_flat_std_data, porosity_mean_data,
+     porosity_std_data, cases_ok_continuous) = create_width_depth_height_to_flat_data(
+        good_simulation_cases, MESH_DENSITY
+    )
+
+    # Create NN
+    model = create_NN(10, 3, 8)
+
+    number_useful_cases = cases_ok_continuous.shape[0]
+
+    x_scaler, y_scaler = create_scalers()
+
+    input_data, output_data, parameters_valid_cases = create_input_data_and_output_data(
+        width_mean_data, width_std_data,
+        depth_mean_data, depth_std_data,
+        height_to_flat_mean_data, height_to_flat_std_data,
+        porosity_mean_data, porosity_std_data,
+        number_useful_cases,
+        cases_ok_continuous,
+        parameters,
+    )
+
+    fit_scalers(x_scaler, y_scaler, input_data, output_data)
+
+    input_data_scaled, output_data_scaled = scale_data(
+        x_scaler, y_scaler, input_data, output_data
+    )
+
+    input_data_scaled = input_data_scaled[:, np.newaxis, :]
+    output_data_scaled = output_data_scaled[:, np.newaxis, :]
+
+    history = model.fit(
+        input_data_scaled,
+        output_data_scaled,
+        epochs=n_epochs,
+        validation_split=0.01,
+    )
+
+    # Output directory: keep same as script for now
+    out_dir = Path("surrogate_model")
+    out_dir.mkdir(exist_ok=True)
+
+    model.save(str(out_dir / "NN.h5"))
+    dump(x_scaler, str(out_dir / "x_scaler.joblib"))
+    dump(y_scaler, str(out_dir / "y_scaler.joblib"))
+    plot_history_training(history, str(out_dir))
+
+    # Processing/prediction maps (same behavior as script)
+    input_variables_for_map = [0, 1]
+    generate_prediction_map(
+        input_variables_for_map,
+        parameters_valid_cases,
+        x_scaler,
+        y_scaler,
+        model,
+        POSSIBLE_OUTPUTS,
+        "Scanning speed (m/s)",
+        "Power (W)",
+        n_divisions_for_prediction,
+    )
+
+    generate_processing_map(
+        input_variables_for_map,
+        parameters_valid_cases,
+        n_divisions_for_prediction,
+    )
+
+    images_dir = Path("images_from_predictions")
+    images_dir.mkdir(exist_ok=True)
+    for png in Path(".").glob("*.png"):
+        png.rename(images_dir / png.name)
+
+    print("Thanks for using this software.")
