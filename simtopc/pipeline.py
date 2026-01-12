@@ -71,29 +71,34 @@ def surrogate(config_path: str) -> None:
 
 
 
+# def generate(config_path: str) -> None:
+#     from pathlib import Path
+#     import subprocess
+
+#     cfg_path = Path(config_path)
+#     if not cfg_path.exists():
+#         raise FileNotFoundError(cfg_path)
+
+#     repo_root = Path(__file__).resolve().parents[1]
+#     script = repo_root / "generate_data.py"
+
+#     if not script.exists():
+#         raise FileNotFoundError(f"No encuentro el script: {script}")
+
+#     # subprocess.run(
+#     #     ["python", str(script)],
+#     #     check=True,
+#     #     cwd=str(repo_root),
+#     # )
+
+#     subprocess.run(
+#         [sys.executable, str(script), config_path],
+#         check=True,
+#         cwd=str(repo_root),
+#     )
+
 def generate(config_path: str) -> None:
-    from pathlib import Path
-    import subprocess
+    from simtopc.generate import run_generate
+    run_generate(config_path)
 
-    cfg_path = Path(config_path)
-    if not cfg_path.exists():
-        raise FileNotFoundError(cfg_path)
-
-    repo_root = Path(__file__).resolve().parents[1]
-    script = repo_root / "generate_data.py"
-
-    if not script.exists():
-        raise FileNotFoundError(f"No encuentro el script: {script}")
-
-    # subprocess.run(
-    #     ["python", str(script)],
-    #     check=True,
-    #     cwd=str(repo_root),
-    # )
-
-    subprocess.run(
-        [sys.executable, str(script), config_path],
-        check=True,
-        cwd=str(repo_root),
-    )
 

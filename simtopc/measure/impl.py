@@ -85,6 +85,7 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
         # terminal(f'cd {name_new_folder} && rm -f *.py')
 
         # print(OF_LOCATION)
+        print(f"\n Extracting meltpool geometry")
         terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
         # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
 
