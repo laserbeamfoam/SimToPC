@@ -19,14 +19,13 @@ Typical outputs are illustrated below.
 
 | Width (W) | Height (H) |
 |-----------|------------|
-| ![](docs/images/width.png) | ![](docs/images/height.png) |
+| ![](docs/images/Width.png) | ![](docs/images/Height.png) |
 
 | Depth (D) | Porosity |
 |-----------|----------|
-| ![](docs/images/depth.png) | ![](docs/images/porosity.png) |
+| ![](docs/images/Depth.png) | ![](docs/images/Porosity.png) |
 
-The extracted metrics are defined on a **per-cross-section basis** along
-continuous tracks, as illustrated below.
+The extracted metrics are defined on a **per-cross-section basis** along continuous tracks, as illustrated below.
 
 ![Melt pool geometry](docs/images/meltpool_geometry.png)
 
