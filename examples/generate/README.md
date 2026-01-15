@@ -20,7 +20,7 @@ At present, the base case template must be provided by the user.
 
 The base case directory follows the naming convention:
 
-base_case_of2412
+`base_case_of2412`
 
 where:
 - `base_case` denotes the simulation template, and
