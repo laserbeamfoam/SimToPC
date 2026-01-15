@@ -10,7 +10,6 @@ SimToPC includes an automated **track continuity check** that identifies whether
 
 The tool is designed to work with **OpenFOAM-based LPBF solvers** and is demonstrated using **laserMeltFoam**. It produces **structured, machine-learning-ready datasets** and can optionally be used to train surrogate models for rapid exploration of process-parameter spaces.
 
----
 
 ### Outputs
 
@@ -39,7 +38,6 @@ In addition, SimToPC outputs:
 - **Track continuity flags** (continuous / discontinuous),
 - **Aggregated datasets** (CSV) suitable for statistical analysis and machine learning.
 
-----
 
 ### How to use
 
@@ -63,7 +61,6 @@ The available commands are:
 
 Only the **measure** stage is required to obtain the primary outputs of SimToPC.
 
----
 
 
 #### Prerequisites
