@@ -122,6 +122,7 @@ SimToPC provides three command-line modes that together define the full workflow
 Detailed, mode-specific tutorials are provided in the `examples` directory:
 - `examples/generate/generate.md`
 - `examples/measure_and_surrogate/measure.md`
+- `examples/measure_and_surrogate/surrogate.md`
 
 
 
