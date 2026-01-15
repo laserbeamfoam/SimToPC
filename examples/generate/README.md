@@ -34,20 +34,24 @@ The operational parameters used to generate simulation cases are defined by the 
 
 For this tutorial, the `parameters.txt` file defines the following combinations of scanning speed, laser power, and spot size:
 
-Scanning Speed (m/s) | Power (W) | Spot size (m)
-------------------------------------------------
-0.75                 | 125       | 50e-6
-1.25                 | 125       | 50e-6
-1.75                 | 125       | 50e-6
-2.25                 | 125       | 50e-6
-0.75                 | 175       | 50e-6
-1.25                 | 175       | 50e-6
-1.75                 | 175       | 50e-6
-2.25                 | 175       | 50e-6
-0.75                 | 225       | 50e-6
-1.25                 | 225       | 50e-6
-1.75                 | 225       | 50e-6
-2.25                 | 225       | 50e-6
+```text
+Scanning Speed (m/s) | Power (W)  | Spot size (m)    # Taken from Parivendhan PhD thesis
+1                         150             80e-6
+1.5                       150             80e-6
+2                         150             80e-6
+1                         200             80e-6
+1.5                       200             80e-6
+2                         200             80e-6
+1                         250             80e-6
+1.5                       250             80e-6
+2                         250             80e-6
+0.5                       150             80e-6
+0.5                       200             80e-6
+0.5                       250             80e-6
+1                         300             80e-6
+1.5                       300             80e-6
+2                         300             80e-6
+```
 
 Each row corresponds to a unique combination of operational parameters, resulting in a total of twelve simulation cases for this tutorial.
 
