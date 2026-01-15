@@ -63,7 +63,9 @@ Before running SimToPC, ensure that the Python environment in which the package 
 
 The `generate` mode is invoked through the SimToPC command-line interface:
 
+```bash
 simtopc generate config.yml
+```
 
 When executed, SimToPC reads the `parameters.txt` file and automatically modifies the base case template to create one simulation case for each parameter combination. The required OpenFOAM input files are updated programmatically according to the specified operational parameters.
 
