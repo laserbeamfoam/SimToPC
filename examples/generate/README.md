@@ -12,7 +12,7 @@ In this tutorial, the selected mesh density is `COARSE`, and the corresponding b
 
 COARSE/base_case_of2412
 
----
+
 
 ## Base case template
 
@@ -26,7 +26,6 @@ where:
 - `base_case` denotes the simulation template, and
 - `of2412` indicates the OpenFOAM version used, which is also specified by the user in the `config.yml` file (OpenFOAM v2412 in this case).
 
----
 
 ## Operational parameters
 
@@ -55,7 +54,7 @@ Scanning Speed (m/s) | Power (W)  | Spot size (m)
 
 Each row corresponds to a unique combination of operational parameters, resulting in a total of twelve simulation cases for this tutorial.
 
----
+
 
 ## Basic usage
 
@@ -69,7 +68,7 @@ simtopc generate config.yml
 
 When executed, SimToPC reads the `parameters.txt` file and automatically modifies the base case template to create one simulation case for each parameter combination. The required OpenFOAM input files are updated programmatically according to the specified operational parameters.
 
----
+
 
 ## Outputs
 
@@ -81,7 +80,6 @@ For this tutorial, twelve simulation case directories are created within the sel
 
 Each directory contains the complete OpenFOAM case setup and the corresponding raw simulation outputs required for subsequent post-processing using the `measure` mode.
 
----
 
 ## Notes
 
