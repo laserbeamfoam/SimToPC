@@ -1,0 +1,27 @@
+mesh_density: COARSE
+parameters_file: parameters.txt
+output_dir: results
+running_on : Xenosim
+status_check_frquency_in_min : 1
+
+measure:
+  y_begin : 100e-6
+  y_end : 700e-6
+  x_min : 0
+  x_max : 0.0002
+  cell_size : 2.5e-06
+  min_points_per_zrow: 4
+
+surrogate:
+  seed: 0
+  n_epochs: 5000
+  n_divisions_for_prediction: 50
+  possible_outputs:
+    - W_mean
+    - W_std
+    - H_mean
+    - H_std
+    - D_mean
+    - D_std
+    - porosity_mean
+    - porosity_std

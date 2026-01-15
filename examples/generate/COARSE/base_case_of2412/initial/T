@@ -1,0 +1,118 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.0                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 1 0 0 0];
+
+internalField   uniform 298.0;
+
+boundaryField
+{
+/*    leftWall
+    {
+      type		zeroGradient;
+    }
+*/
+leftWall
+{
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  
+}
+/*    rightWall
+    {
+      type		zeroGradient;
+    }
+*/
+rightWall
+  {
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  }
+/*    topWall
+    {
+    type		zeroGradient;
+      }*/
+topWall
+  {
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  }
+/*    bottomWall
+    {
+	type		zeroGradient;
+    }*/
+bottomWall
+  {
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  }
+   /* front
+    {
+	type		zeroGradient;
+    }*/
+front
+  {
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  }
+/*    back
+    {
+      type		zeroGradient;
+    }*/
+back
+  {
+    type            externalWallHeatFluxTemperature;
+    mode            coefficient;
+    Ta              constant 298;    
+    h               uniform 0;      
+    kappaMethod     lookup;
+    kappa           kEff;             
+    value           $internalField;
+  }
+    /*solidInterface
+    {
+      type		zeroGradient;
+    }*/
+}
+
+
+// ************************************************************************* //
