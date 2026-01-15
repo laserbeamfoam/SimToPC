@@ -4,6 +4,11 @@
 
 The `generate` mode is used to prepare and execute LPBF simulation cases as part of the simulation-to-characterisation workflow implemented in SimToPC.
 
+The simulation cases used in this tutorial correspond to single-track LPBF simulations of stainless steel 316L. The computational domain, material properties, and process setup follow the configuration described in Parivendhan et al. (2023), which is used here as a reference case for tutorial
+purposes.
+
+Further details regarding the physical modelling, domain definition, and numerical setup can be found in: https://doi.org/10.1016/j.addma.2023.103482
+
 Starting from a predefined base case, this mode modifies the simulation setup according to user-specified operational parameters and manages the execution of the resulting cases.
 
 The base case is selected from the directory corresponding to the user-defined `mesh_density` specified in the `config.yml` file.
@@ -35,21 +40,18 @@ For this tutorial, the `parameters.txt` file defines the following combinations 
 
 ```text
 Scanning Speed (m/s) | Power (W)  | Spot size (m)   
-1                         150             80e-6
-1.5                       150             80e-6
-2                         150             80e-6
-1                         200             80e-6
-1.5                       200             80e-6
-2                         200             80e-6
-1                         250             80e-6
-1.5                       250             80e-6
-2                         250             80e-6
-0.5                       150             80e-6
-0.5                       200             80e-6
-0.5                       250             80e-6
-1                         300             80e-6
-1.5                       300             80e-6
-2                         300             80e-6
+0.75                         125             50e-6
+1.25                         125             50e-6
+1.75                         125             50e-6
+2.25                         125             50e-6
+0.75                         175             50e-6
+1.25                         175             50e-6
+1.75                         175             50e-6
+2.25                         175             50e-6
+0.75                         225             50e-6
+1.25                         225             50e-6
+1.75                         225             50e-6
+2.25                         225             50e-6
 ```
 
 Each row corresponds to a unique combination of operational parameters, resulting in a total of twelve simulation cases for this tutorial.
