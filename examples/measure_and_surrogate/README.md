@@ -1,4 +1,4 @@
-# measure
+# Measure
 
 ## Purpose
 
@@ -12,7 +12,7 @@ geometry and porosity metrics along the full scan path.
 This command implements the core functionality of SimToPC and produces the
 primary outputs analysed in the associated publication.
 
----
+
 
 ## Input data
 
@@ -25,7 +25,7 @@ output structure required for post-processing with ParaView and `pvpython`.
 For the tutorials provided with this repository, precomputed simulation results
 are supplied and used as input to the `measure` command.
 
----
+
 
 ## Basic usage
 
@@ -34,12 +34,14 @@ was installed is active, as described in the main repository `README.md`.
 
 The `measure` mode is invoked through the SimToPC command-line interface:
 
+```bash
     simtopc measure config.yml
+```
 
 The configuration file specifies the location of the simulation case directories
 and the settings required for post-processing and metric extraction.
 
----
+
 
 ## Measurement procedure
 
@@ -64,7 +66,7 @@ each cross-section:
 These quantities are defined consistently with the methodology described in the
 associated publication.
 
----
+
 
 ## Outputs
 
@@ -82,7 +84,7 @@ These outputs correspond directly to the quantities reported and analysed in the
 associated publication and are suitable for downstream statistical analysis and
 machine learning workflows.
 
----
+
 
 ## Notes
 
