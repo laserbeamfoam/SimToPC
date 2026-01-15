@@ -10,7 +10,7 @@ The base case is selected from the directory corresponding to the user-defined `
 
 In this tutorial, the selected mesh density is `COARSE`, and the corresponding base case is located in:
 
-COARSE/base_case_of2412
+`COARSE/base_case_of2412`
 
 
 
