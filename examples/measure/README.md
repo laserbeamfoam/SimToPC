@@ -16,28 +16,71 @@ primary outputs analysed in the associated publication.
 
 ## Input data
 
-The `measure` mode operates on a directory containing one or more completed
+The `measure` mode operates on a directory containing the completed
 simulation cases.
 
 It is assumed that the simulation cases have been previously generated and
 executed using the `generate` mode. Due to the high computational cost of LPBF
 simulations, the `generate` mode is not executed as part of this tutorial.
-Instead, precomputed simulation results are provided with the repository.
+Instead, precomputed simulation results are provided separately.
 
-For this tutorial, the input data consist of twelve completed simulation cases
-located in the directory:
 
-`COARSE/`
+---
 
-Each simulation case is stored in a subdirectory following the convention:
+## Reduced dataset and data access
 
-`test_case_i`
+For storage and distribution reasons, the simulation results provided for this
+tutorial have been reduced in size.
 
+In particular:
+- unnecessary OpenFOAM output fields (e.g. pressure `p`) have been removed,
+- the `polyMesh` directories corresponding to the computational mesh have been
+  removed.
+
+The reduced simulation results are provided in a separate repository, which can
+be obtained using:
+
+    git clone git@github.com:ScimonCFD/SimToPC_measure_data.git
+
+After cloning, extract the dataset as follows:
+
+    mv SimToPC_measure_data/COARSE.zip .
+    rm -rf SimToPC_measure_data
+    unzip COARSE.zip
+    rm COARSE.zip
+
+After extraction, the following directory structure should be obtained:
+
+    COARSE/test_case_i/
 
 where `i` denotes the index of the parameter combination evaluated.
 
-Each simulation case directory is expected to follow the standard OpenFOAM
-output structure required for post-processing with ParaView and `pvpython`.
+---
+
+## Mesh reconstruction
+
+Since the mesh files have been removed from the distributed dataset, the mesh
+must be reconstructed before running the `measure` mode.
+
+For each `test_case_i`, this can be done by executing:
+
+    blockMesh
+
+inside the corresponding case directory.
+
+To simplify this process, the following script can be used to reconstruct the
+mesh for all cases:
+
+    #!/bin/bash
+
+    for d in COARSE/test_case_*; do
+        echo "Running blockMesh in $d"
+        cd $d || exit
+        blockMesh > log.blockMesh
+        cd - > /dev/null
+    done
+
+This assumes that a valid `blockMeshDict` is present in each case directory.
 
 ---
 
@@ -48,8 +91,7 @@ was installed is active, as described in the main repository `README.md`.
 
 The `measure` mode is invoked through the SimToPC command-line interface:
 
-
-`simtopc measure config.yml`
+    simtopc measure config.yml
 
 The configuration file specifies the location of the simulation case directories
 and the settings required for post-processing and metric extraction.
@@ -88,22 +130,17 @@ each individual simulation case.
 
 For each `test_case_i` directory, the following outputs are produced:
 
-- A **track continuity flag**, stored directly in the case directory.
-- **Per-cross-section characterisation data** (W, H, D, porosity), stored as CSV
-  files in the case directory.
-- **Diagnostic plots** illustrating the spatial variation of the extracted
-  metrics along the scan path.
+- a track continuity flag, stored directly in the case directory,
+- per-cross-section characterisation data (W, H, D, porosity), stored as CSV
+  files in the case directory,
+- diagnostic plots illustrating the spatial variation of the extracted metrics
+  along the scan path.
 
-The diagnostic plots are stored in a subdirectory named:
+The diagnostic plots are stored in the directory:
 
+    images_full_meltpool
 
-`images_full_meltpool`
-
-located within each `test_case_i` directory.
-
-These outputs correspond directly to the quantities reported and analysed in the
-associated publication and are suitable for downstream statistical analysis and
-machine learning workflows.
+located within each `test_case_i` directory, 
 
 ---
 
@@ -114,3 +151,5 @@ metric extraction.
 
 Simulation cases classified as discontinuous are excluded from geometric
 characterisation to ensure physically meaningful comparisons across simulations.
+
+The reduced datasets are intended for tutorial and demonstration purposes.
