@@ -142,6 +142,18 @@ The diagnostic plots are stored in the directory:
 
 located within each `test_case_i` directory, 
 
+The figure below shows a representative example of the quantities extracted by
+the `measure` mode along a single scan track.
+
+![Example of track-resolved melt-pool metrics extracted by the measure mode](imgs/Width.png)
+
+
+For a continuous track, the melt-pool width (W), height (H), depth (D), and
+porosity are evaluated on a cross-section-by-cross-section basis along the scan
+direction, highlighting both spatial variability and local fluctuations.
+
+
+
 ---
 
 ## Notes
