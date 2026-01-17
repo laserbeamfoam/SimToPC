@@ -1,12 +1,8 @@
 from __future__ import annotations
-
 from pathlib import Path
 import numpy as np
-
 from pathlib import Path
 import shutil
-# from importlib import resources
-# resources: use stdlib on Python>=3.9; otherwise use backport on 3.8
 from importlib import resources as _stdlib_resources
 
 if hasattr(_stdlib_resources, "files") and hasattr(_stdlib_resources, "as_file"):
@@ -34,10 +30,7 @@ def copy_measure_resources(case_dir: Path) -> None:
         with resources.as_file(resources.files(pkg) / fname) as src_path:
             shutil.copy(src_path, case_dir / fname)
 
-
-# IMPORTANTE: aquí todavía usas esas funciones, pero YA NO desde "src".
-# En el siguiente paso las moveremos dentro del paquete.
-from simtopc.measure.legacy_funcs import (  # lo crearemos en el paso 4
+from simtopc.measure.legacy_funcs import (  
     set_environment_variables,
     terminal,
     calculate_geometry_full_meltpool,
@@ -62,33 +55,15 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             "Y_COORD_END_TRACK": float(measure_cfg.y_end),
         }
 
-
-       
+      
         (case_dir / "measure_inputs.json").write_text(json.dumps(payload, indent=2))
 
 
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")
-
-        # NOTA: estos "cp src/..." los vamos a cambiar pronto por "copiar desde package"
-        # pero por hoy, vamos a mantenerlo igual para no romper el workflow.
-        # terminal(f'cp src/extract* {name_new_folder}/')
-        # terminal(f'cp src/quantities_from_meltpool.py {name_new_folder}/')
-        # terminal(f'cp src/functions.py {name_new_folder}/')
         copy_measure_resources(Path(name_new_folder))
-
-        # print("HERE")
-        # exit()
-
         laser_radius_i = parameters[i, 2] / 2
-        # terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
-        # terminal(f'cd {name_new_folder} && rm *.py')
-        # terminal(f'cd {name_new_folder} && rm -f *.py')
-
-        # print(OF_LOCATION)
         print(f"\n Extracting meltpool geometry")
         terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
-        # terminal(f'bash -c "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
-
         calculate_geometry_full_meltpool(
             name_new_folder,
             laser_radius_i,

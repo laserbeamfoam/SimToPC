@@ -12,14 +12,10 @@ from pathlib import Path
 import numpy as np
 from input_data import DOMAIN_SIZE_IN_MICRONS, Y_COORD_BEGIN_TRACK, Y_COORD_END_TRACK
 
-
-# print("CELL_SIZE is ", CELL_SIZE)
-
 # Read the operational parameters
 parameters = np.loadtxt("../../parameters.txt", skiprows=1)
 
 current_case = Path.cwd().name
-# print(current_case[-1])
 
 # get active source.
 test_case_1foam = GetActiveSource()
@@ -31,8 +27,6 @@ test_case_1foam.MeshRegions = ['back', 'bottomWall', 'front', 'internalMesh', 'l
 
 # get active view
 renderView1 = GetActiveViewOrCreate('RenderView')
-# uncomment following to set a specific view size
-# renderView1.ViewSize = [1980, 907]
 
 # show data in view
 test_case_1foamDisplay = Show(test_case_1foam, renderView1)
@@ -807,7 +801,6 @@ clip2.ClipType.Offset = 0.0
 clip2.Invert = 0
 
 # Properties modified on clip2.ClipType
-# clip2.ClipType.Origin = [9.999999747378752e-05, 0.00014, 7.499999628635123e-05]
 clip2.ClipType.Origin = [9.999999747378752e-05, Y_COORD_BEGIN_TRACK + parameters[int(current_case[-1]) - 1, 2]/2, 7.499999628635123e-05]
 clip2.ClipType.Normal = [0.0, 1.0, 0.0]
 
@@ -1162,7 +1155,6 @@ clip3.ClipType.Normal = [1.0, 0.0, 0.0]
 clip3.ClipType.Offset = 0.0
 
 # Properties modified on clip3.ClipType
-# clip3.ClipType.Origin = [9.999999747378752e-05, 0.00066, 7.375000132014975e-05]
 clip3.ClipType.Origin = [9.999999747378752e-05, Y_COORD_END_TRACK - parameters[int(current_case[-1]) - 1, 2]/2, 7.375000132014975e-05]
 clip3.ClipType.Normal = [0.0, 1.0, 0.0]
 
@@ -2596,7 +2588,3 @@ AssignViewToLayout(view=spreadSheetView1, layout=layout1, hint=0)
 
 # export view
 ExportView('./y_z_slice_meltpool.csv', view=spreadSheetView1)
-
-#### uncomment the following to render all views
-# RenderAllViews()
-# alternatively, if you want to write images, you can use SaveScreenshot(...).

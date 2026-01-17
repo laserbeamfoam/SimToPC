@@ -36,8 +36,6 @@ Authors
 
 
 import os
-# import input_data
-# from input_data import *
 import re
 
 import tensorflow as tf
@@ -94,9 +92,7 @@ def scale_data(x_scaler, y_scaler, input_data, output_data):
     return input_data_scaled, output_data_scaled
 
            
-# def create_width_depth_height_to_flat_data(good_simulation_cases):
 def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
-
     # Assemble the training set
     width_mean_data = []
     width_std_data = []
@@ -110,14 +106,10 @@ def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
     cases_ran_properly_and_have_continuous_meltpool = []
     for i in good_simulation_cases:
         name_new_folder = mesh_density + "/test_case_" + str(i)
-        # meltpool_i_is_cotinuous = load("./" + name_new_folder + 
-        #                                "/continuous.joblib")
         meltpool_i_is_cotinuous = load(str(Path(name_new_folder) / "continuous.joblib"))
         
         if (meltpool_i_is_cotinuous):
             # Read the data
-            # df = pd.read_csv("./" + name_new_folder + 
-            #                  "/cross_sections_statistics.csv")
             df = pd.read_csv(str(Path(name_new_folder) / "cross_sections_statistics.csv"))
             width_mean = np.mean(df["width"].to_numpy())
             width_std = np.std(df["width"].to_numpy())
@@ -127,7 +119,6 @@ def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
             height_to_flat_std = np.std(df["height"].to_numpy())
             porosity_mean = np.mean(df["porosity_at_iy"].to_numpy())
             porosity_std = np.std(df["porosity_at_iy"].to_numpy())            
-            
             
             width_mean_data.append(width_mean)
             width_std_data.append(width_std)
@@ -146,7 +137,6 @@ def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
            height_to_flat_mean_data, height_to_flat_std_data, \
            porosity_mean_data, porosity_std_data, \
            cases_ran_properly_and_have_continuous_meltpool
-           
            
            
 
@@ -203,24 +193,14 @@ def define_good_simulation_cases(mesh_density, number_cases):
     good_simulation_cases = [] # List of the cases that ran properly
     for i in range(1, number_cases + 1):
         name_new_folder = mesh_density + "/test_case_" + str(i)
-        # files_in_folder_i = os.listdir("./" + name_new_folder)
-        # files_in_folder_i = os.listdir(name_new_folder)
         files_in_folder_i = os.listdir(str(Path(name_new_folder)))
-
-    
-        # Verificar si "finished.txt" está en la lista
         if 'finished.txt' in files_in_folder_i:
             good_simulation_cases.append(i)
-        #     pass
-        # else:
-        #     print(name_new_folder + " did not run properly")
-        #     print("Check the simulations that failed")
-        #     break
     if (len(good_simulation_cases) < number_cases):
         print("Some simulation cases did not run properly.")
     return good_simulation_cases
 
-# def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind):
+
 def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind, n_divisions_for_prediction):
 
     x_vals = np.linspace(min(parameters_valid_cases[:, x_ind]), 
@@ -233,16 +213,12 @@ def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind, n_
     return x_vals, y_vals
     
 
-# def generate_prediction_map(input_variables_for_map, 
-#                             parameters_valid_cases, x_scaler, y_scaler, model,
-#                             possible_outputs, x_name, y_name):
 def generate_prediction_map(input_variables_for_map, 
                             parameters_valid_cases, x_scaler, y_scaler, model,
                             possible_outputs, x_name, y_name, n_divisions_for_prediction):
 
     
     for i in range(len(possible_outputs)):
-        # Generate the x and y values that will be used in th predicions 
         x_vals, y_vals = generate_x_y_levels_for_predictions(parameters_valid_cases, 
                                                       input_variables_for_map[0],
                                                       input_variables_for_map[1], n_divisions_for_prediction)
@@ -250,16 +226,11 @@ def generate_prediction_map(input_variables_for_map,
         # Generate a grid with x_vals and y_vals
         x, y = np.meshgrid(x_vals, y_vals)
     
-    
         # Reshape x and y to make predictions with the NN
         x_for_map = x.reshape((x.shape[0] * x.shape[0], 1, 1))
         y_for_map = y.reshape((y.shape[0] * y.shape[0], 1, 1))
         z_for_map = np.zeros(x_for_map.shape) #This initialises z_for_map
-        # Note in this case, there is only 1 Z level in parameters.txt
-        # z_for_map[:, :] =  parameters_valid_cases[:, 2][output_variables_for_map]
         z_for_map[:, :] =  parameters_valid_cases[:, 2][i]
-    
-    
     
         # x_for_predictions is a list. Every element of the list is a numpy array that 
         # contains all the elements that will be used for predictions. For instance, 
@@ -286,78 +257,8 @@ def generate_prediction_map(input_variables_for_map,
         plt.ylabel(y_name)
         plt.title("Predictions using the NN")
         plt.tight_layout()
-        # plt.show()
         plt.savefig(possible_outputs[i]+ "_predictions.png")
     
-
-# def generate_prediction_map(input_variables_for_map, 
-#                             parameters_valid_cases, x_scaler, y_scaler, model,
-#                             possible_outputs, x_name, y_name):
-    
-#     for i in range(len(possible_outputs)):
-#         # 1) Generate the x and y values that will be used in the predictions 
-#         x_vals, y_vals = generate_x_y_levels_for_predictions(
-#             parameters_valid_cases, 
-#             x_ind=input_variables_for_map[0],
-#             y_ind=input_variables_for_map[1]
-#         )
-    
-#         # 2) Grid for map
-#         X_grid, Y_grid = np.meshgrid(x_vals, y_vals)
-#         n_points = X_grid.size
-    
-#         # 3) Prepare NN input
-#         x_for_map = X_grid.reshape((n_points, 1, 1))
-#         y_for_map = Y_grid.reshape((n_points, 1, 1))
-#         z_for_map = np.zeros_like(x_for_map)
-#         z_for_map[:, :] = parameters_valid_cases[:, 2][i]
-    
-#         x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), axis=2)
-
-#         x_for_predictions_scaled = x_scaler.transform(
-#             x_for_predictions.reshape([x_for_predictions.shape[0],
-#                                        x_for_predictions.shape[2]])
-#         )
-#         y_predictions_scaled = model.predict(x_for_predictions_scaled[:, np.newaxis, :])
-#         y_predictions = y_scaler.inverse_transform(
-#             y_predictions_scaled.reshape([y_predictions_scaled.shape[0],
-#                                           y_predictions_scaled.shape[2]])
-#         )
-
-#         # 4) Reshape predictions back into grid
-#         Z_grid = y_predictions[:, i].reshape(X_grid.shape)
-
-#         # 5) ---- MASK THE UNSAFE RECTANGLE ----
-#         # rectangle defined by:
-#         # speed in [1.75, 2.25]
-#         # power in [125, 175]
-#         invalid_mask = (
-#             (X_grid >= 1.75) & (X_grid <= 2.25) &
-#             (Y_grid >= 125.0) & (Y_grid <= 175.0)
-#         )
-
-#         Z_masked = np.ma.array(Z_grid, mask=invalid_mask)
-
-#         # 6) Plot
-#         plt.figure(figsize=(8, 6))
-#         pcm = plt.pcolormesh(
-#             X_grid,
-#             Y_grid,
-#             Z_masked,
-#             shading='auto',
-#             cmap='jet'
-#         )
-#         plt.colorbar(pcm, label="Predicted " + possible_outputs[i] + " (m)")
-#         plt.xlabel(x_name)
-#         plt.ylabel(y_name)
-#         plt.title("Predictions using the NN")
-#         plt.tight_layout()
-#         plt.savefig(possible_outputs[i] + "_predictions.png")
-
-
-
-
-
 
 
 def generate_processing_map(input_variables_for_map, parameters_valid_cases, n_divisions_for_prediction):

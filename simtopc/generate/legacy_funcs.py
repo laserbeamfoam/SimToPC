@@ -36,10 +36,7 @@ Authors
 
 
 import os
-# import input_data
-# from input_data import *
 import re
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
@@ -50,14 +47,12 @@ from joblib import dump, load
 import numpy as np
 import pandas as pd
 import random
-
 import subprocess
 import re
 import time
 import importlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-
 import shutil
 from pathlib import Path
 
@@ -65,21 +60,14 @@ from pathlib import Path
 def terminal(command):
     os.system(command)
 
-# def set_environment_variables():   
 def set_environment_variables(RUNNING_ON):   
     variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
-    # variables_import = "input_files." + running_on.lower() + "_inp" 
-    # imported = importlib.import_module(variables_import)
     imported = importlib.import_module(f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp")
-
     hostname = imported.hostname
     run_address = imported.run_address
     OF_LOCATION = imported.OF_LOCATION
-    
     return hostname, run_address, OF_LOCATION
 
-
-# def set_base_case_name():
 def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
     BASE_CASE_NAME = ""
     if (OPENFOAM_VERSION == "2412"):
@@ -90,13 +78,6 @@ def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
     return BASE_CASE_NAME
     
 
-
-# def create_test_case(base_case_name, test_case_number):
-# def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
-#     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-#     terminal("mkdir -p "  + name_new_folder)
-#     terminal("cp -r " + base_case_name + "/* " + name_new_folder)
-#     terminal("cp -r *py " + "./" + name_new_folder)
 def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
     """
     Create a test case directory and copy the contents of the base case into it.
@@ -220,10 +201,8 @@ def update_openfoam_variable(file_path, full_key, new_value):
     print(f"✅ '{full_key}' updated to {new_value}")
 
 
-# def replace_speed(value, test_case_number):
 def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-    # file_name = "./" + name_new_folder + "/constant/timeVsLaserPosition"
     file_name = str(Path(name_new_folder) / "constant" / "timeVsLaserPosition")
 
     # Read all lines in the file
@@ -244,11 +223,8 @@ def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
         f.writelines(lines)
             
 
-
-# def replace_power(value, test_case_number, speed):
 def replace_power(value, test_case_number, speed, MESH_DENSITY, OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
-    # file_name = "./" + name_new_folder + "/constant/timeVsLaserPower"
     file_name = str(Path(name_new_folder) / "constant" / "timeVsLaserPower")
 
     # Read all lines in the file
@@ -289,8 +265,6 @@ def calculate_h_from_Biot_number(Biot, keff, DOMAIN_SIZE_IN_MICRONS):
     return  h_convection
     
 
-
-
 # def create_simulation_cases(number_cases, base_case_name, parameters):
 def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSITY, OPENFOAM_VERSION):
     # Create the simulation cases
@@ -299,61 +273,23 @@ def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSI
         os.makedirs(name_new_folder, exist_ok=True)
 
         # Create the test cases
-        # create_test_case(base_case_name, i)
         create_test_case(base_case_name, i, MESH_DENSITY)
         
         #Replace the correct values for radius,
-        # update_openfoam_variable("./" + name_new_folder + 
-        #                           "/constant/laserProperties", "laserRadius", 
-        #                           parameters[i, 2]/2)
         update_openfoam_variable(name_new_folder + 
                                   "/constant/laserProperties", "laserRadius", 
                                   parameters[i, 2]/2)
 
     
         #Replace the correct values for scanning speed
-        # replace_speed(parameters[i, 0], i)
         replace_speed(parameters[i, 0], i, MESH_DENSITY, OPENFOAM_VERSION)
     
         #Replace the correct values for power
-        # replace_power(parameters[i, 1], i, parameters[i, 0])
         replace_power(parameters[i, 1], i, parameters[i, 0], MESH_DENSITY, OPENFOAM_VERSION)
 
-        # h_convection = calculate_h_from_Biot_number(parameters[i, 3], K_at_T_solidus, 
-        #                                             DOMAIN_SIZE_IN_MICRONS)
 
-        #Replace the correct values for radius,
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "leftWall.h", h_convection)
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "rightWall.h", h_convection)
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "topWall.h", h_convection)
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "bottomWall.h", h_convection)
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "front.h", h_convection)
-        # update_openfoam_variable("./" + name_new_folder + "/initial/T", 
-        #                          "back.h", h_convection)
-        # To replace a variable in the constant/laserProperties file, this is the 
-        # sample:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/laserProperties", "ray_tracing_on", "true")
-        # To replace a variable in the constant/thermalProperties file,these are the 
-        # samples:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/thermalProperties", "metalProperties.cpL", "800")
-        # update_openfoam_variable("./" + name_new_folder + "/constant/thermalProperties", "TRef", "300")
-        # To replace a variable in the constant/transportProperties file,these are the 
-        # samples:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/transportProperties", "material.rhoS", "800")
-        # update_openfoam_variable("./" + name_new_folder + "/constant/transportProperties", "STgrad", "300")    
-        
-        # Note there are particular functions for replacing the speed and power
-
-
-# def submit_remote_job(remote_host, remote_case_path, local_case_path):
 def submit_remote_job(remote_host, remote_case_path, local_case_path, RUNNING_ON):
     # Submit job on HPC via SSH
-    # cmd = f'ssh {remote_host} "cd {remote_case_path} && sbatch singleTracksonic.sh"'
     cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, text=True)
     
@@ -369,8 +305,6 @@ def submit_remote_job(remote_host, remote_case_path, local_case_path, RUNNING_ON
     else:
         print(f"❌ Could not extract job ID for {local_case_path}")
         return None
-
-
     
 def is_job_in_queue(job_id, hpc_host="sonicstaff"):
     cmd = f'ssh {hpc_host} "squeue -j {job_id}"'
@@ -378,9 +312,6 @@ def is_job_in_queue(job_id, hpc_host="sonicstaff"):
     return str(job_id) in result.stdout
 
 
-
-
-# def monitor_job_is_running(id_current_job, hostname):
 def monitor_job_is_running(id_current_job, hostname, STATUS_CHECK_FREQUENCY_IN_MIN):
     is_current_job_in_queue = True
     while (is_current_job_in_queue):
@@ -390,5 +321,3 @@ def monitor_job_is_running(id_current_job, hostname, STATUS_CHECK_FREQUENCY_IN_M
             time.sleep(STATUS_CHECK_FREQUENCY_IN_MIN * 60)  # Sleep for X minutes
         else:
             print("Job ", str(id_current_job), " is finished")
-
-

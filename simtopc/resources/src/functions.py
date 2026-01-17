@@ -372,25 +372,10 @@ def create_simulation_cases(number_cases, base_case_name, parameters):
     
         #Replace the correct values for power
         replace_power(parameters[i, 1], i, parameters[i, 0])
-        # To replace a variable in the constant/laserProperties file, this is the 
-        # sample:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/laserProperties", "ray_tracing_on", "true")
-        # To replace a variable in the constant/thermalProperties file,these are the 
-        # samples:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/thermalProperties", "metalProperties.cpL", "800")
-        # update_openfoam_variable("./" + name_new_folder + "/constant/thermalProperties", "TRef", "300")
-        # To replace a variable in the constant/transportProperties file,these are the 
-        # samples:
-        # update_openfoam_variable("./" + name_new_folder + "/constant/transportProperties", "material.rhoS", "800")
-        # update_openfoam_variable("./" + name_new_folder + "/constant/transportProperties", "STgrad", "300")    
-        
-        # Note there are particular functions for replacing the speed and power
-
 
     
 def submit_remote_job(remote_host, remote_case_path, local_case_path):
     # Submit job on HPC via SSH
-    # cmd = f'ssh {remote_host} "cd {remote_case_path} && sbatch singleTracksonic.sh"'
     cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, text=True)
     
@@ -429,14 +414,9 @@ def define_good_simulation_cases(MESH_DENSITY, number_cases):
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i)
         files_in_folder_i = os.listdir("./" + name_new_folder)
     
-        # Verificar si "finished.txt" está en la lista
         if 'finished.txt' in files_in_folder_i:
             good_simulation_cases.append(i)
-        #     pass
-        # else:
-        #     print(name_new_folder + " did not run properly")
-        #     print("Check the simulations that failed")
-        #     break
+
     if (len(good_simulation_cases) < number_cases):
         print("Some simulation cases did not run properly.")
     return good_simulation_cases
@@ -617,8 +597,6 @@ def calculate_statistics_rows_meltpool(CSV_3D, meltpool_is_continuous):
     iy = y0
     id_row = 0
     
-    # Statistics [id_row, y_coord, z_coord_ x_min, x_max, row_has_pores, 
-    # number_of_pores_in_row, width_row, number_non_void_cells_in_row]
     Statistics = []
     pore_locatios_at_rows = []
     pores_at_row_are_internal = []
@@ -809,7 +787,6 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                 depth = ((z_at_iy).to_numpy())[location_top_depth_level] - min(
                                                                        z_at_iy)
             
-            # print(iy, width, height, depth)
             porous_volume_at_iy = np.sum(number_pores_at_iy.to_numpy()) * (
                                                                   CELL_SIZE**3)
             total_volume_material_at_iy = (np.sum(
@@ -821,7 +798,6 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
         cross_sections_statistics.append([iy, width, height, depth, 
                                   porosity_at_iy, total_volume_material_at_iy])
 
-        # print(cross_sections_statistics[-1])
                
     cross_sections_statistics_df = pd.DataFrame(cross_sections_statistics, 
                                                 columns = ["iy", "width", 
@@ -863,6 +839,4 @@ def plot_history_training(history, destination_file):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    # plt.show()
-    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  # saves as PNG (high res)
-    
+    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  

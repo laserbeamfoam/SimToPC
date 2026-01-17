@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from pathlib import Path
 from typing import Optional
 
@@ -35,23 +34,11 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
         print("Beginning data generation")
         running_on = cfg_all.running_on
         mesh_density = cfg_all.mesh_density
-        # print("mesh_density is", mesh_density, "\n")
         mesh_density_raw = cfg_all.mesh_density
-        # print("mesh_density_raw is", mesh_density_raw, "\n")
-        mesh_label = Path(str(mesh_density_raw)).name  # => "COARSE" aunque venga un path largo
-        # print("mesh_label is", mesh_label, "\n")
+        mesh_label = Path(str(mesh_density_raw)).name 
         openfoam_version = getattr(cfg_all, "openfoam_version", "2412")
         status_check_frequency_min = int(getattr(cfg_all, "status_check_frquency_in_min", "2"))
-
         hostname, run_address, of_location = lf.set_environment_variables(running_on)
-        print(f"[generate] running_on={running_on}")
-        print(f"[generate] hostname={hostname}")
-        print(f"[generate] run_address={run_address!r}")
-
-        print("\n \n \n \n \n")
-        # exit()
-
-
         base_case_name = lf.set_base_case_name(mesh_density, openfoam_version)
 
         # Keep legacy behavior: parameters.txt relative to working dir
@@ -71,15 +58,12 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
 
         if running_on == "LOCAL":
             for i in range(number_cases):
-                # name_new_folder = f"{mesh_density}/test_case_{i + 1}"
                 name_new_folder = f"{mesh_label}/test_case_{i + 1}"
                 lf.terminal(f"cd {name_new_folder}/system/ && mv decomposeParDict_16cores decomposeParDict")
                 lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && ./Allrun_local"')
         else:
             for i in range(number_cases):
-                # name_new_folder = f"{mesh_density}/test_case_{i + 1}"
                 name_new_folder = f"{mesh_label}/test_case_{i + 1}"
-
                 lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && cp -r initial 0"')
                 lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && blockMesh"')
                 lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && setSolidFraction"')
@@ -87,23 +71,9 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
 
                 print("Transferring the test case ", str(i + 1))
 
-                # print(f"[generate] running_on={running_on}")
-                # print(f"[generate] hostname={hostname}")
-                # print(f"[generate] run_address={run_address!r}")
-
                 if i == 0:
-                    print("HERE")
-                    # cmd = f'ssh {hostname} "cd {run_address} && mkdir {mesh_density}"'
-                    # cmd = f'ssh {hostname} "cd {run_address} && mkdir {mesh_density}"'
-                    # print("CMD =", cmd, "\n")
-                    # lf.terminal(cmd)
-                    # print("HERE2")
-                    # lf.terminal(f'ssh {hostname} "cd {run_address} && mkdir {mesh_density}"')
                     lf.terminal(f'ssh {hostname} "cd {run_address} && mkdir {mesh_label}"')
-                    print("HERE3", "\n")
 
-
-                # lf.terminal(f"scp -r {name_new_folder} {hostname}:{run_address}{name_new_folder}")
                 print("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder, "\n")
                 lf.terminal("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder)
 
@@ -119,17 +89,13 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
                     )
                 )
 
-                # lf.terminal(f"scp -r {hostname}:{run_address}{name_new_folder}.zip ./{mesh_density}/")
                 lf.terminal(f"scp -r {hostname}:{run_address}{name_new_folder}.zip ./{mesh_label}/")
-                # lf.terminal(f'ssh {hostname} "cd {run_address}{mesh_density} && rm *.zip "')
                 lf.terminal(f'ssh {hostname} "cd {run_address}{mesh_label} && rm *.zip "')
                 lf.terminal(f"rm -r {name_new_folder}")
 
         # Unzip results
         for i in range(number_cases):
-            # name_new_folder = f"{mesh_density}/test_case_{i + 1}"
             name_new_folder = f"{mesh_label}/test_case_{i + 1}"
-            # lf.terminal(f"unzip {name_new_folder}.zip -d {mesh_density}/")
             lf.terminal(f"unzip {name_new_folder}.zip -d {mesh_label}/")
             lf.terminal(f"rm {name_new_folder}.zip")
 
