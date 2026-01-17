@@ -1,4 +1,4 @@
-# surrogate
+# Surrogate
 
 ## Purpose
 
@@ -127,6 +127,11 @@ This architecture is intended as a minimal demonstration and can be easily
 modified by the user. The number of layers, nodes, activation functions, and
 optimisation settings can be adjusted to explore alternative surrogate models.
 
+A schematic illustration of the default neural network architecture is shown
+below.
+
+![Default surrogate neural network architecture](imgs/nn_architecture.png)
+
 ---
 
 ### 4. Outputs
@@ -141,7 +146,8 @@ The following artefacts are produced:
 - diagnostic figures illustrating predicted melt-pool metrics as functions of
   laser power and scanning speed.
 
-By default, the diagnostic figures are saved in a directory named:
+By default, the diagnostic figures generated at runtime are saved in a
+directory named:
 
     images_from_predictions/
 
