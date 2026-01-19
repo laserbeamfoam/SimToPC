@@ -26,3 +26,7 @@ log.*
 
 # OS
 .DS_Store
+
+# Allow this base OpenFOAM case to be versioned
+!examples/generate/COARSE/base_case_of2412/constant/
+!examples/generate/COARSE/base_case_of2412/system/
