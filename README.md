@@ -120,9 +120,9 @@ SimToPC provides three command-line modes that together define the full workflow
 - **surrogate** (optional): trains surrogate models from the extracted datasets.
 
 Detailed, mode-specific tutorials are provided in the `examples` directory:
-- `examples/generate/generate.md`
-- `examples/measure_and_surrogate/measure.md`
-- `examples/measure_and_surrogate/surrogate.md`
+- `examples/generate/README.md`
+- `examples/measure/README.md`
+- `examples/surrogate/README.md`
 
 
 
