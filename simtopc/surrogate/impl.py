@@ -1,43 +1,49 @@
-'''
+"""
 License
-  This program is free software: you can redistribute it and/or modify 
-  it under the terms of the GNU General Public License as published 
-  by the Free Software Foundation, either version 3 of the License, 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
   or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-  See the GNU General Public License for more details. You should have 
-  received a copy of the GNU General Public License along with this 
-  program. If not, see <https://www.gnu.org/licenses/>. 
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 Description
-  Provides utility functions that support the full workflow, such as:
-  - Create new test cases from a base case
-  - Update OpenFOAM dictionary files with parameter values
-  - Submit jobs locally or remotely (via Slurm on HPC systems)
-  - Monitor job status in the queue
-  - Handle file transfers, compression, and decompression
+  Surrogate-model implementation for the SimToPC workflow.
 
-Assumptions:
-  - Called by higher-level scripts (e.g. generate_data.py)
-  - Assumes OpenFOAM v2412 dictionary structure when updating
-  - Passwordless SSH is configured for HPC submission
+  This module implements data-driven surrogate modelling based on
+  geometry and porosity metrics extracted from simulation data. It
+  provides routines to assemble training datasets, scale inputs and
+  outputs, define and train neural-network models, and generate
+  prediction and processing maps over the parameter space.
+
+  The surrogate model is intended as an optional, downstream component
+  of the SimToPC workflow.
+
+Assumptions
+  - Measurement outputs have been generated prior to training
+  - Input parameters and outputs are provided in consistent units
+  - Neural-network training is performed using TensorFlow/Keras
+  - The surrogate model is used for interpolation within the sampled
+    parameter space
 
 Authors
-    Simon A. Rodriguez, University College Dublin (UCD). All rights reserved
-    Petar Cosic, University College Dublin (UCD). All rights reserved
-    Tom Flint, University of Manchester (UOM). All rights reserved
-    Philip Cardiff, University College Dublin (UCD). All rights reserved
-    
-'''
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
 
 
 import os
 import re
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
@@ -48,14 +54,11 @@ from joblib import dump, load
 import numpy as np
 import pandas as pd
 import random
-
 import subprocess
-import re
 import time
 import importlib
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
-
 from pathlib import Path
 
 def terminal(command):

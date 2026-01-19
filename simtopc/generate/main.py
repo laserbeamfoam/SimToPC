@@ -1,3 +1,48 @@
+"""
+License
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
+  or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Description
+  Entry point for the simulation-case generation stage of the SimToPC
+  workflow.
+
+  This module implements the logic executed by the `simtopc generate`
+  command. It orchestrates the creation of simulation cases from a user
+  configuration file, updates solver input files with process parameters,
+  and manages the execution of simulations either locally or on remote
+  HPC systems.
+
+  The module coordinates higher-level workflow steps while delegating
+  low-level operations (file manipulation, job submission, monitoring)
+  to legacy helper utilities.
+
+Assumptions
+  - This module is invoked via the SimToPC command-line interface
+  - The user provides a valid SimToPC configuration file (YAML)
+  - Simulation cases are based on an existing OpenFOAM base case
+  - Local or remote execution environments are properly configured
+    (e.g. OpenFOAM installation, SSH access, scheduler availability)
+
+Authors
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
+
 from __future__ import annotations
 from pathlib import Path
 from typing import Optional

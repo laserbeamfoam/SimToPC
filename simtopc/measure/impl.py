@@ -1,3 +1,48 @@
+"""
+License
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
+  or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Description
+  Implementation of the melt-pool measurement stage in the SimToPC
+  workflow.
+
+  This module orchestrates the post-processing of completed simulation
+  cases to extract melt-pool geometry and related metrics. It manages
+  the preparation of case-specific inputs, the execution of auxiliary
+  post-processing scripts, and the aggregation of geometry data into
+  structured outputs.
+
+  The implementation is designed to be solver-agnostic at the workflow
+  level, while relying on solver-specific helper scripts for field
+  extraction.
+
+Assumptions
+  - Simulation cases have been successfully completed prior to execution
+  - Required OpenFOAM and pvpython environments are available
+  - Case directory structures follow the conventions used by SimToPC
+  - Measurement parameters are provided via a validated configuration
+    object
+
+Authors
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
+
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
@@ -54,10 +99,8 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             "Y_COORD_BEGIN_TRACK": float(measure_cfg.y_begin),
             "Y_COORD_END_TRACK": float(measure_cfg.y_end),
         }
-
       
         (case_dir / "measure_inputs.json").write_text(json.dumps(payload, indent=2))
-
 
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")
         copy_measure_resources(Path(name_new_folder))

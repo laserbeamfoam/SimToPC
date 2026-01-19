@@ -1,48 +1,49 @@
-'''
+"""
 License
-  This program is free software: you can redistribute it and/or modify 
-  it under the terms of the GNU General Public License as published 
-  by the Free Software Foundation, either version 3 of the License, 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
   or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-  See the GNU General Public License for more details. You should have 
-  received a copy of the GNU General Public License along with this 
-  program. If not, see <https://www.gnu.org/licenses/>. 
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 Description
-  Provides utility functions that support the full workflow, such as:
-  - Create new test cases from a base case
-  - Update OpenFOAM dictionary files with parameter values
-  - Submit jobs locally or remotely (via Slurm on HPC systems)
-  - Monitor job status in the queue
-  - Handle file transfers, compression, and decompression
+  Legacy utility functions supporting the simulation-case generation
+  workflow in SimToPC.
 
-Assumptions:
-  - Called by higher-level scripts (e.g. generate_data.py)
-  - Assumes OpenFOAM v2412 dictionary structure when updating
-  - Passwordless SSH is configured for HPC submission
+  This module provides low-level helper routines used to:
+  - create simulation cases from a base OpenFOAM case,
+  - modify OpenFOAM dictionary files with process parameters,
+  - submit and monitor simulation jobs locally or on HPC systems,
+  - handle file transfer, compression, and basic workflow orchestration.
+
+  The functions defined here are primarily intended for internal use
+  by higher-level SimToPC workflows and scripts.
+
+Assumptions
+  - This module is invoked by higher-level SimToPC generation routines
+  - OpenFOAM case dictionaries follow the expected solver-specific structure
+  - Remote job submission relies on passwordless SSH access when enabled
+  - The execution environment provides standard UNIX utilities
 
 Authors
-    Simon A. Rodriguez, University College Dublin (UCD). All rights reserved
-    Petar Cosic, University College Dublin (UCD). All rights reserved
-    Tom Flint, University of Manchester (UOM). All rights reserved
-    Philip Cardiff, University College Dublin (UCD). All rights reserved
-    
-'''
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
 
 
 import os
 import re
-# import tensorflow as tf
-# from tensorflow import keras
-# from tensorflow.keras import Sequential
-# from tensorflow.keras.layers import Dense, Input
-# from tensorflow.keras.optimizers import Adam
-# from sklearn.preprocessing import MinMaxScaler
 from joblib import dump, load
 import numpy as np
 import pandas as pd

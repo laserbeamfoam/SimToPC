@@ -1,3 +1,41 @@
+"""
+License
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
+  or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Description
+  Configuration schema and loader utilities for SimToPC.
+
+  This module defines typed configuration objects (dataclasses) used by
+  the SimToPC workflow, and provides a YAML loader that:
+  - reads a user-supplied config file,
+  - applies defaults where appropriate,
+  - resolves relative paths with respect to the config file location.
+
+Assumptions
+  - The configuration file is a YAML document following the SimToPC schema
+  - Paths in the YAML file may be absolute or relative to the config file
+  - YAML parsing is performed with yaml.safe_load
+
+Authors
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Any
@@ -10,7 +48,8 @@ class SurrogateConfig:
     n_epochs: int = 200
     n_divisions_for_prediction: int = 40
     possible_outputs: List[str] = field(default_factory=lambda: [
-        "W_mean", "W_std", "D_mean", "D_std", "H_mean", "H_std", "porosity_mean", "porosity_std"
+        "W_mean", "W_std", "D_mean", "D_std", "H_mean", "H_std", 
+        "porosity_mean", "porosity_std"
     ])
 
 

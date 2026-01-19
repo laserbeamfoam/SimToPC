@@ -1,38 +1,45 @@
-'''
+"""
 License
-  This program is free software: you can redistribute it and/or modify 
-  it under the terms of the GNU General Public License as published 
-  by the Free Software Foundation, either version 3 of the License, 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
   or (at your option) any later version.
 
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-  See the GNU General Public License for more details. You should have 
-  received a copy of the GNU General Public License along with this 
-  program. If not, see <https://www.gnu.org/licenses/>. 
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 Description
-  Provides utility functions that support the full workflow, such as:
-  - Create new test cases from a base case
-  - Update OpenFOAM dictionary files with parameter values
-  - Submit jobs locally or remotely (via Slurm on HPC systems)
-  - Monitor job status in the queue
-  - Handle file transfers, compression, and decompression
+  Legacy helper functions implementing geometry-based measurements of
+  melt-pool cross-sections in SimToPC.
 
-Assumptions:
-  - Called by higher-level scripts (e.g. generate_data.py)
-  - Assumes OpenFOAM v2412 dictionary structure when updating
-  - Passwordless SSH is configured for HPC submission
+  This module contains low-level routines used to analyse discretised
+  melt-pool geometry extracted from simulation data. The implemented
+  algorithms compute continuity, cross-sectional dimensions, porosity
+  metrics, and derived geometric quantities based on structured field
+  data.
+
+  The functions in this module are primarily intended for internal use
+  by the SimToPC measurement workflow.
+
+Assumptions
+  - Input geometry is provided as discretised point data on a uniform grid
+  - Measurement parameters are supplied via a validated MeasureConfig object
+  - Melt-pool geometry corresponds to a single-track configuration
+  - Numerical tolerances are handled via explicit rounding operations
 
 Authors
-    Simon A. Rodriguez, University College Dublin (UCD). All rights reserved
-    Petar Cosic, University College Dublin (UCD). All rights reserved
-    Tom Flint, University of Manchester (UOM). All rights reserved
-    Philip Cardiff, University College Dublin (UCD). All rights reserved
-    
-'''
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
 
 
 import os
