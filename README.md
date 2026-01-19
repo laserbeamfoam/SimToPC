@@ -133,7 +133,7 @@ SimToPc is a collaboration between **Philip Cardiff’s lab** (University Colleg
 For questions, suggestions, or contributions, please feel free to reach out:
 
 - **Simon Rodriguez** – [simon.rodriguezluzardo@ucdconnect.ie](mailto:simon.rodriguezluzardo@ucdconnect.ie) | [LinkedIn](https://www.linkedin.com/in/simonrodriguezl/)  
-- **Alojz Ivankovic** – [alojz.ivankovic@ucd.ie](mailto:alojz.ivankovic@ucd.ie) [LinkedIn](https://www.linkedin.com/in/alojz-ivankovic-6b34a33a/)  
+- **Alojz Ivankovic** – [alojz.ivankovic@ucd.ie](mailto:alojz.ivankovic@ucd.ie) | [LinkedIn](https://www.linkedin.com/in/alojz-ivankovic-6b34a33a/)  
 - **Petar Cosic** – [petar.cosic@ucdconnect.ie](mailto:petar.cosic@ucdconnect.ie)  
 - **Thomas Flint** – [tom.flint@manchester.ac.uk](mailto:tom.flint@manchester.ac.uk) | [LinkedIn](https://www.linkedin.com/in/tom-flint-87ba9748/)  
 - **Philip Cardiff** – [philip.cardiff@ucd.ie](mailto:philip.cardiff@ucd.ie) | [LinkedIn](https://www.linkedin.com/in/philipcardiff/)  
