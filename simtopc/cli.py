@@ -1,7 +1,8 @@
 import argparse
 
 from simtopc.measure.main import run as run_measure_cmd
-from simtopc.pipeline import surrogate, generate
+# from simtopc.pipeline import surrogate, generate
+from simtopc.generate.main import run_generate
 
 
 def main():
@@ -27,5 +28,7 @@ def main():
     elif args.cmd == "surrogate":
         from simtopc.surrogate.main import run as run_surrogate_cmd
         run_surrogate_cmd(args.config)
+    # elif args.cmd == "generate":
+    #     generate(args.config)
     elif args.cmd == "generate":
-        generate(args.config)
+        run_generate(args.config)
