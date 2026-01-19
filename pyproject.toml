@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simtopc"
+version = "0.1.0"
+description = "SimToPC: post-processing for LPBF simulations"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Simon Rodriguez" }]
+dependencies = ["numpy", "scipy", "pandas", "pyyaml", "matplotlib", "joblib", "importlib-resources; python_version<'3.9'",]
+
+[project.optional-dependencies]
+ml = ["tensorflow", 
+"scikit-learn"]
+
+[project.scripts]
+simtopc = "simtopc.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["simtopc*"]
+
+[tool.setuptools.package-data]
+simtopc = ["resources/src/*.py"]
