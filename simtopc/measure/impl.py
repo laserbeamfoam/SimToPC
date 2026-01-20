@@ -109,7 +109,6 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
         copy_measure_resources(Path(name_new_folder))
         laser_radius_i = parameters[i, 2] / 2
         print(f"\n Extracting meltpool geometry")
-        # terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} && pvpython extract_meltpool.py"')
         terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} '
                  '&& pvpython extract_meltpool.py"'
                 )
@@ -122,7 +121,6 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
         terminal(f'cd {name_new_folder} && mkdir images_full_meltpool')
         terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
 
-        # print(f"\n Finished measuring geometry-based quantities for test_case_{i+1}\n")
         print(f"\nFinished measuring geometry-based quantities "
               f"for test_case_{i + 1}\n")
 

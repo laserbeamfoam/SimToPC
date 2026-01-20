@@ -49,14 +49,12 @@ def main():
     p = argparse.ArgumentParser(prog="simtopc")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    # measure_parser = sub.add_parser("measure", help="Measure melt-pool metrics")
     measure_parser = sub.add_parser(
         "measure",
         help="Measure melt-pool metrics",
     )
     measure_parser.add_argument("config", help="Path to config.yml")
 
-    # surrogate_parser = sub.add_parser("surrogate", help="Train surrogate model (requires TensorFlow)")
     surrogate_parser = sub.add_parser(
       "surrogate",
       help="Train surrogate model (requires TensorFlow)",

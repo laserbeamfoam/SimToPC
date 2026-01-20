@@ -134,7 +134,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
       # Build the y-levels
         y_levels = []
         y_level = np.round(y0, 8)
-        # This loop answers the question:"Are there y_levels that are completely 
+        # This loop answers the question:"Are there y_levels that are completly 
         # void. If so, where are they?
         while (y_level <= y_max):
             y_levels.append(y_level)
@@ -187,7 +187,6 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                 height =  max_height_location_at_iy - min(z_at_iy)
                 width = max(width_rows_at_iy)
                 z_location_max_width = width_rows_at_iy.argmax(width)
-                # depth = max(z_at_iy) - z_at_iy.to_numpy()[z_location_max_width]
                 depth = z_at_iy.to_numpy()[z_location_max_width] - min(z_at_iy)
             
             else:

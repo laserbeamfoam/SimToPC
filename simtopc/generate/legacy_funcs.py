@@ -63,7 +63,6 @@ def terminal(command):
 
 def set_environment_variables(RUNNING_ON):   
     variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
-    # imported = importlib.import_module(f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp")
     imported = importlib.import_module(
         f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp"
     )
@@ -88,7 +87,6 @@ def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
     it. This version is portable (doesn't depend on the current working 
     directory).
     """
-    # name_new_folder = str(Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}")
     name_new_folder = str(
         Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}"
     )
@@ -303,7 +301,6 @@ def create_simulation_cases(number_cases, base_case_name, parameters,
 def submit_remote_job(remote_host, remote_case_path, local_case_path, 
                       RUNNING_ON):
     # Submit job on HPC via SSH
-    # cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
     cmd = (
         f'ssh {remote_host} "cd {remote_case_path} '
         f'&& sbatch singleTrack{RUNNING_ON}.sh"'
@@ -337,6 +334,6 @@ def monitor_job_is_running(id_current_job, hostname,
         is_current_job_in_queue = is_job_in_queue(id_current_job, hostname)
         if (is_current_job_in_queue):
             print("Job ", str(id_current_job), " is still in the queue")
-            time.sleep(STATUS_CHECK_FREQUENCY_IN_MIN * 60)  # Sleep for X minutes
+            time.sleep(STATUS_CHECK_FREQUENCY_IN_MIN * 60)  # Sleep for X mints
         else:
             print("Job ", str(id_current_job), " is finished")

@@ -64,7 +64,6 @@ class Config:
 
 
 def _resolve_path(base_dir: Path, maybe_path: str) -> str:
-    # """Resolve a path string relative to base_dir unless it's already absolute."""
     """Resolve path relative to base_dir if not absolute."""
     if maybe_path is None:
         return maybe_path

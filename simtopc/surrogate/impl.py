@@ -99,7 +99,8 @@ def scale_data(x_scaler, y_scaler, input_data, output_data):
     return input_data_scaled, output_data_scaled
 
            
-def create_width_depth_height_to_flat_data(good_simulation_cases, mesh_density):
+def create_width_depth_height_to_flat_data(good_simulation_cases, 
+                                           mesh_density):
     # Assemble the training set
     width_mean_data = []
     width_std_data = []
@@ -330,7 +331,7 @@ def plot_history_training(history, destination_file):
     plt.ylabel('Loss')
     plt.legend()
     # plt.show()
-    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  # saves as PNG (high res)
+    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  
 
 
 def run_surrogate(config_path: str) -> None:
