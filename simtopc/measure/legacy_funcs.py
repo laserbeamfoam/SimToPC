@@ -240,7 +240,8 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
     return cross_sections_statistics_df
 
 
-def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_test_case_i, 
+def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, 
+                                       laser_radius_test_case_i, 
                                        meltpool_is_continuous, measure_cfg):
 
     
@@ -393,12 +394,15 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D, laser_radius_tes
                                                       "number_of_pores_in_row", 
                                                           "width_row",
                                                "number_non_void_cells_in_row"])
-    row_statistics.to_csv(name_new_folder + "/row_statistics.csv", index=False, encoding="utf-8") 
+    row_statistics.to_csv(name_new_folder + "/row_statistics.csv", index=False,
+                          encoding="utf-8") 
     
     return row_statistics, pore_locatios_at_rows, pores_at_row_are_internal
 
-def plotResults(name_new_folder, CSV_CROSS_SECTIONS = "./cross_sections_statistics.csv"):
-    def generate_figure(x, y_values, xlabel, ylabel, title, name_png_file, name_new_folder, referenceValue = False):
+def plotResults(name_new_folder, 
+                CSV_CROSS_SECTIONS = "./cross_sections_statistics.csv"):
+    def generate_figure(x, y_values, xlabel, ylabel, title, name_png_file, 
+                        name_new_folder, referenceValue = False):
         plt.figure()
         plt.plot(x, y_values, marker="x") 
         if (referenceValue == False):
@@ -427,12 +431,14 @@ def plotResults(name_new_folder, CSV_CROSS_SECTIONS = "./cross_sections_statisti
         if key == "porosity_at_iy":
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
                             "Porosity (porous volume / total volume)", 
-                            "Porosity vs. y-coordinate", "Porosity", name_new_folder)
+                            "Porosity vs. y-coordinate", "Porosity", 
+                            name_new_folder)
             
         else:
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
                             key + " (m)", key.capitalize() + 
-                            " vs. y-coordinate", key.capitalize(), name_new_folder)
+                            " vs. y-coordinate", key.capitalize(), 
+                            name_new_folder)
             
     values_for_plot = df["depth"].to_numpy()/df["width"].to_numpy()
     generate_figure(y_locations, values_for_plot, "y_coordinate", 
@@ -466,7 +472,8 @@ def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
         )
 
         print("Generating profiles for the variables")
-        plotResults(name_new_folder, CSV_CROSS_SECTIONS = name_new_folder + "/cross_sections_statistics.csv")
+        plotResults(name_new_folder, 
+       CSV_CROSS_SECTIONS = name_new_folder + "/cross_sections_statistics.csv")
         
     else:
         print("Meltpool is not continuous")

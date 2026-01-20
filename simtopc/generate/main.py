@@ -53,8 +53,8 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
     Entry point for `simtopc generate`.
 
     - Does NOT assume a repository layout.
-    - Uses the directory containing config.yml as the default working directory,
-      so relative files like parameters.txt resolve as expected.
+    - Uses the directory containing config.yml as the default working 
+    directory, so relative files like parameters.txt resolve as expected.
     """
     from simtopc.config import load_config
     from simtopc.generate import legacy_funcs as lf
@@ -82,60 +82,144 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
         mesh_density_raw = cfg_all.mesh_density
         mesh_label = Path(str(mesh_density_raw)).name 
         openfoam_version = getattr(cfg_all, "openfoam_version", "2412")
-        status_check_frequency_min = int(getattr(cfg_all, "status_check_frquency_in_min", "2"))
-        hostname, run_address, of_location = lf.set_environment_variables(running_on)
+        status_check_frequency_min = int(
+            getattr(cfg_all, "status_check_frquency_in_min", "2")
+        )
+        hostname, run_address, of_location = lf.set_environment_variables(
+                                                                    running_on)
         base_case_name = lf.set_base_case_name(mesh_density, openfoam_version)
 
         # Keep legacy behavior: parameters.txt relative to working dir
-        params_file = Path(getattr(cfg_all, "parameters_file", "parameters.txt"))
+        params_file = Path(getattr(cfg_all, "parameters_file", 
+                                   "parameters.txt")
+                          )
+        # if not params_file.exists():
+        #     raise FileNotFoundError(
+        #         f"Could not find parameters file: {params_file.resolve()}\n"
+        #         f"Working directory is: {Path.cwd()}\n"
+        #         f"Hint: place parameters.txt next to config.yml or set `parameters_file:` in the config."
+        #     )
         if not params_file.exists():
             raise FileNotFoundError(
                 f"Could not find parameters file: {params_file.resolve()}\n"
                 f"Working directory is: {Path.cwd()}\n"
-                f"Hint: place parameters.txt next to config.yml or set `parameters_file:` in the config."
+                "Hint: place parameters.txt next to config.yml "
+                "or set `parameters_file:` in the config."
             )
+
 
         import numpy as np
         parameters = np.loadtxt(str(params_file), skiprows=1)
         number_cases = parameters.shape[0]
 
-        lf.create_simulation_cases(number_cases, base_case_name, parameters, mesh_density, openfoam_version)
+        lf.create_simulation_cases(number_cases, base_case_name, parameters, 
+                                                mesh_density, openfoam_version)
 
         if running_on == "LOCAL":
             for i in range(number_cases):
                 name_new_folder = f"{mesh_label}/test_case_{i + 1}"
-                lf.terminal(f"cd {name_new_folder}/system/ && mv decomposeParDict_16cores decomposeParDict")
-                lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && ./Allrun_local"')
+                # lf.terminal(f"cd {name_new_folder}/system/ && mv decomposeParDict_16cores decomposeParDict")
+                lf.terminal(f"cd {name_new_folder}/system/ "
+                            "&& mv decomposeParDict_16cores decomposeParDict"
+                           )
+
+                # lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && ./Allrun_local"')
+                lf.terminal(
+                    f'bash -c "source {of_location} && cd {name_new_folder} '
+                    '&& ./Allrun_local"'
+                           )
+
         else:
             for i in range(number_cases):
                 name_new_folder = f"{mesh_label}/test_case_{i + 1}"
-                lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && cp -r initial 0"')
-                lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && blockMesh"')
-                lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && setSolidFraction"')
-                lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && decomposePar"')
+                # lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && cp -r initial 0"')
+                lf.terminal(
+                    f'bash -c "source {of_location} && cd {name_new_folder} '
+                    '&& cp -r initial 0"'
+                )
+
+                # lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && blockMesh"')
+                lf.terminal(
+                    f'bash -c "source {of_location} && cd {name_new_folder} '
+                    '&& blockMesh"'
+                )
+
+                # lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && setSolidFraction"')
+                lf.terminal(
+                    f'bash -c "source {of_location} && cd {name_new_folder} '
+                    '&& setSolidFraction"'
+                )
+
+                # lf.terminal(f'bash -c "source {of_location} && cd {name_new_folder} && decomposePar"')
+                lf.terminal(
+                    f'bash -c "source {of_location} && cd {name_new_folder} '
+                    '&& decomposePar"'
+                )
+
 
                 print("Transferring the test case ", str(i + 1))
 
                 if i == 0:
-                    lf.terminal(f'ssh {hostname} "cd {run_address} && mkdir {mesh_label}"')
+                    # lf.terminal(f'ssh {hostname} "cd {run_address} && mkdir {mesh_label}"')
+                    lf.terminal(f'ssh {hostname} "cd {run_address} '
+                                f'&& mkdir {mesh_label}"'
+                    )
 
-                print("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder, "\n")
-                lf.terminal("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder)
 
-                job_id = lf.submit_remote_job(hostname, f"{run_address}{name_new_folder}", name_new_folder, running_on)
-                lf.monitor_job_is_running(job_id, hostname, status_check_frequency_min)
+                # print("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder, "\n")
+                scp_cmd = ("scp -r " + name_new_folder + " " + hostname + ":"
+                            + run_address + name_new_folder)
 
+                print(scp_cmd, "\n")
+                # lf.terminal(scp_cmd)
+
+                # lf.terminal("scp -r " + name_new_folder +" " + hostname+ ":" + run_address + name_new_folder)
+                lf.terminal(scp_cmd)
+
+
+                # job_id = lf.submit_remote_job(hostname, f"{run_address}{name_new_folder}", name_new_folder, running_on)
+                job_id = lf.submit_remote_job(
+                                            hostname,
+                                            f"{run_address}{name_new_folder}",
+                                            name_new_folder,
+                                            running_on,
+                                            )
+
+                lf.monitor_job_is_running(job_id, hostname, 
+                                          status_check_frequency_min)
+
+                # lf.terminal(
+                #     'ssh {host} "cd {run}{folder} && cd .. && '
+                #     'zip -r test_case_{idx}.zip test_case_{idx} && '
+                #     '[ -f test_case_{idx}.zip ] && rm -r test_case_{idx} && '
+                #     'echo \\"Compression successful and folder deleted.\\""'.format(
+                #         host=hostname, run=run_address, folder=name_new_folder, idx=str(i + 1)
+                #     )
+                # )
                 lf.terminal(
-                    'ssh {host} "cd {run}{folder} && cd .. && '
-                    'zip -r test_case_{idx}.zip test_case_{idx} && '
-                    '[ -f test_case_{idx}.zip ] && rm -r test_case_{idx} && '
-                    'echo \\"Compression successful and folder deleted.\\""'.format(
-                        host=hostname, run=run_address, folder=name_new_folder, idx=str(i + 1)
+                    (
+                      'ssh {host} "cd {run}{folder} && cd .. && '
+                      'zip -r test_case_{idx}.zip test_case_{idx} && '
+                      '[ -f test_case_{idx}.zip ] && rm -r test_case_{idx} && '
+                      'echo \\"Compression successful and folder deleted.\\""'
+                    ).format(host=hostname, run=run_address, 
+                             folder=name_new_folder, idx=str(i + 1),
                     )
                 )
 
-                lf.terminal(f"scp -r {hostname}:{run_address}{name_new_folder}.zip ./{mesh_label}/")
-                lf.terminal(f'ssh {hostname} "cd {run_address}{mesh_label} && rm *.zip "')
+
+                # lf.terminal(f"scp -r {hostname}:{run_address}{name_new_folder}.zip ./{mesh_label}/")
+                lf.terminal(
+                    f"scp -r {hostname}:{run_address}{name_new_folder}.zip "
+                    f"./{mesh_label}/"
+                )
+
+                # lf.terminal(f'ssh {hostname} "cd {run_address}{mesh_label} && rm *.zip "')
+                lf.terminal(
+                    f'ssh {hostname} "cd {run_address}{mesh_label} '
+                    '&& rm *.zip "'
+                )
+
                 lf.terminal(f"rm -r {name_new_folder}")
 
         # Unzip results

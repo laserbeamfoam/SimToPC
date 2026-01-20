@@ -57,4 +57,5 @@ def run(config_path: str | Path) -> None:
         min_points_per_zrow=int(m.get("min_points_per_zrow", 4)),
     )
 
-    run_measure_cases(cfg_all=cfg_all, measure_cfg=measure_cfg, config_path=config_path)
+    run_measure_cases(cfg_all=cfg_all, measure_cfg=measure_cfg, 
+    config_path=config_path)

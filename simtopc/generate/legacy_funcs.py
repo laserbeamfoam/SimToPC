@@ -63,7 +63,10 @@ def terminal(command):
 
 def set_environment_variables(RUNNING_ON):   
     variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
-    imported = importlib.import_module(f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp")
+    # imported = importlib.import_module(f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp")
+    imported = importlib.import_module(
+        f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp"
+    )
     hostname = imported.hostname
     run_address = imported.run_address
     OF_LOCATION = imported.OF_LOCATION
@@ -81,10 +84,15 @@ def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
 
 def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
     """
-    Create a test case directory and copy the contents of the base case into it.
-    This version is portable (doesn't depend on the current working directory).
+    Create a test case directory and copy the contents of the base case into 
+    it. This version is portable (doesn't depend on the current working 
+    directory).
     """
-    name_new_folder = str(Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}")
+    # name_new_folder = str(Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}")
+    name_new_folder = str(
+        Path(MESH_DENSITY) / f"test_case_{test_case_number + 1}"
+    )
+
     case_dir = Path(name_new_folder).resolve()
     base_case = Path(base_case_name).resolve()
 
@@ -159,7 +167,7 @@ def update_openfoam_variable(file_path, full_key, new_value):
                     )
 
         # Case 1: Double key + dimensions (e.g. "cpL cpL [dims] valor;")
-        pattern_dims = rf'^(\s*{key}\s+{key}\s+\[[^\]]+\]\s+)([^\s;]+)(\s*;.*)$'
+        pattern_dims =rf'^(\s*{key}\s+{key}\s+\[[^\]]+\]\s+)([^\s;]+)(\s*;.*)$'
         match_dims = re.match(pattern_dims, line)
         if in_scope and match_dims:
             prefix, _, suffix = match_dims.groups()
@@ -186,7 +194,7 @@ def update_openfoam_variable(file_path, full_key, new_value):
             continue
         
         # Case 4: Qualifier + value: "h uniform 0;" or "Ta constant 298;"
-        pattern_qual = rf'^(\s*{key}\s+)(uniform|constant)\s+([^\s;]+)(\s*;.*)$'
+        pattern_qual =rf'^(\s*{key}\s+)(uniform|constant)\s+([^\s;]+)(\s*;.*)$'
         m_qual = re.match(pattern_qual, line)
         if m_qual:
             prefix, qualifier, _, suffix = m_qual.groups()
@@ -224,7 +232,8 @@ def replace_speed(value, test_case_number, MESH_DENSITY, OPENFOAM_VERSION):
         f.writelines(lines)
             
 
-def replace_power(value, test_case_number, speed, MESH_DENSITY, OPENFOAM_VERSION):
+def replace_power(value, test_case_number, speed, MESH_DENSITY, 
+                  OPENFOAM_VERSION):
     name_new_folder = MESH_DENSITY + "/test_case_" + str(test_case_number + 1)
     file_name = str(Path(name_new_folder) / "constant" / "timeVsLaserPower")
 
@@ -267,7 +276,8 @@ def calculate_h_from_Biot_number(Biot, keff, DOMAIN_SIZE_IN_MICRONS):
     
 
 # def create_simulation_cases(number_cases, base_case_name, parameters):
-def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSITY, OPENFOAM_VERSION):
+def create_simulation_cases(number_cases, base_case_name, parameters, 
+                            MESH_DENSITY, OPENFOAM_VERSION):
     # Create the simulation cases
     for i in range(number_cases):    
         name_new_folder = MESH_DENSITY + "/test_case_" + str(i + 1)
@@ -286,12 +296,19 @@ def create_simulation_cases(number_cases, base_case_name, parameters, MESH_DENSI
         replace_speed(parameters[i, 0], i, MESH_DENSITY, OPENFOAM_VERSION)
     
         #Replace the correct values for power
-        replace_power(parameters[i, 1], i, parameters[i, 0], MESH_DENSITY, OPENFOAM_VERSION)
+        replace_power(parameters[i, 1], i, parameters[i, 0], MESH_DENSITY, 
+                      OPENFOAM_VERSION)
 
 
-def submit_remote_job(remote_host, remote_case_path, local_case_path, RUNNING_ON):
+def submit_remote_job(remote_host, remote_case_path, local_case_path, 
+                      RUNNING_ON):
     # Submit job on HPC via SSH
-    cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
+    # cmd = "ssh " + remote_host + ' "cd ' + remote_case_path + " && sbatch singleTrack" + RUNNING_ON + '.sh"'
+    cmd = (
+        f'ssh {remote_host} "cd {remote_case_path} '
+        f'&& sbatch singleTrack{RUNNING_ON}.sh"'
+    )
+
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, text=True)
     
     # Extract job ID from output
@@ -313,7 +330,8 @@ def is_job_in_queue(job_id, hpc_host="sonicstaff"):
     return str(job_id) in result.stdout
 
 
-def monitor_job_is_running(id_current_job, hostname, STATUS_CHECK_FREQUENCY_IN_MIN):
+def monitor_job_is_running(id_current_job, hostname, 
+                           STATUS_CHECK_FREQUENCY_IN_MIN):
     is_current_job_in_queue = True
     while (is_current_job_in_queue):
         is_current_job_in_queue = is_job_in_queue(id_current_job, hostname)
