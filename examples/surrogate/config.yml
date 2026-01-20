@@ -25,3 +25,8 @@ surrogate:
     - D_std
     - porosity_mean
     - porosity_std
+
+environment:
+  hostname:  "xenosim"
+  run_address: "/home/simon/run/"
+  of_location: "$HOME/OpenFOAM/OpenFOAM-v2412/etc/bashrc"

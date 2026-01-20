@@ -84,8 +84,11 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
         status_check_frequency_min = int(
             getattr(cfg_all, "status_check_frquency_in_min", "2")
         )
+        # hostname, run_address, of_location = lf.set_environment_variables(
+                                                                    # running_on)
         hostname, run_address, of_location = lf.set_environment_variables(
-                                                                    running_on)
+                                                           cfg_all.environment)
+
         base_case_name = lf.set_base_case_name(mesh_density, openfoam_version)
 
         # Keep legacy behavior: parameters.txt relative to working dir

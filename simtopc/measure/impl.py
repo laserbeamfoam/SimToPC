@@ -83,8 +83,10 @@ from simtopc.measure.legacy_funcs import (set_environment_variables,
 
 def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
     # source the correct OpenFOAM, based on the system and OF version
-    hostname, run_address, OF_LOCATION = set_environment_variables(
-                                                            cfg_all.running_on)
+    # hostname, run_address, OF_LOCATION = set_environment_variables(
+    #                                                         cfg_all.running_on)
+    hostname, run_address, OF_LOCATION = set_environment_variables(cfg_all.environment)
+
 
     # Read the operational parameters
     parameters = np.loadtxt(cfg_all.parameters_file, skiprows=1)

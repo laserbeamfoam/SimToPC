@@ -60,15 +60,21 @@ from pathlib import Path
 def terminal(command):
     os.system(command)
 
-def set_environment_variables(RUNNING_ON):   
-    variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
-    imported = importlib.import_module(
-        f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp"
-    )
-    hostname = imported.hostname
-    run_address = imported.run_address
-    OF_LOCATION = imported.OF_LOCATION
+# def set_environment_variables(RUNNING_ON):   
+#     variables_import = "input_files."+ RUNNING_ON.lower() + "_inp" 
+#     imported = importlib.import_module(
+#         f"simtopc.generate.input_files.{RUNNING_ON.lower()}_inp"
+#     )
+#     hostname = imported.hostname
+#     run_address = imported.run_address
+#     OF_LOCATION = imported.OF_LOCATION
+#     return hostname, run_address, OF_LOCATION
+def set_environment_variables(env):
+    hostname = env.hostname
+    run_address = env.run_address
+    OF_LOCATION = env.of_location
     return hostname, run_address, OF_LOCATION
+
 
 def set_base_case_name(MESH_DENSITY, OPENFOAM_VERSION):
     BASE_CASE_NAME = ""

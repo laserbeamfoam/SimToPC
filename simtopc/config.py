@@ -38,8 +38,15 @@ Authors
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import yaml
+
+
+@dataclass
+class EnvironmentConfig:
+    hostname: str = ""
+    run_address: str = ""
+    of_location: str = ""
 
 
 @dataclass
@@ -59,6 +66,7 @@ class Config:
     parameters_file: str
     output_dir: str
     running_on: str
+    environment: EnvironmentConfig = field(default_factory=EnvironmentConfig)
     measure: Dict[str, Any] = field(default_factory=dict)
     surrogate: SurrogateConfig = field(default_factory=SurrogateConfig)
 
@@ -88,11 +96,17 @@ def load_config(path: str) -> Config:
     parameters_file = data.get("parameters_file", "./parameters.txt")
     output_dir = data["output_dir"]
 
+    env_data = data.get("environment", {}) or {}
+    environment = EnvironmentConfig(**env_data)
+
     return Config(
         mesh_density=_resolve_path(base_dir, mesh_density),
         parameters_file=_resolve_path(base_dir, parameters_file),
         output_dir=_resolve_path(base_dir, output_dir),
         running_on=data["running_on"],
+        environment=environment,
         measure=data.get("measure", {}) or {},
         surrogate=surrogate,
     )
+
+    

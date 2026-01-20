@@ -56,13 +56,19 @@ from matplotlib.colors import ListedColormap
 def terminal(command):
     os.system(command)
 
-def set_environment_variables(running_on: str):
-    variables_import = "simtopc.input_files." + running_on.lower() + "_inp"
-    imported = importlib.import_module(variables_import)
-    hostname = imported.hostname
-    run_address = imported.run_address
-    OF_LOCATION = imported.OF_LOCATION
+# def set_environment_variables(running_on: str):
+#     variables_import = "simtopc.input_files." + running_on.lower() + "_inp"
+#     imported = importlib.import_module(variables_import)
+#     hostname = imported.hostname
+#     run_address = imported.run_address
+#     OF_LOCATION = imported.OF_LOCATION
+#     return hostname, run_address, OF_LOCATION
+def set_environment_variables(env):
+    hostname = env.hostname
+    run_address = env.run_address
+    OF_LOCATION = env.of_location
     return hostname, run_address, OF_LOCATION
+
 
 
 def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i, 
