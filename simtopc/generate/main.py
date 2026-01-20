@@ -47,7 +47,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-
 def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
     """
     Entry point for `simtopc generate`.
@@ -101,7 +100,6 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
                 "Hint: place parameters.txt next to config.yml "
                 "or set `parameters_file:` in the config."
             )
-
 
         import numpy as np
         parameters = np.loadtxt(str(params_file), skiprows=1)

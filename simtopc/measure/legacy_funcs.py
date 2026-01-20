@@ -40,8 +40,6 @@ Authors
   Philip Cardiff, University College Dublin (UCD)
 """
 
-
-
 import os
 import re
 from joblib import dump, load
@@ -49,7 +47,6 @@ import numpy as np
 import pandas as pd
 import random
 import subprocess
-import re
 import time
 import importlib
 import matplotlib.pyplot as plt
@@ -234,7 +231,6 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
     cross_sections_statistics_df.to_csv(name_new_folder + 
                                         "/cross_sections_statistics.csv", 
                                         index=False, encoding="utf-8") 
-        
 
     return cross_sections_statistics_df
 

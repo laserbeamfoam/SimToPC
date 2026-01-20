@@ -46,7 +46,6 @@ Authors
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
-from pathlib import Path
 import shutil
 from importlib import resources as _stdlib_resources
 

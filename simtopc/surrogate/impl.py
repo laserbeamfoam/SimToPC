@@ -40,8 +40,6 @@ Authors
   Philip Cardiff, University College Dublin (UCD)
 """
 
-
-
 import os
 import re
 import tensorflow as tf
@@ -184,7 +182,6 @@ def create_input_data_and_output_data(width_mean_data, width_std_data,
     porosity_std_data = np.array(porosity_std_data).reshape(
                                                    (number_useful_cases, 1, 1)
                                                            )
-
     parameters_valid_cases = parameters[
                              cases_ran_properly_and_have_continuous_meltpool-1]
     input_data = parameters_valid_cases.reshape((number_useful_cases, 1, 
@@ -245,11 +242,11 @@ def generate_prediction_map(input_variables_for_map,
         z_for_map = np.zeros(x_for_map.shape) #This initialises z_for_map
         z_for_map[:, :] =  parameters_valid_cases[:, 2][i]
     
-        # x_for_predictions is a list. Every element of the list is a numpy array that 
-        # contains all the elements that will be used for predictions. For instance, 
-        # if the parameters.txt file has m columns, x_for_predictions will have 
-        # m elements. Each element is a numpy array of all the values that variable 
-        # will take at predicion time. 
+        # x_for_predictions is a list. Every element of the list is a numpy  
+        # array that contains all the elements that will be used for 
+        # predictions. For instance, if the parameters.txt file has m columns,  
+        # x_for_predictions will have m elements. Each element is a numpy array 
+        #  of all the values that variable will take at predicion time. 
         x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), 
                                            axis = 2)
         x_for_predictions_scaled = x_scaler.transform(
@@ -279,48 +276,6 @@ def generate_prediction_map(input_variables_for_map,
         plt.title("Predictions using the NN")
         plt.tight_layout()
         plt.savefig(possible_outputs[i]+ "_predictions.png")
-    
-
-
-def generate_processing_map(input_variables_for_map, parameters_valid_cases, 
-                            n_divisions_for_prediction):
-    # NOTE THIS FUNCTION IS NOT FINISHED, IT IS KEPT HERE TO GENERATE THE
-    # CORRECT PLOT ONCE THE RULE TO DECIDE THE RULE TO DEFINE THE BOUNDARIES OF
-    # THE REGIMES. FOR NOW, THIS FUNCTION JUST SHOWS THE CODE THAT 
-    # GENERATES A SIMILAR COLOUR MAP, USING x_vals, x_vals and a synthetic
-    # r value, calculated as a radius.
-    x_vals, y_vals = generate_x_y_levels_for_predictions(
-                                                        parameters_valid_cases, 
-                                                    input_variables_for_map[0],
-                                                    input_variables_for_map[1],
-                                                    n_divisions_for_prediction)
-
-    x, y = np.meshgrid(x_vals, x_vals)
-
-
-    # 1. Create a simulated value
-    r = np.sqrt(x**2 + y**2)  # aumenta con x e y
-
-    distances = (x**2 + y**2)**0.5
-    z = np.zeros(distances.shape)
-    z[distances < 1.2] = 0
-    z[(distances >= 1.2) & (distances <= 2)] = 1
-    z[distances > 2] = 2
-
-
-    z = z.astype(int)
-
-    cmap = ListedColormap(['red', 'green', 'blue'])
-    plt.figure(figsize=(8, 6))
-    plt.pcolormesh(x, y, z, cmap=cmap, shading='auto')
-    plt.xlabel('Scanning speed (mm/s)')
-    plt.ylabel('Laser Power (W)')
-    plt.title('Processing map')
-    cbar = plt.colorbar(ticks=[0.5, 1.5, 2.5])
-    cbar.ax.set_yticklabels(['Lack of fusion', 'Optimol', 'Overfusion'])
-    plt.tight_layout()
-    # plt.show()
-    plt.savefig("Processing_map.png")
     
 
 def plot_history_training(history, destination_file):
@@ -423,12 +378,6 @@ def run_surrogate(config_path: str) -> None:
         POSSIBLE_OUTPUTS,
         "Scanning speed (m/s)",
         "Power (W)",
-        n_divisions_for_prediction,
-    )
-
-    generate_processing_map(
-        input_variables_for_map,
-        parameters_valid_cases,
         n_divisions_for_prediction,
     )
 

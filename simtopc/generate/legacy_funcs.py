@@ -49,7 +49,6 @@ import numpy as np
 import pandas as pd
 import random
 import subprocess
-import re
 import time
 import importlib
 import matplotlib.pyplot as plt
@@ -106,8 +105,6 @@ def create_test_case(base_case_name, test_case_number, MESH_DENSITY):
             shutil.copytree(item, dest, dirs_exist_ok=True)
         else:
             shutil.copy2(item, dest)
-
-
 
 
 def update_openfoam_variable(file_path, full_key, new_value):
@@ -252,28 +249,8 @@ def replace_power(value, test_case_number, speed, MESH_DENSITY,
     # Write the new lines in the file 
     with open(file_name, 'w', encoding='utf-8') as f:
         f.writelines(lines)
+  
 
-
-
-def calculate_h_from_Biot_number(Biot, keff, DOMAIN_SIZE_IN_MICRONS):
-    domain_volume = (DOMAIN_SIZE_IN_MICRONS[0] * DOMAIN_SIZE_IN_MICRONS[1] * 
-                     DOMAIN_SIZE_IN_MICRONS[2])
-    
-    domain_area_sums = (2 * DOMAIN_SIZE_IN_MICRONS[0] * 
-                        DOMAIN_SIZE_IN_MICRONS[1] + 
-                        2 * DOMAIN_SIZE_IN_MICRONS[1] * 
-                        DOMAIN_SIZE_IN_MICRONS[2] + 
-                        2 * DOMAIN_SIZE_IN_MICRONS[0] * 
-                        DOMAIN_SIZE_IN_MICRONS[2])
-    
-    L_characteristic = domain_volume / domain_area_sums  # In microns
-    
-    h_convection = Biot * keff / (L_characteristic * 1e-6)
-    
-    return  h_convection
-    
-
-# def create_simulation_cases(number_cases, base_case_name, parameters):
 def create_simulation_cases(number_cases, base_case_name, parameters, 
                             MESH_DENSITY, OPENFOAM_VERSION):
     # Create the simulation cases
