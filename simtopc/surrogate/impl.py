@@ -257,8 +257,7 @@ def generate_prediction_map(input_variables_for_map,
         y_predictions = y_scaler.inverse_transform(
                    y_predictions_scaled.reshape([y_predictions_scaled.shape[0], 
                                                y_predictions_scaled.shape[2]]))
-       
-        
+               
         plt.figure(figsize=(8, 6))
         plt.pcolormesh(x_for_predictions[:, :, 0].reshape(
                                                    [n_divisions_for_prediction, 
@@ -270,7 +269,12 @@ def generate_prediction_map(input_variables_for_map,
                                                    [n_divisions_for_prediction, 
                                                    n_divisions_for_prediction]), 
                                                    shading='auto', cmap='jet')
-        plt.colorbar(label="Predicted " + possible_outputs[i] + " (m)")
+
+        if ((possible_outputs[i] == "porosity_mean") or 
+            (possible_outputs[i] == "porosity_std")):
+            plt.colorbar(label = ("Predicted " + possible_outputs[i]))
+        else:
+            plt.colorbar(label="Predicted " + possible_outputs[i] + " (m)")
         plt.xlabel(x_name)
         plt.ylabel(y_name)
         plt.title("Predictions using the NN")
