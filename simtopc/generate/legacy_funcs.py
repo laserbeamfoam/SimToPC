@@ -55,6 +55,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import shutil
 from pathlib import Path
+from itertools import product
 
 
 def terminal(command):
@@ -320,3 +321,34 @@ def monitor_job_is_running(id_current_job, hostname,
             time.sleep(STATUS_CHECK_FREQUENCY_IN_MIN * 60)  # Sleep for X mints
         else:
             print("Job ", str(id_current_job), " is finished")
+
+def generate_parameters_txt_file(power_info, speed_info, laser_radius_info):
+    min_power = power_info["min"]
+    max_power = power_info["max"]
+    min_speed = speed_info["min"]
+    max_speed = speed_info["max"]
+    power = np.linspace(min_power, max_power, power_info["steps"])
+    speed = np.linspace(min_speed, max_speed, speed_info["steps"])
+
+    # combos = list(product(speed, power))
+    S, P = np.meshgrid(speed, power, indexing="ij")
+
+    combos = np.column_stack([
+        S.ravel(),   # speed
+        P.ravel(),   # power
+    ])
+
+    data = np.column_stack([
+        combos,
+        np.full(len(combos), float(laser_radius_info)),
+    ])
+
+    header = "Scanning Speed (m/s) | Power (W) | Spot size (m)"
+
+    np.savetxt(
+        "parameters.txt",
+        data,
+        header=header,
+        comments="# ",
+        fmt="%6.2f %5.0f %10.3e",
+    )

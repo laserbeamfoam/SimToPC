@@ -79,6 +79,18 @@ def run_generate(config_path: str, workdir: Optional[str] = None) -> None:
         running_on = cfg_all.running_on
         mesh_density = cfg_all.mesh_density
         mesh_density_raw = cfg_all.mesh_density
+        generate_parameters_file = cfg_all.generate_parameters_file
+        if generate_parameters_file:
+            pg = cfg_all.parameters_generation
+            # print(pg)
+            power_info = pg.get("power", {})
+            speed_info = pg.get("speed", {})
+            laser_radius_info = pg.get("laser_radius", {})
+            lf.generate_parameters_txt_file(power_info, speed_info, 
+                                         laser_radius_info)
+            # exit()
+
+
         mesh_label = Path(str(mesh_density_raw)).name 
         openfoam_version = getattr(cfg_all, "openfoam_version", "2412")
         status_check_frequency_min = int(

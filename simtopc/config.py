@@ -69,6 +69,8 @@ class Config:
     environment: EnvironmentConfig = field(default_factory=EnvironmentConfig)
     measure: Dict[str, Any] = field(default_factory=dict)
     surrogate: SurrogateConfig = field(default_factory=SurrogateConfig)
+    generate_parameters_file: bool = False
+    parameters_generation: Dict[str, Any] = field(default_factory=dict)
 
 
 def _resolve_path(base_dir: Path, maybe_path: str) -> str:
@@ -99,6 +101,9 @@ def load_config(path: str) -> Config:
     env_data = data.get("environment", {}) or {}
     environment = EnvironmentConfig(**env_data)
 
+    generate_parameters_file = bool(data.get("generate_parameters_file", False))
+    parameters_generation = data.get("parameters_generation", {}) or {}
+
     return Config(
         mesh_density=_resolve_path(base_dir, mesh_density),
         parameters_file=_resolve_path(base_dir, parameters_file),
@@ -107,6 +112,8 @@ def load_config(path: str) -> Config:
         environment=environment,
         measure=data.get("measure", {}) or {},
         surrogate=surrogate,
+        generate_parameters_file=generate_parameters_file,
+        parameters_generation=parameters_generation,
     )
 
     
