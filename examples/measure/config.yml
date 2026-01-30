@@ -3,6 +3,18 @@ parameters_file: parameters.txt
 output_dir: results
 running_on : Xenosim
 status_check_frquency_in_min : 1
+generate_parameters_file: false
+
+parameters_generation:
+  power:
+    min: 125
+    max: 225
+    steps: 3 # Number of steps
+  speed:
+    min: 0.75
+    max: 2.25
+    steps: 4 # Number of steps
+  laser_radius: 50e-6
 
 measure:
   y_begin : 100e-6
