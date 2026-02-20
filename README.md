@@ -6,7 +6,7 @@
 
 It supports **case generation and execution**, automated **post-processing**, and the extraction of **track-resolved melt-pool geometry and porosity metrics** from high-fidelity simulations. By analysing the melt pool along the **entire scan track**, SimToPC enables full-field characterisation beyond conventional centreline or single-slice measurements.
 
-SimToPC includes an automated **track continuity check** that identifies whether a continuous melt track is formed. Geometric metrics are evaluated only for continuous tracks, while discontinuous cases are flagged and excluded from further analysis.
+SimToPC includes an automated **track-continuity check** that determines whether a continuous melt track forms. Geometric metrics are evaluated only for continuous tracks, while discontinuous cases are flagged and excluded from further analysis.
 
 The tool is designed to work with **OpenFOAM-based LPBF solvers** and is demonstrated using **laserMeltFoam**. It produces **structured, machine-learning-ready datasets** and can optionally be used to train surrogate models for rapid exploration of process-parameter spaces.
 
@@ -24,7 +24,7 @@ Typical outputs are illustrated below.
 |-----------|----------|
 | ![](docs/images/Depth.png) | ![](docs/images/Porosity.png) |
 
-The extracted metrics are defined on a **per-cross-section basis** along continuous tracks, as illustrated below.
+The extracted metrics are defined **per cross-section** along continuous tracks, as illustrated below.
 
 ![Melt pool geometry](docs/images/meltpool_geometry.png)
 
@@ -57,9 +57,9 @@ The available commands are:
 
 - **measure**: post-processes completed simulations, assesses track continuity, and extracts melt-pool geometry and porosity metrics.
 
-- **surrogate** (optional): trains a surrogate model from the extracted datasets for rapid exploration of the process-parameter space.
+- **surrogate** (optional): trains a surrogate model from the extracted datasets to rapidly explore the process-parameter space.
 
-Only the **measure** stage is required to obtain the primary outputs of SimToPC.
+Only the **measure** stage is required to obtain SimToPC's primary outputs.
 
 
 
