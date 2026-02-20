@@ -1,0 +1,393 @@
+"""
+License
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation, either version 3 of the License,
+  or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Description
+  Surrogate-model implementation for the SimToPC workflow.
+
+  This module implements data-driven surrogate modelling based on
+  geometry and porosity metrics extracted from simulation data. It
+  provides routines to assemble training datasets, scale inputs and
+  outputs, define and train neural-network models, and generate
+  prediction and processing maps over the parameter space.
+
+  The surrogate model is intended as an optional, downstream component
+  of the SimToPC workflow.
+
+Assumptions
+  - Measurement outputs have been generated prior to training
+  - Input parameters and outputs are provided in consistent units
+  - Neural-network training is performed using TensorFlow/Keras
+  - The surrogate model is used for interpolation within the sampled
+    parameter space
+
+Authors
+  Simon A. Rodriguez, University College Dublin (UCD)
+  Alojz Ivankovic, University College Dublin (UCD)
+  Petar Cosic, University College Dublin (UCD)
+  Tom Flint, University of Manchester (UoM)
+  Philip Cardiff, University College Dublin (UCD)
+"""
+
+import os
+import re
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.optimizers import Adam
+from sklearn.preprocessing import MinMaxScaler
+from joblib import dump, load
+import numpy as np
+import pandas as pd
+import random
+import subprocess
+import time
+import importlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from pathlib import Path
+
+def terminal(command):
+    os.system(command)
+
+def create_NN(n_nodes, n_input_variables, n_output_variables):
+    # Set the neural network up
+    model = Sequential()
+    model.add(Dense(units = n_nodes, 
+                    kernel_initializer = 'he_normal', 
+                    activation = 'relu', input_shape = (None, 
+                                                        n_input_variables)))
+    model.add(Dense(units = n_output_variables, 
+                    kernel_initializer = 'he_normal', activation = 'linear'))
+    model.compile(optimizer=Adam(lr = 0.01), loss='mse')
+    
+    return model
+            
+
+def create_scalers():
+    x_scaler =  MinMaxScaler()
+    y_scaler  =  MinMaxScaler()
+    
+    return x_scaler, y_scaler
+
+def fit_scalers(x_scaler, y_scaler, input_data, output_data):
+    x_scaler.fit(input_data.reshape([input_data.shape[0], 
+                                     input_data.shape[2]])) 
+    y_scaler.fit(output_data.reshape([output_data.shape[0], 
+                                      output_data.shape[2]]))
+    
+def scale_data(x_scaler, y_scaler, input_data, output_data):
+    input_data_scaled = x_scaler.transform(input_data.reshape(
+                                   [input_data.shape[0], input_data.shape[2]])) 
+    output_data_scaled = y_scaler.transform(output_data.reshape(
+                                 [output_data.shape[0], output_data.shape[2]]))
+    
+    return input_data_scaled, output_data_scaled
+
+           
+def create_width_depth_height_to_flat_data(good_simulation_cases, 
+                                           mesh_density):
+    # Assemble the training set
+    width_mean_data = []
+    width_std_data = []
+    depth_mean_data = []
+    depth_std_data = []
+    height_to_flat_mean_data = []
+    height_to_flat_std_data = []
+    porosity_mean_data = []
+    porosity_std_data = []
+    
+    cases_ran_properly_and_have_continuous_meltpool = []
+    for i in good_simulation_cases:
+        name_new_folder = mesh_density + "/test_case_" + str(i)
+        meltpool_i_is_cotinuous = load(
+                              str(Path(name_new_folder) / "continuous.joblib"))
+        
+        if (meltpool_i_is_cotinuous):
+            # Read the data
+            df = pd.read_csv(
+                  str(Path(name_new_folder) / "cross_sections_statistics.csv"))
+            width_mean = np.mean(df["width"].to_numpy())
+            width_std = np.std(df["width"].to_numpy())
+            depth_mean = np.mean(df["depth"].to_numpy())
+            depth_std = np.std(df["depth"].to_numpy())
+            height_to_flat_mean = np.mean(df["height"].to_numpy())
+            height_to_flat_std = np.std(df["height"].to_numpy())
+            porosity_mean = np.mean(df["porosity_at_iy"].to_numpy())
+            porosity_std = np.std(df["porosity_at_iy"].to_numpy())            
+            
+            width_mean_data.append(width_mean)
+            width_std_data.append(width_std)
+            depth_mean_data.append(depth_mean)
+            depth_std_data.append(depth_std)
+            height_to_flat_mean_data.append(height_to_flat_mean)
+            height_to_flat_std_data.append(height_to_flat_std)
+            porosity_mean_data.append(porosity_mean)
+            porosity_std_data.append(porosity_std)
+            cases_ran_properly_and_have_continuous_meltpool.append(i)
+
+    cases_ran_properly_and_have_continuous_meltpool = np.array(
+                               cases_ran_properly_and_have_continuous_meltpool
+                                                              )
+    return width_mean_data, width_std_data, depth_mean_data, depth_std_data, \
+           height_to_flat_mean_data, height_to_flat_std_data, \
+           porosity_mean_data, porosity_std_data, \
+           cases_ran_properly_and_have_continuous_meltpool
+           
+
+def seed_everything(SEED):
+    random.seed(SEED)
+    np.random.seed(SEED)
+    tf.random.set_seed(SEED)
+    
+
+def create_input_data_and_output_data(width_mean_data, width_std_data, 
+                                       depth_mean_data, depth_std_data, 
+                                       height_to_flat_mean_data, 
+                                       height_to_flat_std_data, 
+                                       porosity_mean_data, porosity_std_data,
+                                       number_useful_cases, 
+                               cases_ran_properly_and_have_continuous_meltpool,
+                                      parameters):
+    
+    width_mean_data = np.array(width_mean_data).reshape((number_useful_cases, 
+                                                         1, 1))
+    width_std_data = np.array(width_std_data).reshape((number_useful_cases, 
+                                                       1, 1))
+    depth_mean_data = np.array(depth_mean_data).reshape((number_useful_cases, 
+                                                         1, 1))
+    depth_std_data = np.array(depth_std_data).reshape((number_useful_cases, 
+                                                       1, 1))
+    height_to_flat_mean_data = np.array(height_to_flat_mean_data).reshape(
+                                                    (number_useful_cases, 1, 1)
+                                                                         )
+    height_to_flat_std_data = np.array(height_to_flat_std_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                                       )
+    porosity_mean_data = np.array(porosity_mean_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                             )
+    porosity_std_data = np.array(porosity_std_data).reshape(
+                                                   (number_useful_cases, 1, 1)
+                                                           )
+    parameters_valid_cases = parameters[
+                             cases_ran_properly_and_have_continuous_meltpool-1]
+    input_data = parameters_valid_cases.reshape((number_useful_cases, 1, 
+                                              parameters_valid_cases.shape[1]))
+    output_data = np.concatenate((width_mean_data, width_std_data, 
+                                  depth_mean_data, depth_std_data, 
+                                  height_to_flat_mean_data, 
+                                  height_to_flat_std_data, porosity_mean_data, 
+                                  porosity_std_data), axis = 2)
+    
+    return input_data, output_data, parameters_valid_cases
+    
+
+def define_good_simulation_cases(mesh_density, number_cases):
+    good_simulation_cases = [] # List of the cases that ran properly
+    for i in range(1, number_cases + 1):
+        name_new_folder = mesh_density + "/test_case_" + str(i)
+        files_in_folder_i = os.listdir(str(Path(name_new_folder)))
+        if 'finished.txt' in files_in_folder_i:
+            good_simulation_cases.append(i)
+    if (len(good_simulation_cases) < number_cases):
+        print("Some simulation cases did not run properly.")
+    return good_simulation_cases
+
+
+def generate_x_y_levels_for_predictions(parameters_valid_cases, x_ind, y_ind, 
+                                                   n_divisions_for_prediction):
+
+    x_vals = np.linspace(min(parameters_valid_cases[:, x_ind]), 
+                         max(parameters_valid_cases[:, x_ind]), 
+                         n_divisions_for_prediction)
+    y_vals = np.linspace(min(parameters_valid_cases[:, y_ind]), 
+                         max(parameters_valid_cases[:, y_ind]), 
+                         n_divisions_for_prediction)
+    
+    return x_vals, y_vals
+    
+
+def generate_prediction_map(input_variables_for_map, 
+                            parameters_valid_cases, x_scaler, y_scaler, model,
+                            possible_outputs, x_name, y_name, 
+                            n_divisions_for_prediction):
+
+    
+    for i in range(len(possible_outputs)):
+        x_vals, y_vals = generate_x_y_levels_for_predictions(
+                                                        parameters_valid_cases, 
+                                                    input_variables_for_map[0],
+                                                    input_variables_for_map[1],
+                                                    n_divisions_for_prediction)
+    
+        # Generate a grid with x_vals and y_vals
+        x, y = np.meshgrid(x_vals, y_vals)
+    
+        # Reshape x and y to make predictions with the NN
+        x_for_map = x.reshape((x.shape[0] * x.shape[0], 1, 1))
+        y_for_map = y.reshape((y.shape[0] * y.shape[0], 1, 1))
+        z_for_map = np.zeros(x_for_map.shape) #This initialises z_for_map
+        z_for_map[:, :] =  parameters_valid_cases[:, 2][i]
+    
+        # x_for_predictions is a list. Every element of the list is a numpy  
+        # array that contains all the elements that will be used for 
+        # predictions. For instance, if the parameters.txt file has m columns,  
+        # x_for_predictions will have m elements. Each element is a numpy array 
+        #  of all the values that variable will take at predicion time. 
+        x_for_predictions = np.concatenate((x_for_map, y_for_map, z_for_map), 
+                                           axis = 2)
+        x_for_predictions_scaled = x_scaler.transform(
+                         x_for_predictions.reshape([x_for_predictions.shape[0],
+                                                 x_for_predictions.shape[2]] ))
+        y_predictions_scaled = model.predict(
+                                    x_for_predictions_scaled[:, np.newaxis, :])
+        y_predictions = y_scaler.inverse_transform(
+                   y_predictions_scaled.reshape([y_predictions_scaled.shape[0], 
+                                               y_predictions_scaled.shape[2]]))
+               
+        plt.figure(figsize=(8, 6))
+        plt.pcolormesh(x_for_predictions[:, :, 0].reshape(
+                                                   [n_divisions_for_prediction, 
+                                                   n_divisions_for_prediction]), 
+                        x_for_predictions[:, :, 1].reshape(
+                                                   [n_divisions_for_prediction, 
+                                                  n_divisions_for_prediction]), 
+                        y_predictions[:, i].reshape(
+                                                   [n_divisions_for_prediction, 
+                                                   n_divisions_for_prediction]), 
+                                                   shading='auto', cmap='jet')
+
+        if ((possible_outputs[i] == "porosity_mean") or 
+            (possible_outputs[i] == "porosity_std")):
+            plt.colorbar(label = ("Predicted " + possible_outputs[i]))
+        else:
+            plt.colorbar(label="Predicted " + possible_outputs[i] + " (m)")
+        plt.xlabel(x_name)
+        plt.ylabel(y_name)
+        plt.title("Predictions using the NN")
+        plt.tight_layout()
+        plt.savefig(possible_outputs[i]+ "_predictions.png")
+    
+
+def plot_history_training(history, destination_file):
+    # Plot loss vs. epochs
+    plt.plot(history.history['loss'], label='Training loss')
+    plt.plot(history.history['val_loss'], label='Validation loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    # plt.show()
+    plt.savefig(destination_file + "/loss_vs_iterations.png", dpi=300)  
+
+
+def run_surrogate(config_path: str) -> None:
+    """
+    Train surrogate model(replaces create_and_train_surrogate_model.py script).
+    """
+    # Import TensorFlow only when running surrogate
+    import tensorflow as tf  # noqa: F401
+
+    from simtopc.config import load_config
+
+    cfg_path = Path(config_path).expanduser().resolve()
+    cfg = load_config(str(cfg_path))
+
+    MESH_DENSITY = cfg.mesh_density
+    SEED = cfg.surrogate.seed
+    n_epochs = cfg.surrogate.n_epochs
+    n_divisions_for_prediction = cfg.surrogate.n_divisions_for_prediction
+    POSSIBLE_OUTPUTS = cfg.surrogate.possible_outputs
+
+    # Seed
+    seed_everything(SEED)
+
+    # Load parameters
+    parameters = np.loadtxt(cfg.parameters_file, skiprows=1)
+    number_cases = parameters.shape[0]
+
+    # Select good cases
+    good_simulation_cases = define_good_simulation_cases(MESH_DENSITY, 
+                                                                  number_cases)
+
+    # Build dataset from measure outputs
+    (width_mean_data, width_std_data, depth_mean_data, depth_std_data,
+     height_to_flat_mean_data, height_to_flat_std_data, 
+     porosity_mean_data, porosity_std_data, 
+     cases_ok_continuous) = create_width_depth_height_to_flat_data(
+        good_simulation_cases, MESH_DENSITY
+    )
+
+    # Create NN
+    model = create_NN(10, 3, 8)
+
+    number_useful_cases = cases_ok_continuous.shape[0]
+
+    x_scaler, y_scaler = create_scalers()
+
+    (input_data, output_data, 
+    parameters_valid_cases) = create_input_data_and_output_data(
+        width_mean_data, width_std_data,
+        depth_mean_data, depth_std_data,
+        height_to_flat_mean_data, height_to_flat_std_data,
+        porosity_mean_data, porosity_std_data, number_useful_cases, 
+        cases_ok_continuous, parameters,
+    )
+
+    fit_scalers(x_scaler, y_scaler, input_data, output_data)
+
+    input_data_scaled, output_data_scaled = scale_data(
+        x_scaler, y_scaler, input_data, output_data
+    )
+
+    input_data_scaled = input_data_scaled[:, np.newaxis, :]
+    output_data_scaled = output_data_scaled[:, np.newaxis, :]
+
+    history = model.fit(
+        input_data_scaled,
+        output_data_scaled,
+        epochs=n_epochs,
+        validation_split=0.01,
+    )
+
+    # Output directory: keep same as script for now
+    out_dir = Path("surrogate_model")
+    out_dir.mkdir(exist_ok=True)
+
+    model.save(str(out_dir / "NN.h5"))
+    dump(x_scaler, str(out_dir / "x_scaler.joblib"))
+    dump(y_scaler, str(out_dir / "y_scaler.joblib"))
+    plot_history_training(history, str(out_dir))
+
+    # Processing/prediction maps (same behavior as script)
+    input_variables_for_map = [0, 1]
+    generate_prediction_map(
+        input_variables_for_map,
+        parameters_valid_cases,
+        x_scaler,
+        y_scaler,
+        model,
+        POSSIBLE_OUTPUTS,
+        "Scanning speed (m/s)",
+        "Power (W)",
+        n_divisions_for_prediction,
+    )
+
+    images_dir = Path("images_from_predictions")
+    images_dir.mkdir(exist_ok=True)
+    for png in Path(".").glob("*.png"):
+        png.rename(images_dir / png.name)
+
+    print("Thanks for using this software.")
