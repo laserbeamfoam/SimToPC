@@ -6,7 +6,7 @@ from the repository itself, without relying on chat history.
 
 Current Focus
 - Main target: improve `measure` toward publication-quality scientific software
-- Current phase: `P3` numerical robustness and method consistency
+- Current phase: transition from `P3` to `P6`
 - Active implementation branch: `measure-p3-numerical-impl`
 
 Plan Files
@@ -32,6 +32,8 @@ Important Commits
 - `458120a` Represent analysis windows explicitly
 - `4121b2b` Centralize section validity evaluation
 - `63da505` Extract section geometry helper
+- `f3b4a48` Centralize mesh rounding helpers
+- `1307e48` Extract row evaluation helper
 
 What P2 Achieved
 - Trimming is configurable instead of hard-coded
@@ -49,6 +51,8 @@ What P3 Has Achieved So Far
 - Explicit `SectionSupport` representation
 - Shared helper for section validity evaluation
 - Shared helper for section geometry extraction
+- Shared helper for row evaluation
+- Centralized mesh-rounding helpers
 - Reduced duplication inside `legacy_funcs.py`
 
 Validated Real Cases
@@ -59,15 +63,17 @@ Validated Real Cases
 Current Status
 - The `measure` core is more explicit and less fragile than before
 - `P2` can be treated as provisionally closed
-- `P3` is in progress and already improving internal consistency
+- `P3` can be treated as provisionally closed
+- The next recommended block is `P6` input validation and clear errors
 
 Suggested Next Step
-- Continue `P3` by reducing remaining duplication between continuity and
-  statistics paths, but without changing scientific behavior
-- After that, reassess whether the next best move is:
-  - more `P3`
-  - input validation improvements
-  - or the first real test scaffolding
+- Define and implement `P6`
+- Focus on early validation of config, geometry assumptions, and clearer
+  user-facing errors/warnings
+- After `P6`, reassess whether the next best move is:
+  - test scaffolding
+  - reproducibility work
+  - or a smaller follow-up cleanup
 
 Notes
 - Do not include `.codex` in commits
