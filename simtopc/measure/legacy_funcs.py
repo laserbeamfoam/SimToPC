@@ -102,6 +102,18 @@ class SectionGeometry:
     z_max_mesh: float
 
 
+@dataclass(frozen=True)
+class RowEvaluation:
+    x_min_mesh: float
+    x_max_mesh: float
+    row_has_pores: bool
+    n_pores: int
+    width_row: float
+    number_non_void_cells: int
+    pore_locations: list
+    pores_are_internal: list
+
+
 def terminal(command):
     os.system(command)
 
@@ -199,6 +211,69 @@ def _build_section_geometry(df, y_actual, y_values, y_tol, cell_size):
         x_max_mesh=x_max_mesh,
         z_min_mesh=z_min_mesh,
         z_max_mesh=z_max_mesh,
+    )
+
+
+def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size):
+    mask_at_row = (iz == _round_array(z_at_iy))
+    cells_at_iy_iz = cells_at_iy[mask_at_row]
+    x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
+    if x_at_iy_iz.shape[0] == 0:
+        return None
+
+    min_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
+        np.min(x_at_iy_iz),
+        cell_size,
+    )
+    max_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
+        np.max(x_at_iy_iz),
+        cell_size,
+    )
+
+    distance_minx_max_at_zlevel = _round_scalar(
+        max_x_at_iy_iz_that_is_in_original_mesh
+        - min_x_at_iy_iz_that_is_in_original_mesh
+    )
+    expected_number_cells_at_iy_iz = int(distance_minx_max_at_zlevel / cell_size)
+
+    ix = min_x_at_iy_iz_that_is_in_original_mesh
+    number_non_void_cells_in_row = 0
+    row_has_pores = False
+    n_pores_in_row = 0
+    width_row = _round_scalar(
+        max_x_at_iy_iz_that_is_in_original_mesh
+        - min_x_at_iy_iz_that_is_in_original_mesh
+    )
+
+    pore_locations_at_row_i = []
+    pores_at_row_i_are_internal = []
+    if expected_number_cells_at_iy_iz > 1:
+        x_at_iy_iz_rounded = _round_array(x_at_iy_iz)
+        while ix < max_x_at_iy_iz_that_is_in_original_mesh:
+            if np.sum(np.isclose(ix, x_at_iy_iz_rounded)) > 0:
+                number_non_void_cells_in_row += 1
+            else:
+                n_pores_in_row += 1
+                row_has_pores = True
+                pore_locations_at_row_i.append(ix)
+                mask_at_ix = np.isclose(ix, x_at_iy)
+                cells_at_ix_iy = cells_at_iy[mask_at_ix]
+                z_at_ix_iy = cells_at_ix_iy["Points_2"]
+                pores_at_row_i_are_internal.append(np.sum(iz < z_at_ix_iy) > 0)
+            ix = _round_scalar(ix + cell_size)
+
+    if expected_number_cells_at_iy_iz == 1:
+        number_non_void_cells_in_row = 1
+
+    return RowEvaluation(
+        x_min_mesh=min_x_at_iy_iz_that_is_in_original_mesh,
+        x_max_mesh=max_x_at_iy_iz_that_is_in_original_mesh,
+        row_has_pores=row_has_pores,
+        n_pores=n_pores_in_row,
+        width_row=width_row,
+        number_non_void_cells=number_non_void_cells_in_row,
+        pore_locations=pore_locations_at_row_i,
+        pores_are_internal=pores_at_row_i_are_internal,
     )
 
 
@@ -598,83 +673,34 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
             iz = z_min_at_iy_that_is_in_original_mesh
             
             while (iz <= z_max_at_iy_that_is_in_original_mesh):
-                mask2 = (iz == _round_array(z_at_iy))
-                cells_at_iy_iz = cells_at_iy[mask2]
-                x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
-                if (x_at_iy_iz.shape[0] == 0):
+                row_evaluation = _evaluate_section_row(
+                    cells_at_iy=cells_at_iy,
+                    x_at_iy=x_at_iy,
+                    z_at_iy=z_at_iy,
+                    iz=iz,
+                    cell_size=cell_size,
+                )
+                if row_evaluation is None:
                     iz = z_max_at_iy_that_is_in_original_mesh
                     iz = _round_scalar(iz + cell_size) 
                               
                 else:
-                    min_x_at_iy_iz = np.min(x_at_iy_iz)
-                    max_x_at_iy_iz = np.max(x_at_iy_iz)
-                    
-                    
-                    min_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
-                        min_x_at_iy_iz,
-                        cell_size,
-                    )
-                    max_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
-                        max_x_at_iy_iz,
-                        cell_size,
-                    )
-                    
-                    distance_minx_max_at_zlevel = _round_scalar(
-                        max_x_at_iy_iz_that_is_in_original_mesh - 
-                        min_x_at_iy_iz_that_is_in_original_mesh)
-                    expected_number_cells_at_iy_iz = int(
-                                         distance_minx_max_at_zlevel/cell_size)
-                   
-                    ix = min_x_at_iy_iz_that_is_in_original_mesh
-                    init_in = ix
-                    number_non_void_cells_in_row = 0
-                    
-                    row_has_pores = False
-                    n_pores_in_row = 0
-                    width_row = _round_scalar(
-                                      max_x_at_iy_iz_that_is_in_original_mesh - 
-                                       min_x_at_iy_iz_that_is_in_original_mesh)
-                    
-                    pore_locations_at_row_i = []
-                    pores_at_row_i_are_internal = []
-                    if (expected_number_cells_at_iy_iz > 1):
-                        while (ix < max_x_at_iy_iz_that_is_in_original_mesh):
-                            if np.sum(np.isclose(ix, _round_array(x_at_iy_iz))) > 0:
-                                cell_is_a_pore = False
-                                number_non_void_cells_in_row = (
-                                                  number_non_void_cells_in_row 
-                                                  + 1)
-                            else:
-                                cell_is_a_pore = True
-                                n_pores_in_row = n_pores_in_row + 1
-                                row_has_pores = True
-                                pore_locations_at_row_i.append(ix)
-                                mask3 = np.isclose(ix, x_at_iy)
-                                cells_at_ix_iy = cells_at_iy[mask3]
-                                z_at_ix_iy = cells_at_ix_iy["Points_2"]
-                                pores_at_row_i_are_internal.append(
-                                                   np.sum(iz < z_at_ix_iy) > 0)
-                                                        
-                            ix = _round_scalar(ix + cell_size)
-                            
-                    if (expected_number_cells_at_iy_iz == 1):
-                        number_non_void_cells_in_row = 1
-                    
-                    if (n_pores_in_row > 0):
-                        pore_locations_at_row_i.insert(0, id_row)
+                    if row_evaluation.n_pores > 0:
+                        pore_locations_at_row_i = [id_row, *row_evaluation.pore_locations]
                         pore_locatios_at_rows.append(pore_locations_at_row_i)
-                        pores_at_row_i_are_internal.insert(0, id_row)
+                        pores_at_row_i_are_internal = [id_row, *row_evaluation.pores_are_internal]
                         pores_at_row_are_internal.append(
-                                                   pores_at_row_i_are_internal)
+                            pores_at_row_i_are_internal
+                        )
                     else:
                         pore_locatios_at_rows.append([id_row, "NA"])
                         pores_at_row_are_internal.append([id_row, "NA"])
                     
                     new_statistics_row = [id_row, iy, iz, 
-                                       min_x_at_iy_iz_that_is_in_original_mesh, 
-                                       max_x_at_iy_iz_that_is_in_original_mesh, 
-                                      row_has_pores, n_pores_in_row, width_row,
-                                                  number_non_void_cells_in_row]
+                                       row_evaluation.x_min_mesh, 
+                                       row_evaluation.x_max_mesh, 
+                                      row_evaluation.row_has_pores, row_evaluation.n_pores, row_evaluation.width_row,
+                                                  row_evaluation.number_non_void_cells]
                     
                     Statistics.append(new_statistics_row)
                     iz = _round_scalar(iz + cell_size)
