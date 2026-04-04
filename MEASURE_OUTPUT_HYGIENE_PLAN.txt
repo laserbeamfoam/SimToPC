@@ -1,0 +1,76 @@
+Measure Output Hygiene Plan
+
+Purpose
+Reduce the amount of `measure` artefacts left in each `test_case_*` directory
+and separate user-facing results from internal or temporary files.
+
+Proposed Directory Structure
+
+- `measure_results/`
+- `measure_aux/`
+- `measure_work/`
+
+Classification
+
+Results
+- `row_statistics.csv`
+- `cross_sections_statistics.csv`
+- `images_full_meltpool/`
+
+Auxiliary / Metadata
+- `continuous.joblib`
+- `void_iy_levels.joblib`
+- `measure_inputs.json`
+- `meltpool.csv`
+
+Temporary / Work Files
+- `extract_meltpool.py`
+- `extract_x_z_slice_meltpool.py`
+- `extract_y_z_slice_meltpool.py`
+- `functions.py`
+
+Implementation Plan
+
+O1. Define and create the target directories
+- `measure_results/`
+- `measure_aux/`
+- `measure_work/`
+
+O2. First pass: move main results only
+- move `row_statistics.csv` to `measure_results/`
+- move `cross_sections_statistics.csv` to `measure_results/`
+- move `images_full_meltpool/` to `measure_results/`
+
+O3. Second pass: move auxiliary files
+- move `continuous.joblib` to `measure_aux/`
+- move `void_iy_levels.joblib` to `measure_aux/`
+- move `measure_inputs.json` to `measure_aux/`
+- move `meltpool.csv` to `measure_aux/`
+
+O4. Third pass: isolate temporary scripts
+- copy or move helper scripts into `measure_work/`
+- update execution paths accordingly
+
+O5. Update code and documentation
+- update internal output paths
+- update `examples/measure/README.md`
+- update output expectations where needed
+
+O6. Validate
+- rerun representative 75 micron case
+- rerun representative 100 micron case
+- rerun automated test suite
+- confirm output layout matches the intended structure
+
+Recommended Order
+
+1. First pass only: `measure_results/`
+2. Then auxiliary files
+3. Then temporary/work files
+
+Reasoning
+
+The first pass offers the best ratio of value to risk:
+- it improves user-facing cleanliness immediately,
+- it affects the most visible outputs,
+- and it is less invasive than moving internal coordination files first.
