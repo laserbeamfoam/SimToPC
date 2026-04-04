@@ -44,6 +44,18 @@ class TrimConfig:
     start_spot_sizes: float = 0.0
     end_spot_sizes: float = 0.0
 
+    def validate(self) -> None:
+        if self.start_spot_sizes < 0:
+            raise ValueError(
+                "measure.trim.start_spot_sizes must be non-negative, "
+                f"got {self.start_spot_sizes}."
+            )
+        if self.end_spot_sizes < 0:
+            raise ValueError(
+                "measure.trim.end_spot_sizes must be non-negative, "
+                f"got {self.end_spot_sizes}."
+            )
+
 @dataclass(frozen=True)
 class MeasureConfig:
     y_begin: float
@@ -53,3 +65,26 @@ class MeasureConfig:
     cell_size: float
     min_points_per_zrow: int = 4
     trim: TrimConfig = field(default_factory=TrimConfig)
+
+    def validate(self) -> None:
+        if self.y_end <= self.y_begin:
+            raise ValueError(
+                "measure.y_end must be greater than measure.y_begin, "
+                f"got y_begin={self.y_begin} and y_end={self.y_end}."
+            )
+        if self.x_max < self.x_min:
+            raise ValueError(
+                "measure.x_max must be greater than or equal to measure.x_min, "
+                f"got x_min={self.x_min} and x_max={self.x_max}."
+            )
+        if self.cell_size <= 0:
+            raise ValueError(
+                "measure.cell_size must be positive, "
+                f"got {self.cell_size}."
+            )
+        if self.min_points_per_zrow < 1:
+            raise ValueError(
+                "measure.min_points_per_zrow must be at least 1, "
+                f"got {self.min_points_per_zrow}."
+            )
+        self.trim.validate()
