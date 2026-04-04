@@ -6,13 +6,16 @@ from the repository itself, without relying on chat history.
 
 Current Focus
 - Main target: improve `measure` toward publication-quality scientific software
-- Current phase: transition from `P3` to `P6`
-- Active implementation branch: `measure-p3-numerical-impl`
+- Current phase: late `P8` consolidation and SoftwareX-oriented polish
+- Active implementation branch: `measure-output-results-layout`
 
 Plan Files
 - `MEASURE_PLAN.txt`
 - `MEASURE_P2_TRIMMING_SPEC.txt`
 - `MEASURE_P3_NUMERICAL_SPEC.txt`
+- `MEASURE_P6_VALIDATION_SPEC.txt`
+- `MEASURE_P7_TESTS_SPEC.txt`
+- `MEASURE_P8_REPRO_SPEC.txt`
 
 Important Branches
 - `measure-refactor-base`
@@ -20,6 +23,9 @@ Important Branches
 - `measure-p2-trimming-impl`
 - `measure-config-loader-fix`
 - `measure-p3-numerical-impl`
+- `measure-p6-validation-impl`
+- `measure-p7-tests-impl`
+- `measure-output-results-layout`
 
 Important Commits
 - `0426f7d` Add measure refactor plan
@@ -34,6 +40,13 @@ Important Commits
 - `63da505` Extract section geometry helper
 - `f3b4a48` Centralize mesh rounding helpers
 - `1307e48` Extract row evaluation helper
+- `3234a1a` Validate measure configuration inputs
+- `639dcb8` Show cleaner measure config errors
+- `8c3262f` Warn when analysis window is adjusted
+- `c83667a` Add initial measure tests
+- `911f8e2` Add synthetic continuity tests
+- `4c61595` Improve measure example reproducibility docs
+- `dd9a97d` Organize measure outputs into dedicated folders
 
 What P2 Achieved
 - Trimming is configurable instead of hard-coded
@@ -46,7 +59,7 @@ What P2 Achieved
   - spot diameter = 100 microns
 - Extra unknown keys in config no longer break `measure`
 
-What P3 Has Achieved So Far
+What P3 Achieved
 - Explicit `AnalysisWindow` representation
 - Explicit `SectionSupport` representation
 - Shared helper for section validity evaluation
@@ -54,6 +67,30 @@ What P3 Has Achieved So Far
 - Shared helper for row evaluation
 - Centralized mesh-rounding helpers
 - Reduced duplication inside `legacy_funcs.py`
+
+What P6 Achieved So Far
+- Early validation of `measure` inputs
+- Clearer config-related error messages
+- Cleaner CLI output for invalid `measure` configs
+- Informative warning when the nominal window is reduced to the observed meltpool window
+
+What P7 Achieved So Far
+- Minimal `pytest`-based test infrastructure
+- Tests for `MeasureConfig` validation
+- Tests for `measure` config parsing helpers
+- Tests for mesh snapping and nominal/observed window logic
+- Tests for trimming behavior and excessive-trimming errors
+- Tests for synthetic continuity, discontinuity, and spurious-level handling
+- Current automated result: `20` tests passing locally
+
+What P8 Achieved So Far
+- `examples/measure` has been promoted toward the official reproducibility example
+- `examples/measure/README.md` was rewritten to act as an operational guide
+- `examples/measure/config.yml` was simplified to focus on `measure`
+- `measure` outputs are now grouped into:
+  - `measure_results/` for primary outputs
+  - `measure_aux/` for auxiliary files
+  - `measure_work/` for temporary work artifacts
 
 Validated Real Cases
 - 75 micron spot diameter: works
@@ -64,16 +101,15 @@ Current Status
 - The `measure` core is more explicit and less fragile than before
 - `P2` can be treated as provisionally closed
 - `P3` can be treated as provisionally closed
-- The next recommended block is `P6` input validation and clear errors
+- `P6` has a solid first pass and can be treated as provisionally advanced
+- `P7` now has a meaningful automated base around config, numerics, and continuity
+- `P8` now includes documentation cleanup and a cleaner on-disk output layout
 
 Suggested Next Step
-- Define and implement `P6`
-- Focus on early validation of config, geometry assumptions, and clearer
-  user-facing errors/warnings
-- After `P6`, reassess whether the next best move is:
-  - test scaffolding
-  - reproducibility work
-  - or a smaller follow-up cleanup
+- Decide whether the next highest-value move is:
+  - further polishing the reproducibility example and output structure
+  - pausing to re-evaluate readiness against SoftwareX expectations
+  - or defining the next architecture-focused cleanup after the SoftwareX pass
 
 Notes
 - Do not include `.codex` in commits
