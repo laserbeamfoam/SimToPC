@@ -37,6 +37,7 @@ Authors
 
 
 from dataclasses import dataclass, field
+from dataclasses import fields as dataclass_fields
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import yaml
@@ -83,6 +84,11 @@ def _resolve_path(base_dir: Path, maybe_path: str) -> str:
     return str((base_dir / p).resolve())
 
 
+def _filter_known_dataclass_fields(data: Dict[str, Any], dataclass_type) -> Dict[str, Any]:
+    allowed = {field.name for field in dataclass_fields(dataclass_type)}
+    return {key: value for key, value in data.items() if key in allowed}
+
+
 def load_config(path: str) -> Config:
     config_path = Path(path).expanduser().resolve()
     if not config_path.exists():
@@ -92,6 +98,7 @@ def load_config(path: str) -> Config:
     data = yaml.safe_load(config_path.read_text()) or {}
 
     sur_data = data.get("surrogate", {}) or {}
+    sur_data = _filter_known_dataclass_fields(sur_data, SurrogateConfig)
     surrogate = SurrogateConfig(**sur_data)
 
     mesh_density = data["mesh_density"]
@@ -99,6 +106,7 @@ def load_config(path: str) -> Config:
     output_dir = data["output_dir"]
 
     env_data = data.get("environment", {}) or {}
+    env_data = _filter_known_dataclass_fields(env_data, EnvironmentConfig)
     environment = EnvironmentConfig(**env_data)
 
     generate_parameters_file = bool(data.get("generate_parameters_file", False))
