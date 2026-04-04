@@ -52,7 +52,7 @@ def test_is_meltpool_continuous_returns_true_for_simple_continuous_case(tmp_path
     )
 
     assert result is True
-    assert load(case_dir / "continuous.joblib") is True
+    assert load(case_dir / "measure_aux" / "continuous.joblib") is True
 
 
 def test_is_meltpool_continuous_returns_false_when_a_section_is_missing(tmp_path):
@@ -72,8 +72,8 @@ def test_is_meltpool_continuous_returns_false_when_a_section_is_missing(tmp_path
     )
 
     assert result is False
-    assert load(case_dir / "continuous.joblib") is False
-    assert 135.0e-6 in load(case_dir / "void_iy_levels.joblib")
+    assert load(case_dir / "measure_aux" / "continuous.joblib") is False
+    assert 135.0e-6 in load(case_dir / "measure_aux" / "void_iy_levels.joblib")
 
 
 def test_is_meltpool_continuous_ignores_spurious_y_level_without_support(tmp_path):
@@ -94,4 +94,4 @@ def test_is_meltpool_continuous_ignores_spurious_y_level_without_support(tmp_pat
     )
 
     assert result is True
-    assert load(case_dir / "continuous.joblib") is True
+    assert load(case_dir / "measure_aux" / "continuous.joblib") is True

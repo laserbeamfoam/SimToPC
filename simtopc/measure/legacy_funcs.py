@@ -57,6 +57,9 @@ from pathlib import Path
 
 ROUND_DECIMALS = 8
 ROUND_TOL = 10 ** (-ROUND_DECIMALS)
+MEASURE_RESULTS_DIRNAME = "measure_results"
+MEASURE_AUX_DIRNAME = "measure_aux"
+MEASURE_WORK_DIRNAME = "measure_work"
 
 
 @dataclass(frozen=True)
@@ -443,6 +446,24 @@ def _emit_analysis_window_warnings(name_new_folder, measure_cfg, analysis_window
         )
 
 
+def _measure_results_dir(name_new_folder):
+    results_dir = Path(name_new_folder) / MEASURE_RESULTS_DIRNAME
+    results_dir.mkdir(parents=True, exist_ok=True)
+    return results_dir
+
+
+def _measure_aux_dir(name_new_folder):
+    aux_dir = Path(name_new_folder) / MEASURE_AUX_DIRNAME
+    aux_dir.mkdir(parents=True, exist_ok=True)
+    return aux_dir
+
+
+def _measure_work_dir(name_new_folder):
+    work_dir = Path(name_new_folder) / MEASURE_WORK_DIRNAME
+    work_dir.mkdir(parents=True, exist_ok=True)
+    return work_dir
+
+
 
 def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i, 
                             measure_cfg, CSV_3D="meltpool.csv"):
@@ -509,7 +530,8 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
         if levels_count < measure_cfg.min_points_per_zrow:
             meltpool_is_continuous = False
             break
-    dump(meltpool_is_continuous, str(Path(name_new_folder) / "continuous.joblib"))
+    aux_dir = _measure_aux_dir(name_new_folder)
+    dump(meltpool_is_continuous, str(aux_dir / "continuous.joblib"))
                 
     if (not meltpool_is_continuous): 
         void_iy_levels = []
@@ -525,7 +547,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
             if not section_support.is_valid:
                 void_iy_levels.append(iy)
         if (len(void_iy_levels) > 0):
-            dump(void_iy_levels, str(Path(name_new_folder) / "void_iy_levels.joblib"))
+            dump(void_iy_levels, str(aux_dir / "void_iy_levels.joblib"))
     return meltpool_is_continuous
 
 
@@ -542,7 +564,7 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
     y_unique = np.unique(y)  
     void_iy_levels= []
     if (not meltpool_is_continuous):
-        void_iy_levels = load(str(Path(name_new_folder) / "void_iy_levels.joblib"))
+        void_iy_levels = load(str(_measure_aux_dir(name_new_folder) / "void_iy_levels.joblib"))
     
     for iy in y_unique:
         if not np.any(np.isclose(iy, void_iy_levels)):
@@ -609,9 +631,12 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                                                            "porosity_at_iy", 
                                                 "total_volume_material_at_iy"])
     
-    cross_sections_statistics_df.to_csv(name_new_folder + 
-                                        "/cross_sections_statistics.csv", 
-                                        index=False, encoding="utf-8") 
+    results_dir = _measure_results_dir(name_new_folder)
+    cross_sections_statistics_df.to_csv(
+        results_dir / "cross_sections_statistics.csv",
+        index=False,
+        encoding="utf-8",
+    )
 
     return cross_sections_statistics_df
 
@@ -650,7 +675,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
     
     void_iy_levels= []
     if (not meltpool_is_continuous):
-        void_iy_levels = load(str(Path(name_new_folder) / "void_iy_levels.joblib"))
+        void_iy_levels = load(str(_measure_aux_dir(name_new_folder) / "void_iy_levels.joblib"))
 
     id_row = 0
     Statistics = []
@@ -732,15 +757,21 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                                                       "number_of_pores_in_row", 
                                                           "width_row",
                                                "number_non_void_cells_in_row"])
-    row_statistics.to_csv(name_new_folder + "/row_statistics.csv", index=False,
-                          encoding="utf-8") 
+    results_dir = _measure_results_dir(name_new_folder)
+    row_statistics.to_csv(
+        results_dir / "row_statistics.csv",
+        index=False,
+        encoding="utf-8",
+    )
     
     return row_statistics, pore_locatios_at_rows, pores_at_row_are_internal
 
 def plotResults(name_new_folder, 
                 CSV_CROSS_SECTIONS = "./cross_sections_statistics.csv"):
+    results_dir = _measure_results_dir(name_new_folder)
+
     def generate_figure(x, y_values, xlabel, ylabel, title, name_png_file, 
-                        name_new_folder, referenceValue = False):
+                        results_dir, referenceValue = False):
         plt.figure()
         plt.plot(x, y_values, marker="x") 
         if (referenceValue == False):
@@ -757,7 +788,7 @@ def plotResults(name_new_folder,
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(name_new_folder + "/" + name_png_file + ".png")
+        plt.savefig(results_dir / f"{name_png_file}.png")
     
     df = pd.read_csv(CSV_CROSS_SECTIONS)
     y_locations = df["iy"]
@@ -770,17 +801,17 @@ def plotResults(name_new_folder,
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
                             "Porosity (porous volume / total volume)", 
                             "Porosity vs. y-coordinate", "Porosity", 
-                            name_new_folder)
+                            results_dir)
             
         else:
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
                             key + " (m)", key.capitalize() + 
                             " vs. y-coordinate", key.capitalize(), 
-                            name_new_folder)
+                            results_dir)
             
     values_for_plot = df["depth"].to_numpy()/df["width"].to_numpy()
     generate_figure(y_locations, values_for_plot, "y_coordinate", 
-                    "D/W","D/W vs. y-coordinate", "DByW", name_new_folder, 0.5)
+                    "D/W","D/W vs. y-coordinate", "DByW", results_dir, 0.5)
             
 
 def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
@@ -818,7 +849,7 @@ def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
 
         print("Generating profiles for the variables")
         plotResults(name_new_folder, 
-       CSV_CROSS_SECTIONS = name_new_folder + "/cross_sections_statistics.csv")
+       CSV_CROSS_SECTIONS = str(_measure_results_dir(name_new_folder) / "cross_sections_statistics.csv"))
         
     else:
         print("Meltpool is not continuous")
