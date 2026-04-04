@@ -1,5 +1,7 @@
 mesh_density: COARSE
 parameters_file: parameters.txt
+# Required by the global SimToPC config schema. The `measure` stage writes its
+# case-specific outputs inside each `COARSE/test_case_i/` directory.
 output_dir: results
 running_on : Xenosim
 
