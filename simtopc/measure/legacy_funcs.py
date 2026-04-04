@@ -90,6 +90,18 @@ class SectionSupport:
         return self.supported_z_levels > 0
 
 
+@dataclass(frozen=True)
+class SectionGeometry:
+    cells: pd.DataFrame
+    x_values: np.ndarray
+    y_values: np.ndarray
+    z_values: np.ndarray
+    x_min_mesh: float
+    x_max_mesh: float
+    z_min_mesh: float
+    z_max_mesh: float
+
+
 def terminal(command):
     os.system(command)
 
@@ -155,6 +167,30 @@ def _evaluate_section_support(y_reported, y_actual, y_values, z_values, y_tol, c
         y_actual=float(y_actual),
         z_values=section_z_values,
         supported_z_levels=_count_supported_z_levels(section_z_values, cell_size),
+    )
+
+
+def _build_section_geometry(df, y_actual, y_values, y_tol, cell_size):
+    section_mask = np.isclose(y_values, y_actual, atol=y_tol)
+    cells_at_section = df[section_mask]
+    x_at_section = _round_array(cells_at_section["Points_0"].to_numpy())
+    y_at_section = _round_array(cells_at_section["Points_1"].to_numpy())
+    z_at_section = _round_array(cells_at_section["Points_2"].to_numpy())
+
+    x_min_mesh = np.round(np.round(np.min(x_at_section) / cell_size) * cell_size, 8)
+    x_max_mesh = np.round(np.round(np.max(x_at_section) / cell_size) * cell_size, 8)
+    z_min_mesh = np.round(np.round(np.min(z_at_section) / cell_size) * cell_size, 8)
+    z_max_mesh = np.round(np.round(np.max(z_at_section) / cell_size) * cell_size, 8)
+
+    return SectionGeometry(
+        cells=cells_at_section,
+        x_values=x_at_section,
+        y_values=y_at_section,
+        z_values=z_at_section,
+        x_min_mesh=x_min_mesh,
+        x_max_mesh=x_max_mesh,
+        z_min_mesh=z_min_mesh,
+        z_max_mesh=z_max_mesh,
     )
 
 
@@ -531,24 +567,21 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
         if not section_support.is_valid:
             continue
         if not np.any(np.isclose(iy, void_iy_levels)):
-            mask = np.isclose(iy_actual, y, atol=y_merge_tol)
-            cells_at_iy = df[mask]
-            x_at_iy = _round_array(cells_at_iy["Points_0"].to_numpy())
-            y_at_iy = _round_array(cells_at_iy["Points_1"].to_numpy())
-            z_at_iy = _round_array(cells_at_iy["Points_2"].to_numpy())
-    
-            z_min_at_iy = np.min(z_at_iy)
-            z_max_at_iy = np.max(z_at_iy)
-            x_min_at_iy = np.min(x_at_iy) 
-            x_max_at_iy = np.max(x_at_iy) 
-            z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         z_min_at_iy/cell_size) * cell_size, 8)
-            z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         z_max_at_iy/cell_size) * cell_size, 8)
-            x_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         x_min_at_iy/cell_size) * cell_size, 8)
-            x_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                                         x_max_at_iy/cell_size) * cell_size, 8)
+            section_geometry = _build_section_geometry(
+                df=df,
+                y_actual=iy_actual,
+                y_values=y,
+                y_tol=y_merge_tol,
+                cell_size=cell_size,
+            )
+            cells_at_iy = section_geometry.cells
+            x_at_iy = section_geometry.x_values
+            y_at_iy = section_geometry.y_values
+            z_at_iy = section_geometry.z_values
+            z_min_at_iy_that_is_in_original_mesh = section_geometry.z_min_mesh
+            z_max_at_iy_that_is_in_original_mesh = section_geometry.z_max_mesh
+            x_min_at_iy_that_is_in_original_mesh = section_geometry.x_min_mesh
+            x_max_at_iy_that_is_in_original_mesh = section_geometry.x_max_mesh
             
             iz = z_min_at_iy_that_is_in_original_mesh
             
