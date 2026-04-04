@@ -42,6 +42,7 @@ Authors
 
 import os
 import re
+from dataclasses import dataclass
 from joblib import dump, load
 import numpy as np
 import pandas as pd
@@ -56,6 +57,25 @@ from pathlib import Path
 
 ROUND_DECIMALS = 8
 ROUND_TOL = 10 ** (-ROUND_DECIMALS)
+
+
+@dataclass(frozen=True)
+class AnalysisWindow:
+    y_values: np.ndarray
+    y_data_min: float
+    y_data_max: float
+    x_mid_section_snapped: float
+    y_merge_tol: float
+    y_effective_begin: float
+    y_effective_end: float
+    trim_start: float
+    trim_end: float
+    y_trimmed_begin_physical: float
+    y_trimmed_end_physical: float
+    y_levels: np.ndarray
+    y_levels_actual: np.ndarray
+    nominal_mismatch: bool
+    trim_snapped: bool
 
 
 def terminal(command):
@@ -236,23 +256,23 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
         or abs(mesh_end - y_trimmed_end_physical) > ROUND_TOL
     )
 
-    return {
-        "y_values": y_values,
-        "y_data_min": y_data_min,
-        "y_data_max": y_data_max,
-        "x_mid_section_snapped": _round_scalar(x_mid_section_snapped),
-        "y_merge_tol": merge_tol,
-        "y_effective_begin": _round_scalar(y_effective_begin),
-        "y_effective_end": _round_scalar(y_effective_end),
-        "trim_start": trim_start,
-        "trim_end": trim_end,
-        "y_trimmed_begin_physical": _round_scalar(y_trimmed_begin_physical),
-        "y_trimmed_end_physical": _round_scalar(y_trimmed_end_physical),
-        "y_levels": y_levels_report,
-        "y_levels_actual": actual_y_levels,
-        "nominal_mismatch": nominal_mismatch,
-        "trim_snapped": trim_snapped,
-    }
+    return AnalysisWindow(
+        y_values=y_values,
+        y_data_min=y_data_min,
+        y_data_max=y_data_max,
+        x_mid_section_snapped=_round_scalar(x_mid_section_snapped),
+        y_merge_tol=merge_tol,
+        y_effective_begin=_round_scalar(y_effective_begin),
+        y_effective_end=_round_scalar(y_effective_end),
+        trim_start=trim_start,
+        trim_end=trim_end,
+        y_trimmed_begin_physical=_round_scalar(y_trimmed_begin_physical),
+        y_trimmed_end_physical=_round_scalar(y_trimmed_end_physical),
+        y_levels=y_levels_report,
+        y_levels_actual=actual_y_levels,
+        nominal_mismatch=nominal_mismatch,
+        trim_snapped=trim_snapped,
+    )
 
 
 
@@ -269,14 +289,14 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
         spot_size=2 * laser_radius_test_case_i,
     )
     x = _round_array(df["Points_0"].to_numpy())
-    y = analysis_window["y_values"]
+    y = analysis_window.y_values
     z = _round_array(df["Points_2"].to_numpy())
     meltpool_is_continuous = True
-    y_levels = analysis_window["y_levels"]
-    y_levels_actual = analysis_window["y_levels_actual"]
-    y_merge_tol = analysis_window["y_merge_tol"]
+    y_levels = analysis_window.y_levels
+    y_levels_actual = analysis_window.y_levels_actual
+    y_merge_tol = analysis_window.y_merge_tol
     # First, check if a y-z slice at the canonical x location is continuous.
-    x_mid_section_snapped = analysis_window["x_mid_section_snapped"]
+    x_mid_section_snapped = analysis_window.x_mid_section_snapped
     mask_x_mid_section = np.isclose(x, x_mid_section_snapped)
     mid_plane_x = df[mask_x_mid_section]
     y_at_mid_plane_x = _round_array(mid_plane_x["Points_1"].to_numpy())
@@ -451,9 +471,9 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
         spot_size=2 * laser_radius_test_case_i,
     )
     x = _round_array(df["Points_0"].to_numpy())
-    y = analysis_window["y_values"]
+    y = analysis_window.y_values
     z = _round_array(df["Points_2"].to_numpy())
-    y_merge_tol = analysis_window["y_merge_tol"]
+    y_merge_tol = analysis_window.y_merge_tol
     
     void_iy_levels= []
     if (not meltpool_is_continuous):
@@ -466,8 +486,8 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
     
     # Iterate over all the y-sections
     for iy, iy_actual in zip(
-        analysis_window["y_levels"],
-        analysis_window["y_levels_actual"],
+        analysis_window.y_levels,
+        analysis_window.y_levels_actual,
     ):
         if np.isnan(iy_actual):
             continue
