@@ -1,0 +1,67 @@
+Measure P7 Tests Specification
+
+Purpose
+Start building automated confidence around `measure` so future refactors do not
+re-break behavior that has already been fixed and validated manually.
+
+Why P7 Matters
+- `measure` now has better trimming, more robust numerical handling, and better
+  validation/errors.
+- Right now, most confidence still depends on manual sanity checks.
+- For a publication-quality tool, at least a small automated test layer is
+  needed.
+
+Scope
+P7 should begin small and practical.
+The goal is not a huge test suite immediately.
+The goal is to protect the highest-value behavior first.
+
+P7.1 Add Minimal Test Infrastructure
+- Add a lightweight testing framework, preferably `pytest`.
+- Keep setup simple.
+- Avoid requiring OpenFOAM or ParaView for the first tests.
+
+P7.2 Test Pure Validation Logic
+- Test valid `MeasureConfig` construction.
+- Test invalid inputs:
+  - negative `cell_size`
+  - `y_end <= y_begin`
+  - `x_max < x_min`
+  - negative trimming
+  - invalid `min_points_per_zrow`
+
+P7.3 Test Core Numerical Helpers
+- Test mesh snapping rules.
+- Test rounding-to-mesh helpers.
+- Test trimming behavior when spot size does not align with the mesh.
+- Test that the first/last reported `iy` align with `cell_size`.
+
+P7.4 Test Representative Real Logic With Small Synthetic Data
+- Build tiny synthetic point datasets in memory where possible.
+- Use them to test:
+  - continuity on a simple continuous case
+  - continuity on a simple discontinuous case
+  - section selection after trimming
+
+P7.5 Preserve Known Real-World Fixes
+- Add tests that encode the spirit of the two important manual checks:
+  - a case analogous to 75 micron spot diameter behavior
+  - a case analogous to 100 micron spot diameter behavior
+- These do not need the full real datasets at first.
+- They should protect the behavior pattern that was manually verified.
+
+P7.6 Keep External Dependencies Out of the First Wave
+- Do not start by testing `pvpython`, OpenFOAM, or shell commands.
+- Focus first on the internal logic we already refactored.
+
+Desired Outcome
+After the first pass of P7:
+- core validation has automated checks
+- key numerical behavior is protected
+- the most important manual regressions are harder to reintroduce
+
+Suggested First Implementation Steps
+1. add basic `pytest` support
+2. create a first test file for `MeasureConfig`
+3. create a second test file for helper-level numerical behavior
+4. run the tests locally and keep them small and fast
