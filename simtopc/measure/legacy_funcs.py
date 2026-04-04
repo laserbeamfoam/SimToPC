@@ -241,6 +241,7 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
         "y_data_min": y_data_min,
         "y_data_max": y_data_max,
         "x_mid_section_snapped": _round_scalar(x_mid_section_snapped),
+        "y_merge_tol": merge_tol,
         "y_effective_begin": _round_scalar(y_effective_begin),
         "y_effective_end": _round_scalar(y_effective_end),
         "trim_start": trim_start,
@@ -273,6 +274,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     meltpool_is_continuous = True
     y_levels = analysis_window["y_levels"]
     y_levels_actual = analysis_window["y_levels_actual"]
+    y_merge_tol = analysis_window["y_merge_tol"]
     # First, check if a y-z slice at the canonical x location is continuous.
     x_mid_section_snapped = analysis_window["x_mid_section_snapped"]
     mask_x_mid_section = np.isclose(x, x_mid_section_snapped)
@@ -291,6 +293,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
         mask_y_section_at_y_level_and_x_mid_plane = np.isclose(
             y_level_actual,
             y_at_mid_plane_x,
+            atol=y_merge_tol,
         )
         
         z_at_y_level_and_x_mid_plane = z_at_mid_plane_x[
@@ -325,7 +328,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
             if np.isnan(iy_actual):
                 void_iy_levels.append(iy)
                 continue
-            mask = np.isclose(iy_actual, y)
+            mask = np.isclose(iy_actual, y, atol=y_merge_tol)
             if (np.sum(mask) == 0):
                 void_iy_levels.append(iy)
         if (len(void_iy_levels) > 0):
@@ -450,6 +453,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
     x = _round_array(df["Points_0"].to_numpy())
     y = analysis_window["y_values"]
     z = _round_array(df["Points_2"].to_numpy())
+    y_merge_tol = analysis_window["y_merge_tol"]
     
     void_iy_levels= []
     if (not meltpool_is_continuous):
@@ -468,7 +472,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
         if np.isnan(iy_actual):
             continue
         if not np.any(np.isclose(iy, void_iy_levels)):
-            mask = np.isclose(iy_actual, y)
+            mask = np.isclose(iy_actual, y, atol=y_merge_tol)
             cells_at_iy = df[mask]
             x_at_iy = _round_array(cells_at_iy["Points_0"].to_numpy())
             y_at_iy = _round_array(cells_at_iy["Points_1"].to_numpy())
