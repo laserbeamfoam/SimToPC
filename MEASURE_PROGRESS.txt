@@ -6,7 +6,7 @@ from the repository itself, without relying on chat history.
 
 Current Focus
 - Main target: improve `measure` toward publication-quality scientific software
-- Current phase: late `P8` consolidation and SoftwareX-oriented polish
+- Current phase: Level S reached for `measure` (SoftwareX-oriented freeze)
 - Active implementation branch: `measure-output-results-layout`
 
 Plan Files
@@ -47,6 +47,8 @@ Important Commits
 - `911f8e2` Add synthetic continuity tests
 - `4c61595` Improve measure example reproducibility docs
 - `dd9a97d` Organize measure outputs into dedicated folders
+- `51d138e` Align surrogate inputs with measure outputs
+- `5f0da95` Show cleaner surrogate dependency errors
 
 What P2 Achieved
 - Trimming is configurable instead of hard-coded
@@ -91,6 +93,8 @@ What P8 Achieved So Far
   - `measure_results/` for primary outputs
   - `measure_aux/` for auxiliary files
   - `measure_work/` for temporary work artifacts
+- `surrogate` was aligned with the new `measure` output layout
+- missing TensorFlow for `surrogate` now produces a cleaner CLI error
 
 Validated Real Cases
 - 75 micron spot diameter: works
@@ -104,12 +108,12 @@ Current Status
 - `P6` has a solid first pass and can be treated as provisionally advanced
 - `P7` now has a meaningful automated base around config, numerics, and continuity
 - `P8` now includes documentation cleanup and a cleaner on-disk output layout
+- `measure` can now be treated as frozen for Level S / SoftwareX-oriented work
 
 Suggested Next Step
-- Decide whether the next highest-value move is:
-  - further polishing the reproducibility example and output structure
-  - pausing to re-evaluate readiness against SoftwareX expectations
-  - or defining the next architecture-focused cleanup after the SoftwareX pass
+- Keep `measure` frozen unless a real bug is found
+- Do not start new technical refactors in `measure` before an explicit decision
+- When ready, shift focus away from code changes and toward the next planned activity
 
 Notes
 - Do not include `.codex` in commits
