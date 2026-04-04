@@ -108,6 +108,17 @@ def _count_supported_z_levels(z_values, cell_size):
     return levels_count
 
 
+def _snap_value_to_global_mesh(value, cell_size, direction):
+    scaled = value / cell_size
+    if direction == "forward":
+        snapped = np.ceil(scaled - ROUND_TOL)
+    elif direction == "backward":
+        snapped = np.floor(scaled + ROUND_TOL)
+    else:
+        raise ValueError(f"Unknown snapping direction: {direction}")
+    return _round_scalar(snapped * cell_size)
+
+
 def _compute_analysis_y_levels(df, measure_cfg, spot_size):
     y_begin = float(measure_cfg.y_begin)
     y_end = float(measure_cfg.y_end)
@@ -183,26 +194,37 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
     y_trimmed_begin_physical = y_effective_begin + trim_start
     y_trimmed_end_physical = y_effective_end - trim_end
 
-    start_idx = np.searchsorted(
-        canonical_y_levels,
-        y_trimmed_begin_physical - ROUND_TOL,
-        side="left",
+    mesh_begin = _snap_value_to_global_mesh(
+        y_trimmed_begin_physical,
+        cell_size,
+        direction="forward",
     )
-    end_idx = np.searchsorted(
-        canonical_y_levels,
-        y_trimmed_end_physical + ROUND_TOL,
-        side="right",
-    ) - 1
+    mesh_end = _snap_value_to_global_mesh(
+        y_trimmed_end_physical,
+        cell_size,
+        direction="backward",
+    )
 
-    if start_idx >= canonical_y_levels.size or end_idx < 0 or start_idx > end_idx:
+    if mesh_end < mesh_begin:
         raise ValueError(
             "No measurable y-sections remain after trimming and mesh snapping."
         )
-    snapped_begin = canonical_y_levels[start_idx]
-    snapped_end = canonical_y_levels[end_idx]
-    y_levels = canonical_y_levels[start_idx : end_idx + 1]
 
-    if y_levels.size == 0:
+    n_levels = int(np.floor(((mesh_end - mesh_begin) / cell_size) + ROUND_TOL)) + 1
+    y_levels_report = _round_array(
+        mesh_begin + np.arange(n_levels, dtype=float) * cell_size
+    )
+    actual_y_levels = []
+    for y_level in y_levels_report:
+        idx = int(np.argmin(np.abs(canonical_y_levels - y_level)))
+        nearest = canonical_y_levels[idx]
+        if abs(nearest - y_level) <= merge_tol:
+            actual_y_levels.append(nearest)
+        else:
+            actual_y_levels.append(np.nan)
+
+    actual_y_levels = np.asarray(actual_y_levels, dtype=float)
+    if y_levels_report.size == 0:
         raise ValueError("No measurable y-sections remain after trimming.")
 
     nominal_mismatch = (
@@ -210,8 +232,8 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
         or abs(y_effective_end - y_end) > ROUND_TOL
     )
     trim_snapped = (
-        abs(snapped_begin - y_trimmed_begin_physical) > ROUND_TOL
-        or abs(snapped_end - y_trimmed_end_physical) > ROUND_TOL
+        abs(mesh_begin - y_trimmed_begin_physical) > ROUND_TOL
+        or abs(mesh_end - y_trimmed_end_physical) > ROUND_TOL
     )
 
     return {
@@ -225,7 +247,8 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
         "trim_end": trim_end,
         "y_trimmed_begin_physical": _round_scalar(y_trimmed_begin_physical),
         "y_trimmed_end_physical": _round_scalar(y_trimmed_end_physical),
-        "y_levels": y_levels,
+        "y_levels": y_levels_report,
+        "y_levels_actual": actual_y_levels,
         "nominal_mismatch": nominal_mismatch,
         "trim_snapped": trim_snapped,
     }
@@ -249,6 +272,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     z = _round_array(df["Points_2"].to_numpy())
     meltpool_is_continuous = True
     y_levels = analysis_window["y_levels"]
+    y_levels_actual = analysis_window["y_levels_actual"]
     # First, check if a y-z slice at the canonical x location is continuous.
     x_mid_section_snapped = analysis_window["x_mid_section_snapped"]
     mask_x_mid_section = np.isclose(x, x_mid_section_snapped)
@@ -259,10 +283,13 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     # This loop answers the question: are there cells with less than 3 cells
     # (or 4 points) aligned along the z-axis for every y-location in the 
     # x_mid_plane?
-    for y_level in y_levels:
+    for y_level, y_level_actual in zip(y_levels, y_levels_actual):
+        if np.isnan(y_level_actual):
+            meltpool_is_continuous = False
+            break
         # Check if there are cells at every y_level
         mask_y_section_at_y_level_and_x_mid_plane = np.isclose(
-            y_level,
+            y_level_actual,
             y_at_mid_plane_x,
         )
         
@@ -294,8 +321,11 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
                 
     if (not meltpool_is_continuous): 
         void_iy_levels = []
-        for iy in y_levels:
-            mask = np.isclose(iy, y)
+        for iy, iy_actual in zip(y_levels, y_levels_actual):
+            if np.isnan(iy_actual):
+                void_iy_levels.append(iy)
+                continue
+            mask = np.isclose(iy_actual, y)
             if (np.sum(mask) == 0):
                 void_iy_levels.append(iy)
         if (len(void_iy_levels) > 0):
@@ -431,9 +461,14 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
     pores_at_row_are_internal = []
     
     # Iterate over all the y-sections
-    for iy in analysis_window["y_levels"]:
+    for iy, iy_actual in zip(
+        analysis_window["y_levels"],
+        analysis_window["y_levels_actual"],
+    ):
+        if np.isnan(iy_actual):
+            continue
         if not np.any(np.isclose(iy, void_iy_levels)):
-            mask = np.isclose(iy, y)
+            mask = np.isclose(iy_actual, y)
             cells_at_iy = df[mask]
             x_at_iy = _round_array(cells_at_iy["Points_0"].to_numpy())
             y_at_iy = _round_array(cells_at_iy["Points_1"].to_numpy())
