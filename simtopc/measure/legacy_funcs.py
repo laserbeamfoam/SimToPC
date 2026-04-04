@@ -424,6 +424,25 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
     )
 
 
+def _emit_analysis_window_warnings(name_new_folder, measure_cfg, analysis_window):
+    if analysis_window.nominal_mismatch:
+        print(
+            "Warning: requested measurement window "
+            f"[{measure_cfg.y_begin}, {measure_cfg.y_end}] was reduced to "
+            "the observed meltpool window "
+            f"[{analysis_window.y_effective_begin}, {analysis_window.y_effective_end}] "
+            f"for {name_new_folder}."
+        )
+    if analysis_window.trim_snapped:
+        print(
+            "Warning: trimming boundaries were snapped to the mesh for "
+            f"{name_new_folder}. Physical trimmed window "
+            f"[{analysis_window.y_trimmed_begin_physical}, "
+            f"{analysis_window.y_trimmed_end_physical}] became reported window "
+            f"[{analysis_window.y_levels[0]}, {analysis_window.y_levels[-1]}]."
+        )
+
+
 
 def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i, 
                             measure_cfg, CSV_3D="meltpool.csv"):
@@ -766,6 +785,13 @@ def plotResults(name_new_folder,
 
 def calculate_geometry_full_meltpool(name_new_folder, laser_radius_test_case_i,
                                      measure_cfg, CSV_3D="meltpool.csv"):
+    df = pd.read_csv(CSV_3D)
+    analysis_window = _compute_analysis_y_levels(
+        df,
+        measure_cfg,
+        spot_size=2 * laser_radius_test_case_i,
+    )
+    _emit_analysis_window_warnings(name_new_folder, measure_cfg, analysis_window)
 
     meltpool_is_continuous = is_meltpool_continuous(name_new_folder,
                                                     laser_radius_test_case_i,
