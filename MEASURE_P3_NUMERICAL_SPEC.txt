@@ -1,0 +1,116 @@
+SimToPC Measure P3 Specification
+Numerical Robustness and Method Consistency
+
+Purpose
+Strengthen the numerical and methodological consistency of `measure` so that
+its geometry-extraction logic is explicit, reproducible, and easier to defend
+scientifically.
+
+1. Scope
+
+- P3 focuses on the internal numerical logic of `measure`.
+- It does not introduce major new user-facing features.
+- It does not expand scope into `generate` or `surrogate`.
+- It does not rewrite the ParaView extraction pipeline from scratch.
+
+2. Core Goal
+
+After P3, `measure` should:
+- use a clearly defined geometry model,
+- apply one coherent discretisation policy,
+- treat continuity and section statistics consistently,
+- and be easier to test and explain.
+
+3. P3.1 Geometry Model Definition
+
+3.1 Source Geometry
+- `measure` operates on geometric points exported from ParaView in
+  `meltpool.csv`.
+- The software must define explicitly what role these exported points play in
+  the method.
+
+3.2 Section Definition
+- A section in `y` must be defined explicitly.
+- The method must distinguish between:
+  - raw exported point coordinates,
+  - grouped candidate section levels,
+  - reported section levels aligned to mesh spacing.
+
+3.3 Row Definition
+- A row in `z` must also be defined explicitly.
+- The method must explain how points are grouped into z-rows and how support in
+  z is counted.
+
+4. P3.2 Unified Discretisation Policy
+
+4.1 Central Rule
+- Rounding, grouping, snapping, and tolerance handling must follow one shared
+  policy across the module.
+
+4.2 Consistency Requirement
+- The same discretisation principles must be used in:
+  - continuity detection,
+  - trimming,
+  - y-level selection,
+  - section extraction,
+  - geometry calculation.
+
+4.3 Expected Outcome
+- No duplicated logic with slightly different tolerances should remain in the
+  core measurement path.
+
+5. P3.3 Valid Section Definition
+
+5.1 Section Reality
+- A section must satisfy an explicit criterion to count as physically and
+  numerically valid.
+
+5.2 Minimum Support
+- The relationship between valid sections and support in z must be made
+  explicit.
+- The criterion used for continuity and the criterion used for geometry
+  extraction should be compatible.
+
+5.3 Spurious Levels
+- The method must define how spurious y-levels introduced by point-based
+  exports are filtered or ignored.
+
+6. P3.4 Structural Consolidation
+
+6.1 Shared Helpers
+- Shared numerical operations should be implemented through small reusable
+  helpers.
+
+6.2 Reduced Duplication
+- The code should avoid repeating the same conceptual operations separately in
+  continuity checks and section-statistics generation.
+
+6.3 Expected Outcome
+- The scientific core becomes easier to read, audit, and maintain.
+
+7. P3.5 Preparation for Testing
+
+7.1 Testability Goal
+- P3 should prepare the code for future tests, even if P7 implements most of
+  them later.
+
+7.2 Desired Properties
+- Smaller functions
+- Clearer inputs and outputs
+- Less accidental dependence on filesystem state or execution context
+
+8. Out of Scope
+
+- Full plotting redesign
+- Surrogate changes
+- Generate-stage refactors
+- Large-scale CLI redesign
+- Full rewrite of `extract_meltpool.py`
+
+9. Expected End State
+
+At the end of P3, `measure` should have:
+- a clearer geometry model,
+- a more explicit numerical policy,
+- better internal consistency,
+- and a cleaner scientific core ready for later testing and documentation work.
