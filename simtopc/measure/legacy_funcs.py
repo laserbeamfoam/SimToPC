@@ -127,6 +127,14 @@ def _round_array(values):
     return np.round(np.asarray(values, dtype=float), ROUND_DECIMALS)
 
 
+def _round_to_mesh(value, cell_size):
+    return _round_scalar(np.round(float(value) / cell_size) * cell_size)
+
+
+def _round_array_to_mesh(values, cell_size):
+    return _round_array(np.round(np.asarray(values, dtype=float) / cell_size) * cell_size)
+
+
 def _deduplicate_levels(levels, merge_tol):
     if levels.size == 0:
         return levels
@@ -141,14 +149,14 @@ def _count_supported_z_levels(z_values, cell_size):
     z_values = _round_array(z_values)
     if z_values.size == 0:
         return 0
-    z_min = np.round(np.round(np.min(z_values) / cell_size) * cell_size, 8)
-    z_max = np.round(np.round(np.max(z_values) / cell_size) * cell_size, 8)
+    z_min = _round_to_mesh(np.min(z_values), cell_size)
+    z_max = _round_to_mesh(np.max(z_values), cell_size)
     z_level = z_min
     levels_count = 0
     while z_level <= z_max:
         if np.sum(np.isclose(z_values, z_level)) >= 1:
             levels_count += 1
-        z_level = np.round(z_level + cell_size, 8)
+        z_level = _round_scalar(z_level + cell_size)
     return levels_count
 
 
@@ -177,10 +185,10 @@ def _build_section_geometry(df, y_actual, y_values, y_tol, cell_size):
     y_at_section = _round_array(cells_at_section["Points_1"].to_numpy())
     z_at_section = _round_array(cells_at_section["Points_2"].to_numpy())
 
-    x_min_mesh = np.round(np.round(np.min(x_at_section) / cell_size) * cell_size, 8)
-    x_max_mesh = np.round(np.round(np.max(x_at_section) / cell_size) * cell_size, 8)
-    z_min_mesh = np.round(np.round(np.min(z_at_section) / cell_size) * cell_size, 8)
-    z_max_mesh = np.round(np.round(np.max(z_at_section) / cell_size) * cell_size, 8)
+    x_min_mesh = _round_to_mesh(np.min(x_at_section), cell_size)
+    x_max_mesh = _round_to_mesh(np.max(x_at_section), cell_size)
+    z_min_mesh = _round_to_mesh(np.min(z_at_section), cell_size)
+    z_max_mesh = _round_to_mesh(np.max(z_at_section), cell_size)
 
     return SectionGeometry(
         cells=cells_at_section,
@@ -386,11 +394,15 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
             break
         z_min_at_y_level_and_x_mid_plane = np.min(z_at_y_level_and_x_mid_plane)
         z_max_at_y_level_and_x_mid_plane = np.max(z_at_y_level_and_x_mid_plane)
-        z_min_at_iy_that_is_in_original_mesh = np.round(np.round(
-                    z_min_at_y_level_and_x_mid_plane/cell_size) * cell_size, 8)
-        z_max_at_iy_that_is_in_original_mesh = np.round(np.round(
-                    z_max_at_y_level_and_x_mid_plane/cell_size) * cell_size, 8)
-        z0_at_y_level = z_min_at_iy_that_is_in_original_mesh.copy()
+        z_min_at_iy_that_is_in_original_mesh = _round_to_mesh(
+            z_min_at_y_level_and_x_mid_plane,
+            cell_size,
+        )
+        z_max_at_iy_that_is_in_original_mesh = _round_to_mesh(
+            z_max_at_y_level_and_x_mid_plane,
+            cell_size,
+        )
+        z0_at_y_level = z_min_at_iy_that_is_in_original_mesh
         expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh 
                            - z_min_at_iy_that_is_in_original_mesh) / cell_size)
         levels_count = 0
@@ -399,7 +411,7 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
                                               z_at_y_level_and_x_mid_plane, 8))    
             if (np.sum(mask) >= 1):
                 levels_count = levels_count + 1
-            z0_at_y_level = np.round(z0_at_y_level + cell_size, 8)
+            z0_at_y_level = _round_scalar(z0_at_y_level + cell_size)
         if levels_count < measure_cfg.min_points_per_zrow:
             meltpool_is_continuous = False
             break
@@ -586,26 +598,30 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
             iz = z_min_at_iy_that_is_in_original_mesh
             
             while (iz <= z_max_at_iy_that_is_in_original_mesh):
-                mask2 = ((iz == np.round(z_at_iy, 8)))
+                mask2 = (iz == _round_array(z_at_iy))
                 cells_at_iy_iz = cells_at_iy[mask2]
                 x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
                 if (x_at_iy_iz.shape[0] == 0):
                     iz = z_max_at_iy_that_is_in_original_mesh
-                    iz = np.round(iz + cell_size, 8) 
+                    iz = _round_scalar(iz + cell_size) 
                               
                 else:
                     min_x_at_iy_iz = np.min(x_at_iy_iz)
                     max_x_at_iy_iz = np.max(x_at_iy_iz)
                     
                     
-                    min_x_at_iy_iz_that_is_in_original_mesh = np.round(
-                             np.round(min_x_at_iy_iz/cell_size) * cell_size, 8)
-                    max_x_at_iy_iz_that_is_in_original_mesh = np.round(
-                             np.round(max_x_at_iy_iz/cell_size) * cell_size, 8)
+                    min_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
+                        min_x_at_iy_iz,
+                        cell_size,
+                    )
+                    max_x_at_iy_iz_that_is_in_original_mesh = _round_to_mesh(
+                        max_x_at_iy_iz,
+                        cell_size,
+                    )
                     
-                    distance_minx_max_at_zlevel = np.round(
+                    distance_minx_max_at_zlevel = _round_scalar(
                         max_x_at_iy_iz_that_is_in_original_mesh - 
-                        min_x_at_iy_iz_that_is_in_original_mesh, 8)
+                        min_x_at_iy_iz_that_is_in_original_mesh)
                     expected_number_cells_at_iy_iz = int(
                                          distance_minx_max_at_zlevel/cell_size)
                    
@@ -615,10 +631,9 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                     
                     row_has_pores = False
                     n_pores_in_row = 0
-                    width_row = np.round(
+                    width_row = _round_scalar(
                                       max_x_at_iy_iz_that_is_in_original_mesh - 
-                                       min_x_at_iy_iz_that_is_in_original_mesh, 
-                                         8)
+                                       min_x_at_iy_iz_that_is_in_original_mesh)
                     
                     pore_locations_at_row_i = []
                     pores_at_row_i_are_internal = []
@@ -640,7 +655,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                                 pores_at_row_i_are_internal.append(
                                                    np.sum(iz < z_at_ix_iy) > 0)
                                                         
-                            ix = np.round(ix + cell_size, 8)
+                            ix = _round_scalar(ix + cell_size)
                             
                     if (expected_number_cells_at_iy_iz == 1):
                         number_non_void_cells_in_row = 1
@@ -662,7 +677,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                                                   number_non_void_cells_in_row]
                     
                     Statistics.append(new_statistics_row)
-                    iz = np.round(iz + cell_size, 8)
+                    iz = _round_scalar(iz + cell_size)
                     id_row = id_row + 1
             
     row_statistics = pd.DataFrame(Statistics, columns = ["id_row", "y_coord", 
