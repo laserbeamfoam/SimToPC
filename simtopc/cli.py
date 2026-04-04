@@ -77,7 +77,11 @@ def main():
             print(f"Measure configuration error: {exc}", file=sys.stderr)
             raise SystemExit(2) from None
     elif args.cmd == "surrogate":
-        from simtopc.surrogate.main import run as run_surrogate_cmd
-        run_surrogate_cmd(args.config)
+        try:
+            from simtopc.surrogate.main import run as run_surrogate_cmd
+            run_surrogate_cmd(args.config)
+        except (RuntimeError, FileNotFoundError) as exc:
+            print(f"Surrogate error: {exc}", file=sys.stderr)
+            raise SystemExit(2) from None
     elif args.cmd == "generate":
         run_generate(args.config)
