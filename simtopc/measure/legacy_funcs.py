@@ -78,6 +78,18 @@ class AnalysisWindow:
     trim_snapped: bool
 
 
+@dataclass(frozen=True)
+class SectionSupport:
+    y_reported: float
+    y_actual: float
+    z_values: np.ndarray
+    supported_z_levels: int
+
+    @property
+    def is_valid(self) -> bool:
+        return self.supported_z_levels > 0
+
+
 def terminal(command):
     os.system(command)
 
@@ -126,6 +138,24 @@ def _count_supported_z_levels(z_values, cell_size):
             levels_count += 1
         z_level = np.round(z_level + cell_size, 8)
     return levels_count
+
+
+def _evaluate_section_support(y_reported, y_actual, y_values, z_values, y_tol, cell_size):
+    if np.isnan(y_actual):
+        return SectionSupport(
+            y_reported=float(y_reported),
+            y_actual=float("nan"),
+            z_values=np.asarray([], dtype=float),
+            supported_z_levels=0,
+        )
+
+    section_z_values = _round_array(z_values[np.isclose(y_values, y_actual, atol=y_tol)])
+    return SectionSupport(
+        y_reported=float(y_reported),
+        y_actual=float(y_actual),
+        z_values=section_z_values,
+        supported_z_levels=_count_supported_z_levels(section_z_values, cell_size),
+    )
 
 
 def _snap_value_to_global_mesh(value, cell_size, direction):
@@ -306,19 +336,16 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     # (or 4 points) aligned along the z-axis for every y-location in the 
     # x_mid_plane?
     for y_level, y_level_actual in zip(y_levels, y_levels_actual):
-        if np.isnan(y_level_actual):
-            meltpool_is_continuous = False
-            break
-        # Check if there are cells at every y_level
-        mask_y_section_at_y_level_and_x_mid_plane = np.isclose(
-            y_level_actual,
-            y_at_mid_plane_x,
-            atol=y_merge_tol,
+        section_support = _evaluate_section_support(
+            y_reported=y_level,
+            y_actual=y_level_actual,
+            y_values=y_at_mid_plane_x,
+            z_values=z_at_mid_plane_x,
+            y_tol=y_merge_tol,
+            cell_size=cell_size,
         )
-        
-        z_at_y_level_and_x_mid_plane = z_at_mid_plane_x[
-                                     mask_y_section_at_y_level_and_x_mid_plane]
-        if z_at_y_level_and_x_mid_plane.size == 0:
+        z_at_y_level_and_x_mid_plane = section_support.z_values
+        if not section_support.is_valid:
             meltpool_is_continuous = False
             break
         z_min_at_y_level_and_x_mid_plane = np.min(z_at_y_level_and_x_mid_plane)
@@ -345,11 +372,15 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     if (not meltpool_is_continuous): 
         void_iy_levels = []
         for iy, iy_actual in zip(y_levels, y_levels_actual):
-            if np.isnan(iy_actual):
-                void_iy_levels.append(iy)
-                continue
-            mask = np.isclose(iy_actual, y, atol=y_merge_tol)
-            if (np.sum(mask) == 0):
+            section_support = _evaluate_section_support(
+                y_reported=iy,
+                y_actual=iy_actual,
+                y_values=y,
+                z_values=z,
+                y_tol=y_merge_tol,
+                cell_size=cell_size,
+            )
+            if not section_support.is_valid:
                 void_iy_levels.append(iy)
         if (len(void_iy_levels) > 0):
             dump(void_iy_levels, str(Path(name_new_folder) / "void_iy_levels.joblib"))
@@ -489,7 +520,15 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
         analysis_window.y_levels,
         analysis_window.y_levels_actual,
     ):
-        if np.isnan(iy_actual):
+        section_support = _evaluate_section_support(
+            y_reported=iy,
+            y_actual=iy_actual,
+            y_values=y,
+            z_values=z,
+            y_tol=y_merge_tol,
+            cell_size=cell_size,
+        )
+        if not section_support.is_valid:
             continue
         if not np.any(np.isclose(iy, void_iy_levels)):
             mask = np.isclose(iy_actual, y, atol=y_merge_tol)
