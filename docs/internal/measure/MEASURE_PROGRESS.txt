@@ -10,12 +10,12 @@ Current Focus
 - Active implementation branch: `measure-output-results-layout`
 
 Plan Files
-- `MEASURE_PLAN.txt`
-- `MEASURE_P2_TRIMMING_SPEC.txt`
-- `MEASURE_P3_NUMERICAL_SPEC.txt`
-- `MEASURE_P6_VALIDATION_SPEC.txt`
-- `MEASURE_P7_TESTS_SPEC.txt`
-- `MEASURE_P8_REPRO_SPEC.txt`
+- `docs/internal/measure/MEASURE_PLAN.txt`
+- `docs/internal/measure/MEASURE_P2_TRIMMING_SPEC.txt`
+- `docs/internal/measure/MEASURE_P3_NUMERICAL_SPEC.txt`
+- `docs/internal/measure/MEASURE_P6_VALIDATION_SPEC.txt`
+- `docs/internal/measure/MEASURE_P7_TESTS_SPEC.txt`
+- `docs/internal/measure/MEASURE_P8_REPRO_SPEC.txt`
 
 Important Branches
 - `measure-refactor-base`
