@@ -39,7 +39,7 @@ Authors
 from __future__ import annotations
 from pathlib import Path
 from simtopc.config import load_config
-from simtopc.measure_config import MeasureConfig
+from simtopc.measure_config import MeasureConfig, TrimConfig
 from simtopc.measure.impl import run_measure_cases
 
 
@@ -48,6 +48,7 @@ def run(config_path: str | Path) -> None:
     cfg_all = load_config(str(config_path))
 
     m = cfg_all.measure
+    trim_raw = m.get("trim", {}) or {}
     measure_cfg = MeasureConfig(
         y_begin=float(m["y_begin"]),
         y_end=float(m["y_end"]),
@@ -55,6 +56,11 @@ def run(config_path: str | Path) -> None:
         x_max=float(m["x_max"]),
         cell_size=float(m["cell_size"]),
         min_points_per_zrow=int(m.get("min_points_per_zrow", 4)),
+        trim=TrimConfig(
+            enabled=bool(trim_raw.get("enabled", False)),
+            start_spot_sizes=float(trim_raw.get("start_spot_sizes", 0.0)),
+            end_spot_sizes=float(trim_raw.get("end_spot_sizes", 0.0)),
+        ),
     )
 
     run_measure_cases(cfg_all=cfg_all, measure_cfg=measure_cfg, 

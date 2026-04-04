@@ -35,7 +35,14 @@ Authors
 """
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class TrimConfig:
+    enabled: bool = False
+    start_spot_sizes: float = 0.0
+    end_spot_sizes: float = 0.0
 
 @dataclass(frozen=True)
 class MeasureConfig:
@@ -45,3 +52,4 @@ class MeasureConfig:
     x_max: float
     cell_size: float
     min_points_per_zrow: int = 4
+    trim: TrimConfig = field(default_factory=TrimConfig)
