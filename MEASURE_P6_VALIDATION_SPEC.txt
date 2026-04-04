@@ -1,0 +1,66 @@
+Measure P6 Validation Specification
+
+Purpose
+Improve `measure` by validating inputs and assumptions early, and by replacing
+confusing runtime failures with clear warnings and error messages.
+
+Why P6 Matters
+- The software is now numerically more robust after `P2` and `P3`.
+- The next weak point is user-facing reliability.
+- A publication-quality tool should fail early and explain why.
+
+Scope
+P6 is about validation and clarity, not about changing the scientific method.
+
+P6.1 Validate Measurement Window Inputs
+- Check that `y_begin` and `y_end` are present and numeric.
+- Check that `y_end > y_begin`.
+- Emit a clear error if the requested nominal window is invalid.
+
+P6.2 Validate Mesh and Geometry Inputs
+- Check that `cell_size > 0`.
+- Check that `x_min <= x_max`.
+- Check that `min_points_per_zrow >= 1`.
+- Check that meltpool data is not empty before analysis starts.
+
+P6.3 Validate Trimming Inputs
+- Check that trimming values are numeric and non-negative.
+- Check that trimming does not consume the full effective window.
+- Emit a clear error when trimming plus mesh snapping leaves no measurable
+  section.
+
+P6.4 Validate Observed vs Requested Window
+- Detect when the requested analysis window does not overlap the observed
+  meltpool window.
+- Emit a clear error in that case.
+- Detect when the overlap exists but differs from the requested window.
+- Emit a warning when the nominal window had to be reduced to the observed one.
+
+P6.5 Validate Config Shape and Unknown Keys Where Useful
+- Keep ignoring unknown keys in unrelated config blocks when possible.
+- Improve local validation for `measure`-specific inputs.
+- Prefer targeted messages over generic Python tracebacks.
+
+P6.6 Improve Error Messages
+- Errors should explain:
+  - what is wrong
+  - what values were received
+  - what the user can change
+- Warnings should explain when the code had to adapt the requested setup.
+
+P6.7 Keep Scientific Behavior Stable
+- P6 should not redefine continuity, porosity, width, height, or depth.
+- P6 should mainly improve guardrails and diagnostics.
+
+Desired Outcome
+After P6:
+- invalid configs fail early
+- edge cases are easier to understand
+- users get clearer feedback
+- `measure` feels more like a real tool and less like internal research code
+
+Suggested First Implementation Steps
+1. audit the existing validation already present in `legacy_funcs.py`
+2. identify missing checks in config parsing and `measure/main.py`
+3. add the highest-value validations first
+4. test against one valid and one intentionally invalid config

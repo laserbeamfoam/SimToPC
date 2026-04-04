@@ -14,6 +14,7 @@ dependencies = ["numpy", "scipy", "pandas", "pyyaml", "matplotlib", "joblib", "i
 [project.optional-dependencies]
 ml = ["tensorflow", 
 "scikit-learn"]
+test = ["pytest>=7"]
 
 [project.scripts]
 simtopc = "simtopc.cli:main"
@@ -23,3 +24,6 @@ include = ["simtopc*"]
 
 [tool.setuptools.package-data]
 simtopc = ["resources/src/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

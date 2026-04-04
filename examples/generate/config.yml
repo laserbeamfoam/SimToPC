@@ -23,6 +23,10 @@ measure:
   x_max : 0.0002
   cell_size : 2.5e-06
   min_points_per_zrow: 4
+  trim:
+    enabled: false
+    start_spot_sizes: 0.0
+    end_spot_sizes: 0.0
 
 surrogate:
   seed: 0

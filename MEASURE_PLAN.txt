@@ -1,0 +1,73 @@
+SimToPC Measure Refactor Plan
+
+Purpose
+Convert `measure` from research code that mainly works in the author's
+environment into a more robust, testable, reproducible scientific software
+component suitable for later re-evaluation against SoftwareX or CPC.
+
+Plan Master
+
+P0. Scope
+- Focus the software-improvement effort on `measure`.
+- Treat `generate` and `surrogate` as out of scope unless they block
+  improvements to `measure`.
+
+P1. Method Definition
+- Define precisely what `measure` computes.
+- Fix the formal definitions of continuity, width, height, depth, and porosity.
+- Make explicit which part of the track is measured and why.
+
+P2. Track Trimming Redesign
+- Replace the current implicit trimming near the beginning and end of the track.
+- Let the user decide whether trimming is applied.
+- Let the user specify how much to trim at the start and end in multiples of
+  `spot size`.
+- Make this behavior explicit, configurable, and scientifically defensible.
+
+P3. Numerical Robustness and Physics-to-Mesh Mapping
+- Remove fragile float-equality assumptions.
+- Define a single policy for translating physical trimming distances into valid
+  mesh sections.
+- Support cases where the `spot size` does not align with the mesh spacing.
+- Ensure cases like `75 um` spot size with `5e-6 m` cell size work correctly.
+
+P4. Structural Bug Fixes
+- Fix fragile path handling and file access.
+- Remove accidental dependence on the current working directory.
+- Make continuous and discontinuous cases behave consistently.
+
+P5. Scientific Core Separation
+- Separate data extraction, geometric analysis, result export, and plotting.
+- Isolate the scientific core of `measure` so it can be tested directly.
+
+P6. Input Validation and Clear Errors
+- Validate configuration and assumptions early.
+- Detect invalid or inconsistent inputs.
+- Emit clear warnings or errors, especially for trimming and mesh alignment.
+
+P7. Tests
+- Add unit tests for continuity and geometric metrics.
+- Add tests for trimming behavior.
+- Add tests for numerical edge cases.
+- Add small synthetic integration cases.
+
+P8. Reproducibility
+- Provide a minimal reproducible example for `measure`.
+- Document inputs, outputs, assumptions, and expected behavior clearly.
+- Reduce reliance on author-specific project knowledge.
+
+P9. Editorial Re-evaluation
+- Re-evaluate the publication target only after `measure` is significantly
+  stronger.
+- Compare the resulting state honestly against SoftwareX and CPC expectations.
+
+Shared Shortcut Reference
+- P1: method
+- P2: trimming
+- P3: numerical robustness
+- P4: structural bugs
+- P5: scientific core separation
+- P6: validation
+- P7: tests
+- P8: reproducibility
+- P9: journal re-evaluation

@@ -79,7 +79,28 @@ def copy_measure_resources(case_dir: Path) -> None:
 from simtopc.measure.legacy_funcs import (set_environment_variables,
                                           terminal, 
                                           calculate_geometry_full_meltpool,
+                                          _measure_aux_dir,
+                                          _measure_work_dir,
                                           )
+
+
+MEASURE_WORK_FILENAMES = (
+    "extract_meltpool.py",
+    "extract_x_z_slice_meltpool.py",
+    "extract_y_z_slice_meltpool.py",
+    "functions.py",
+)
+
+
+def archive_measure_work_files(case_dir: Path) -> None:
+    work_dir = _measure_work_dir(str(case_dir))
+    for filename in MEASURE_WORK_FILENAMES:
+        file_path = case_dir / filename
+        if file_path.exists():
+            file_path.replace(work_dir / filename)
+
+    for clip_path in sorted(case_dir.glob("Clip*.png")):
+        clip_path.replace(work_dir / clip_path.name)
 
 def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
     # source the correct OpenFOAM, based on the system and OF version
@@ -103,8 +124,9 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             "Y_COORD_END_TRACK": float(measure_cfg.y_end),
         }
       
+        aux_dir = _measure_aux_dir(name_new_folder)
         (case_dir / "measure_inputs.json").write_text(json.dumps(payload, 
-                                                                     indent=2))
+                                                                 indent=2))
 
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")
         copy_measure_resources(Path(name_new_folder))
@@ -114,13 +136,19 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
                  '&& pvpython extract_meltpool.py"'
                 )
 
+        archive_measure_work_files(case_dir)
+
+        meltpool_csv = case_dir / "meltpool.csv"
+        if meltpool_csv.exists():
+            meltpool_csv.replace(aux_dir / "meltpool.csv")
+        measure_inputs_json = case_dir / "measure_inputs.json"
+        if measure_inputs_json.exists():
+            measure_inputs_json.replace(aux_dir / "measure_inputs.json")
+
         calculate_geometry_full_meltpool(name_new_folder, laser_radius_i, 
                                          measure_cfg, 
-                                       CSV_3D=name_new_folder + "/meltpool.csv"
+                                       CSV_3D=str(aux_dir / "meltpool.csv")
                                        )
-
-        terminal(f'cd {name_new_folder} && mkdir images_full_meltpool')
-        terminal(f'cd {name_new_folder} && mv *png images_full_meltpool/')
 
         print(f"\nFinished measuring geometry-based quantities "
               f"for test_case_{i + 1}\n")

@@ -42,6 +42,7 @@ Authors
 
 
 import argparse
+import sys
 from simtopc.measure.main import run as run_measure_cmd
 from simtopc.generate.main import run_generate
 
@@ -70,9 +71,17 @@ def main():
     args = p.parse_args()
 
     if args.cmd == "measure":
-        run_measure_cmd(args.config)
+        try:
+            run_measure_cmd(args.config)
+        except (ValueError, FileNotFoundError) as exc:
+            print(f"Measure configuration error: {exc}", file=sys.stderr)
+            raise SystemExit(2) from None
     elif args.cmd == "surrogate":
-        from simtopc.surrogate.main import run as run_surrogate_cmd
-        run_surrogate_cmd(args.config)
+        try:
+            from simtopc.surrogate.main import run as run_surrogate_cmd
+            run_surrogate_cmd(args.config)
+        except (RuntimeError, FileNotFoundError) as exc:
+            print(f"Surrogate error: {exc}", file=sys.stderr)
+            raise SystemExit(2) from None
     elif args.cmd == "generate":
         run_generate(args.config)

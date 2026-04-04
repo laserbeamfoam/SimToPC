@@ -2,114 +2,153 @@
 
 ## Purpose
 
-The `measure` mode performs post-processing and characterisation of completed
-LPBF simulation cases.
+This example shows how to run the `measure` mode of SimToPC on a set of
+previously completed LPBF simulation cases.
 
-Starting from simulation outputs generated using OpenFOAM-based solvers, this
-mode assesses melt-track continuity and extracts track-resolved melt-pool
-geometry and porosity metrics along the full scan path.
+The goal of this example is not to rerun the expensive simulations, but to
+demonstrate how SimToPC post-processes completed cases to:
 
-This command implements the core functionality of SimToPC and produces the
-primary outputs analysed in the associated publication.
+- check melt-track continuity,
+- extract track-resolved melt-pool geometry,
+- and compute porosity-related metrics along the scan path.
 
----
-
-## Input data
-
-The `measure` mode operates on a directory containing the completed
-simulation cases.
-
-It is assumed that the simulation cases have been previously generated and
-executed using the `generate` mode. Due to the high computational cost of LPBF
-simulations, the `generate` mode is not executed as part of this tutorial.
-Instead, precomputed simulation results are provided separately.
-
+General installation and project-wide prerequisites are described in the main
+repository [README](../../README.md).
 
 ---
 
-## Reduced dataset and data access
+## What This Example Uses
 
-For storage and distribution reasons, the simulation results provided for this
-tutorial have been reduced in size.
+This example assumes that the simulation cases have already been executed.
+
+To avoid rerunning costly OpenFOAM simulations, the example relies on a reduced
+dataset distributed in a separate repository. The reduced dataset contains the
+case directories needed by `measure`, but not the full original simulation
+outputs.
 
 In particular:
-- unnecessary OpenFOAM output fields (e.g. pressure `p`) have been removed,
-- the `polyMesh` directories corresponding to the computational mesh have been
-  removed.
 
-The reduced simulation results are provided in a separate repository, which can
-be obtained using:
+- unnecessary OpenFOAM fields such as `p` have been removed,
+- `polyMesh` has been removed from each case directory,
+- the mesh therefore needs to be reconstructed before post-processing.
 
-    git clone git@github.com:ScimonCFD/SimToPC_measure_data.git
+This means that the reproducible path for this example is:
 
-After cloning, extract the dataset as follows:
-
-    mv SimToPC_measure_data/COARSE.zip .
-    rm -rf SimToPC_measure_data
-    unzip COARSE.zip
-    rm COARSE.zip
-
-After extraction, the following directory structure should be obtained:
-
-    COARSE/test_case_i/
-
-where `i` denotes the index of the parameter combination evaluated.
+1. obtain the reduced dataset,
+2. reconstruct the mesh in each case,
+3. run `simtopc measure config.yml`.
 
 ---
 
-## Mesh reconstruction
+## Example-Specific Requirements
 
-Since the mesh files have been removed from the distributed dataset, the mesh
-must be reconstructed before running the `measure` mode.
+In addition to the general SimToPC setup described in the main README, this
+example requires:
 
-For each `test_case_i`, this can be done by executing:
-
-    blockMesh
-
-inside the corresponding case directory.
-
-To simplify this process, the following script can be used to reconstruct the
-mesh for all cases:
-
-    #!/bin/bash
-
-    for d in COARSE/test_case_*; do
-        echo "Running blockMesh in $d"
-        cd $d || exit
-        blockMesh > log.blockMesh
-        cd - > /dev/null
-    done
-
-This assumes that a valid `blockMeshDict` is present in each case directory.
+- access to the reduced dataset repository,
+- OpenFOAM with `blockMesh`,
+- ParaView with `pvpython`.
 
 ---
 
-## Basic usage
+## Get the Reduced Dataset
 
-Before running SimToPC, ensure that the Python environment in which the package
-was installed is active, as described in the main repository `README.md`.
+Clone the external dataset repository:
 
-The `measure` mode is invoked through the SimToPC command-line interface:
+```bash
+git clone git@github.com:ScimonCFD/SimToPC_measure_data.git
+```
 
-    simtopc measure config.yml
+Then extract the reduced dataset:
 
-The configuration file specifies the location of the simulation case directories
-and the settings required for post-processing and metric extraction.
+```bash
+mv SimToPC_measure_data/COARSE.zip .
+rm -rf SimToPC_measure_data
+unzip COARSE.zip
+rm COARSE.zip
+```
+
+After extraction, the following structure should exist:
+
+```text
+COARSE/test_case_i/
+```
+
+where `i` is the index of the parameter combination.
 
 ---
 
-## Measurement procedure
+## Reconstruct the Mesh
 
-For each simulation case, SimToPC processes the melt track on a
-cross-section-by-cross-section basis along the scan direction.
+Because `polyMesh` is not included in the reduced dataset, the mesh must be
+rebuilt before running `measure`.
 
-First, a **track continuity check** is performed. Based on the known mesh
-resolution, expected cross-sections are enumerated along the track. If one or
-more expected cross-sections contain no material cells, the track is classified
-as discontinuous.
+For an individual case:
 
-For **continuous tracks only**, geometric and porosity metrics are evaluated at
-each cross-section:
+```bash
+cd COARSE/test_case_i
+blockMesh > log.blockMesh
+```
+
+To rebuild the mesh for all cases:
+
+```bash
+for d in COARSE/test_case_*; do
+    echo "Running blockMesh in $d"
+    cd "$d" || exit
+    blockMesh > log.blockMesh
+    cd - > /dev/null
+done
+```
+
+This assumes that each case contains a valid `blockMeshDict`.
+
+---
+
+## Run the Example
+
+From the `examples/measure` directory, run:
+
+```bash
+cd examples/measure
+simtopc measure config.yml
+```
+
+This command uses the local `config.yml`, the local `parameters.txt`, and the
+extracted `COARSE/test_case_i`
+directories located beside them.
+
+---
+
+## Example Configuration Notes
+
+The example configuration focuses on the parameters needed by `measure`:
+
+- `y_begin`, `y_end`: nominal measurement window along the scan direction,
+- `x_min`, `x_max`: lateral range used to define the analysed melt-pool region,
+- `cell_size`: mesh spacing used by the post-processing logic,
+- `min_points_per_zrow`: minimum support used in continuity and section checks,
+- `trim`: optional exclusion of material near the beginning and end of the
+  track.
+
+When trimming is enabled:
+
+- `start_spot_sizes` and `end_spot_sizes` are given in multiples of
+  `spot size`,
+- `spot size` means the **laser diameter**,
+- trimming boundaries are projected onto valid mesh-aligned sections.
+
+---
+
+## Measurement Procedure
+
+For each simulation case, SimToPC analyses the track cross-section by
+cross-section along the scan direction.
+
+It first performs a continuity check. If the track is classified as
+discontinuous, geometric characterisation is skipped for that case.
+
+For continuous tracks, SimToPC computes:
 
 - **W (width)**: maximum lateral extent of the melt pool,
 - **H (height)**: vertical extent of the melt pool, accounting for surface and
@@ -118,50 +157,61 @@ each cross-section:
   location of maximum width,
 - **Porosity**: ratio of pore cells to total cells in the cross-section.
 
-These quantities are defined consistently with the methodology described in the
-associated publication.
+These quantities are evaluated along the full scan track.
 
 ---
 
-## Outputs
+## Expected Outputs
 
-All outputs generated by the `measure` mode are stored within the directory of
-each individual simulation case.
+For each `test_case_i`, `measure` now groups its outputs into dedicated
+subdirectories inside the case directory.
 
-For each `test_case_i` directory, the following outputs are produced:
+The main outputs are:
 
-- a track continuity flag, stored directly in the case directory,
-- per-cross-section characterisation data (W, H, D, porosity), stored as CSV
-  files in the case directory,
-- diagnostic plots illustrating the spatial variation of the extracted metrics
-  along the scan path.
+- `measure_results/row_statistics.csv`: row-level geometry and porosity
+  information,
+- `measure_results/cross_sections_statistics.csv`: cross-section-level W, H,
+  D, and porosity,
+- `measure_results/*.png`: diagnostic plots generated from the extracted
+  metrics,
+- `measure_aux/continuous.joblib`: continuity flag for the track,
+- `measure_aux/meltpool.csv`: extracted meltpool point cloud used by the
+  geometry calculations.
 
-The diagnostic plots are stored in the directory:
+Additional helper files may appear in:
 
-    images_full_meltpool
+- `measure_aux/`: auxiliary metadata used by the workflow,
+- `measure_work/`: temporary scripts and screenshots produced while extracting
+  data with ParaView.
 
-located within each `test_case_i` directory, 
-
-The figure below shows a representative example of the quantities extracted by
-the `measure` mode along a single scan track.
+The figure below shows an example of track-resolved output generated by
+`measure`.
 
 ![Example of track-resolved melt-pool metrics extracted by the measure mode](imgs/Width.png)
 
+---
 
-For a continuous track, the melt-pool width (W), height (H), depth (D), and
-porosity are evaluated on a cross-section-by-cross-section basis along the scan
-direction, highlighting both spatial variability and local fluctuations.
+## Expected Messages
 
+Depending on the case and the chosen measurement settings, the command may
+print informative warnings.
 
+Examples include:
+
+- a warning when the requested nominal measurement window is reduced to the
+  observed meltpool window,
+- a warning when trimming boundaries must be snapped to the mesh,
+- a clean configuration error if required `measure` settings are invalid.
+
+Warnings indicate that the code adapted the requested setup.
+Errors indicate that the configuration must be fixed before analysis can
+proceed.
 
 ---
 
 ## Notes
 
-The `measure` mode relies on ParaView and `pvpython` for post-processing and
-metric extraction.
-
-Simulation cases classified as discontinuous are excluded from geometric
-characterisation to ensure physically meaningful comparisons across simulations.
-
-The reduced datasets are intended for tutorial and demonstration purposes.
+- This example uses precomputed simulation data from a separate repository.
+- `measure` relies on ParaView and `pvpython` for meltpool extraction.
+- Discontinuous tracks are excluded from geometric characterisation.
+- The reduced dataset is intended for tutorial and demonstration purposes.

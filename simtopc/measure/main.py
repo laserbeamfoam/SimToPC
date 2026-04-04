@@ -39,23 +39,74 @@ Authors
 from __future__ import annotations
 from pathlib import Path
 from simtopc.config import load_config
-from simtopc.measure_config import MeasureConfig
+from simtopc.measure_config import MeasureConfig, TrimConfig
 from simtopc.measure.impl import run_measure_cases
+
+
+REQUIRED_MEASURE_KEYS = ("y_begin", "y_end", "x_min", "x_max", "cell_size")
+
+
+def _require_measure_mapping(measure_raw):
+    if not measure_raw:
+        raise ValueError(
+            "Missing required 'measure' configuration block."
+        )
+    if not isinstance(measure_raw, dict):
+        raise ValueError(
+            "The 'measure' configuration block must be a mapping of keys to values."
+        )
+    missing = [key for key in REQUIRED_MEASURE_KEYS if key not in measure_raw]
+    if missing:
+        missing_list = ", ".join(f"measure.{key}" for key in missing)
+        raise ValueError(
+            f"Missing required measurement configuration values: {missing_list}."
+        )
+    return measure_raw
+
+
+def _coerce_float(mapping, key):
+    try:
+        return float(mapping[key])
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"measure.{key} must be numeric, got {mapping[key]!r}."
+        ) from None
+
+
+def _coerce_int(mapping, key, default):
+    raw_value = mapping.get(key, default)
+    try:
+        return int(raw_value)
+    except (TypeError, ValueError):
+        raise ValueError(
+            f"measure.{key} must be an integer, got {raw_value!r}."
+        ) from None
 
 
 def run(config_path: str | Path) -> None:
     config_path = Path(config_path).resolve()
     cfg_all = load_config(str(config_path))
 
-    m = cfg_all.measure
+    m = _require_measure_mapping(cfg_all.measure)
+    trim_raw = m.get("trim", {}) or {}
+    if not isinstance(trim_raw, dict):
+        raise ValueError("measure.trim must be a mapping of trim options.")
     measure_cfg = MeasureConfig(
-        y_begin=float(m["y_begin"]),
-        y_end=float(m["y_end"]),
-        x_min=float(m["x_min"]),
-        x_max=float(m["x_max"]),
-        cell_size=float(m["cell_size"]),
-        min_points_per_zrow=int(m.get("min_points_per_zrow", 4)),
+        y_begin=_coerce_float(m, "y_begin"),
+        y_end=_coerce_float(m, "y_end"),
+        x_min=_coerce_float(m, "x_min"),
+        x_max=_coerce_float(m, "x_max"),
+        cell_size=_coerce_float(m, "cell_size"),
+        min_points_per_zrow=_coerce_int(m, "min_points_per_zrow", 4),
+        trim=TrimConfig(
+            enabled=bool(trim_raw.get("enabled", False)),
+            start_spot_sizes=_coerce_float(trim_raw, "start_spot_sizes")
+            if "start_spot_sizes" in trim_raw else 0.0,
+            end_spot_sizes=_coerce_float(trim_raw, "end_spot_sizes")
+            if "end_spot_sizes" in trim_raw else 0.0,
+        ),
     )
+    measure_cfg.validate()
 
     run_measure_cases(cfg_all=cfg_all, measure_cfg=measure_cfg, 
     config_path=config_path)

@@ -59,6 +59,11 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from pathlib import Path
 
+
+MEASURE_RESULTS_DIRNAME = "measure_results"
+MEASURE_AUX_DIRNAME = "measure_aux"
+
+
 def terminal(command):
     os.system(command)
 
@@ -112,13 +117,20 @@ def create_width_depth_height_to_flat_data(good_simulation_cases,
     cases_ran_properly_and_have_continuous_meltpool = []
     for i in good_simulation_cases:
         name_new_folder = mesh_density + "/test_case_" + str(i)
+        case_dir = Path(name_new_folder)
         meltpool_i_is_cotinuous = load(
-                              str(Path(name_new_folder) / "continuous.joblib"))
+            str(case_dir / MEASURE_AUX_DIRNAME / "continuous.joblib")
+        )
         
         if (meltpool_i_is_cotinuous):
             # Read the data
             df = pd.read_csv(
-                  str(Path(name_new_folder) / "cross_sections_statistics.csv"))
+                str(
+                    case_dir
+                    / MEASURE_RESULTS_DIRNAME
+                    / "cross_sections_statistics.csv"
+                )
+            )
             width_mean = np.mean(df["width"].to_numpy())
             width_std = np.std(df["width"].to_numpy())
             depth_mean = np.mean(df["depth"].to_numpy())

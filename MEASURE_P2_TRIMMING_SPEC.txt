@@ -1,0 +1,153 @@
+SimToPC Measure P2 Specification
+Track Trimming Redesign
+
+Purpose
+Define the trimming behavior of `measure` explicitly, so that track-edge
+exclusion is configurable, numerically robust, and scientifically defensible.
+
+1. Core Definitions
+
+1.1 Spot Size
+- In SimToPC, `spot size` means the laser diameter.
+- This must be documented explicitly in the user-facing configuration and
+  documentation.
+
+1.2 Nominal Analysis Window
+- `y_begin` and `y_end` define the nominal analysis window requested by the
+  user.
+- The nominal track length used by `measure` is:
+
+  L_nominal = y_end - y_begin
+
+- `y_begin` and `y_end` are not assumed to be the ground truth of the observed
+  meltpool extent.
+
+1.3 Observed Meltpool Window
+- The extracted meltpool data define an observed window in the scan direction:
+
+  [y_data_min, y_data_max]
+
+- This observed window comes from the actual meltpool data available for the
+  case.
+
+1.4 Effective Analysis Window
+- `measure` must construct an effective analysis window from the overlap between
+  the nominal window and the observed meltpool window:
+
+  y_effective_begin = max(y_begin, y_data_min)
+  y_effective_end   = min(y_end, y_data_max)
+
+- The effective window is the physical interval on which trimming may be
+  applied.
+
+2. Trimming Configuration
+
+2.1 User-Controlled Trimming
+- Track trimming must be user-configurable.
+- Trimming is specified independently for the start and end of the track.
+
+- Proposed configuration semantics:
+
+  trim.enabled
+  trim.start_spot_sizes
+  trim.end_spot_sizes
+
+2.2 Trimming Units
+- Trimming values are expressed in multiples of `spot size`.
+- Since `spot size` means laser diameter:
+
+  L_trim_start = trim.start_spot_sizes * spot_size
+  L_trim_end   = trim.end_spot_sizes * spot_size
+
+2.3 Intended Behavior
+- Trimming removes edge regions from the effective analysis window.
+- The trimmed physical window is:
+
+  y_trimmed_begin_physical = y_effective_begin + L_trim_start
+  y_trimmed_end_physical   = y_effective_end - L_trim_end
+
+3. Physics-to-Mesh Mapping
+
+3.1 General Rule
+- The physical trimmed window must be mapped to actual valid mesh sections.
+- SimToPC must not rely on exact float equality to decide section membership.
+
+3.2 Start of Track
+- If the physical trimming boundary at the start does not fall exactly on a
+  valid mesh section, `measure` must use the next valid section.
+
+3.3 End of Track
+- If the physical trimming boundary at the end does not fall exactly on a valid
+  mesh section, `measure` must use the previous valid section.
+
+3.4 Interpretation
+- This is a conservative snapping rule:
+  - start -> snap forward
+  - end -> snap backward
+
+4. Validation Rules
+
+4.1 Nominal Window Validation
+- `y_end` must be strictly greater than `y_begin`.
+- Otherwise, `measure` must raise a clear error.
+
+4.2 Effective Window Validation
+- The effective window must be non-empty:
+
+  y_effective_end > y_effective_begin
+
+- If the nominal and observed windows do not overlap usefully, `measure` must
+  raise a clear error.
+
+4.3 Trimming Length Validation
+- Trimming must be validated against the effective physical window, not only
+  against nominal user intent.
+
+- The requested trimming must satisfy:
+
+  L_trim_start >= 0
+  L_trim_end >= 0
+  L_trim_start + L_trim_end < (y_effective_end - y_effective_begin)
+
+- If this condition fails, `measure` must raise a clear error.
+
+4.4 Post-Snapping Validation
+- After snapping the physical trim boundaries to valid mesh sections, at least
+  one valid measurable section must remain.
+- If no valid section remains, `measure` must raise a clear error.
+
+5. Warnings
+
+5.1 Nominal vs Observed Window Mismatch
+- If the user-requested nominal window differs appreciably from the observed
+  meltpool window, `measure` should emit a warning.
+- The exact warning threshold can be defined later during implementation.
+
+5.2 Mesh Alignment Warning
+- If a requested trim boundary does not fall exactly on the mesh and must be
+  snapped, `measure` should be allowed to emit a warning or an informative
+  message.
+
+6. Default Behavior
+
+6.1 Recommended Default
+- Recommended default:
+
+  trim.enabled = false
+  trim.start_spot_sizes = 0.0
+  trim.end_spot_sizes = 0.0
+
+- This avoids hidden methodological assumptions.
+- Paper-specific trimming choices should be made explicitly in configuration.
+
+7. Consequences for Implementation
+
+- `measure` must treat `y_begin` and `y_end` as a requested analysis window.
+- `measure` must extract the observed meltpool extent from the data.
+- `measure` must build the effective window from the overlap of nominal and
+  observed windows.
+- Trimming must be applied to the effective window, not blindly to the nominal
+  one.
+- Mesh snapping must follow the start-forward / end-backward rule.
+- Validation and error handling must occur before geometry statistics are
+  computed.
