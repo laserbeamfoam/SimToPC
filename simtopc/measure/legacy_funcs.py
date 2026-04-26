@@ -799,12 +799,12 @@ def plotResults(name_new_folder,
         plt.savefig(results_dir / f"{name_png_file}.png")
     
     df = pd.read_csv(CSV_CROSS_SECTIONS)
-    y_locations = df["iy"]
+    y_locations = df["iy"].to_numpy()
     
     keys_for_plot = ["width", "height", "depth", "porosity_at_iy"]
     
     for key in keys_for_plot:
-        values_for_plot = df[key]
+        values_for_plot = df[key].to_numpy()
         if key == "porosity_at_iy":
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
                             "Porosity (porous volume / total volume)", 
