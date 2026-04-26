@@ -356,23 +356,31 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
 
     trim_start = trim_start_spot_sizes * spot_size
     trim_end = trim_end_spot_sizes * spot_size
-    effective_length = y_effective_end - y_effective_begin
+    requested_length = y_end - y_begin
 
-    if trim_start + trim_end >= effective_length:
+    if trim_start + trim_end >= requested_length:
         raise ValueError(
-            "Requested trimming removes the full effective track window."
+            "Requested trimming removes the full requested track window."
         )
 
-    y_trimmed_begin_physical = y_effective_begin + trim_start
-    y_trimmed_end_physical = y_effective_end - trim_end
+    y_trimmed_begin_physical = y_begin + trim_start
+    y_trimmed_end_physical = y_end - trim_end
+    y_measurable_begin_physical = max(y_trimmed_begin_physical, y_data_min)
+    y_measurable_end_physical = min(y_trimmed_end_physical, y_data_max)
+
+    if y_measurable_end_physical <= y_measurable_begin_physical:
+        raise ValueError(
+            "The trimmed measurement window does not overlap with the "
+            "observed meltpool window."
+        )
 
     mesh_begin = _snap_value_to_global_mesh(
-        y_trimmed_begin_physical,
+        y_measurable_begin_physical,
         cell_size,
         direction="forward",
     )
     mesh_end = _snap_value_to_global_mesh(
-        y_trimmed_end_physical,
+        y_measurable_end_physical,
         cell_size,
         direction="backward",
     )
@@ -404,8 +412,8 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
         or abs(y_effective_end - y_end) > ROUND_TOL
     )
     trim_snapped = (
-        abs(mesh_begin - y_trimmed_begin_physical) > ROUND_TOL
-        or abs(mesh_end - y_trimmed_end_physical) > ROUND_TOL
+        abs(mesh_begin - y_measurable_begin_physical) > ROUND_TOL
+        or abs(mesh_end - y_measurable_end_physical) > ROUND_TOL
     )
 
     return AnalysisWindow(
