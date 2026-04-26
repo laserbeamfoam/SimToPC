@@ -9,13 +9,7 @@ from paraview.simple import *
 paraview.simple._DisableFirstRenderCameraReset()
 
 from pathlib import Path
-import numpy as np
 from input_data import DOMAIN_SIZE_IN_MICRONS, Y_COORD_BEGIN_TRACK, Y_COORD_END_TRACK
-
-# Read the operational parameters
-parameters = np.loadtxt("../../parameters.txt", skiprows=1)
-
-current_case = Path.cwd().name
 
 # get active source.
 test_case_1foam = GetActiveSource()
@@ -801,7 +795,7 @@ clip2.ClipType.Offset = 0.0
 clip2.Invert = 0
 
 # Properties modified on clip2.ClipType
-clip2.ClipType.Origin = [9.999999747378752e-05, Y_COORD_BEGIN_TRACK + parameters[int(current_case[-1]) - 1, 2]/2, 7.499999628635123e-05]
+clip2.ClipType.Origin = [9.999999747378752e-05, Y_COORD_BEGIN_TRACK, 7.499999628635123e-05]
 clip2.ClipType.Normal = [0.0, 1.0, 0.0]
 
 # show data in view
@@ -1155,7 +1149,7 @@ clip3.ClipType.Normal = [1.0, 0.0, 0.0]
 clip3.ClipType.Offset = 0.0
 
 # Properties modified on clip3.ClipType
-clip3.ClipType.Origin = [9.999999747378752e-05, Y_COORD_END_TRACK - parameters[int(current_case[-1]) - 1, 2]/2, 7.375000132014975e-05]
+clip3.ClipType.Origin = [9.999999747378752e-05, Y_COORD_END_TRACK, 7.375000132014975e-05]
 clip3.ClipType.Normal = [0.0, 1.0, 0.0]
 
 # show data in view
