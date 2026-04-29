@@ -59,18 +59,32 @@ def test_compute_analysis_y_levels_aligns_reported_window_to_mesh():
 
 
 def test_compute_analysis_y_levels_reports_trim_snapping_when_needed():
-    df = make_synthetic_meltpool_df(np.arange(137.5e-6, 662.6e-6, 5.0e-6))
+    df = make_synthetic_meltpool_df(np.arange(100.0e-6, 700.1e-6, 5.0e-6))
     measure_cfg = make_measure_config(
         trim=TrimConfig(enabled=True, start_spot_sizes=1.0, end_spot_sizes=1.0)
     )
 
-    analysis_window = _compute_analysis_y_levels(df, measure_cfg, spot_size=75.0e-6)
+    analysis_window = _compute_analysis_y_levels(df, measure_cfg, spot_size=77.0e-6)
 
     assert analysis_window.trim_snapped is True
-    assert analysis_window.y_trimmed_begin_physical == pytest.approx(212.5e-6)
-    assert analysis_window.y_trimmed_end_physical == pytest.approx(587.5e-6)
-    assert analysis_window.y_levels[0] == pytest.approx(215.0e-6)
-    assert analysis_window.y_levels[-1] == pytest.approx(585.0e-6)
+    assert analysis_window.y_trimmed_begin_physical == pytest.approx(177.0e-6)
+    assert analysis_window.y_trimmed_end_physical == pytest.approx(623.0e-6)
+    assert analysis_window.y_levels[0] == pytest.approx(180.0e-6)
+    assert analysis_window.y_levels[-1] == pytest.approx(620.0e-6)
+
+
+def test_compute_analysis_y_levels_applies_trim_to_requested_window_before_observed_window():
+    df = make_synthetic_meltpool_df(np.arange(100.0e-6, 685.1e-6, 5.0e-6))
+    measure_cfg = make_measure_config(
+        trim=TrimConfig(enabled=True, start_spot_sizes=0.5, end_spot_sizes=0.5)
+    )
+
+    analysis_window = _compute_analysis_y_levels(df, measure_cfg, spot_size=75.0e-6)
+
+    assert analysis_window.y_trimmed_begin_physical == pytest.approx(137.5e-6)
+    assert analysis_window.y_trimmed_end_physical == pytest.approx(662.5e-6)
+    assert analysis_window.y_levels[0] == pytest.approx(140.0e-6)
+    assert analysis_window.y_levels[-1] == pytest.approx(660.0e-6)
 
 
 def test_compute_analysis_y_levels_rejects_non_overlapping_window():
@@ -87,5 +101,5 @@ def test_compute_analysis_y_levels_rejects_excessive_trimming():
         trim=TrimConfig(enabled=True, start_spot_sizes=3.0, end_spot_sizes=3.0)
     )
 
-    with pytest.raises(ValueError, match="Requested trimming removes the full effective track window"):
+    with pytest.raises(ValueError, match="Requested trimming removes the full requested track window"):
         _compute_analysis_y_levels(df, measure_cfg, spot_size=100.0e-6)
