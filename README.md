@@ -4,11 +4,11 @@
 
 **SimToPC** is an open-source Python package that provides an **end-to-end simulation-to-characterisation workflow** for **single-track Laser Powder Bed Fusion (LPBF)** studies.
 
-It supports **case generation and execution**, automated **post-processing**, and the extraction of **track-resolved melt-pool geometry and porosity metrics** from high-fidelity simulations. By analysing the melt pool along the **entire scan track**, SimToPC enables full-field characterisation beyond conventional centreline or single-slice measurements.
+It supports **case generation and execution**, automated **post-processing**, and the extraction of **track-resolved melt-pool geometry and operational void-fraction metrics** from high-fidelity simulations. By analysing the melt pool along the **entire scan track**, SimToPC enables full-field characterisation beyond conventional centreline or single-slice measurements.
 
 SimToPC includes an automated **track-continuity check** that determines whether a continuous melt track forms. Geometric metrics are evaluated only for continuous tracks, while discontinuous cases are flagged and excluded from further analysis.
 
-The tool is designed to work with **OpenFOAM-based LPBF solvers** and is demonstrated using **laserMeltFoam**. It produces **structured, machine-learning-ready datasets** and can optionally be used to train surrogate models for rapid exploration of process-parameter spaces.
+The tool is designed to work with **OpenFOAM-based LPBF solvers** and is demonstrated using **laserMeltFoam**. It produces **structured, machine-learning-ready datasets** and can optionally be used to train surrogate models for exploratory analysis of process-parameter spaces.
 
 
 ### Outputs
@@ -20,7 +20,7 @@ Typical outputs are illustrated below.
 |-----------|------------|
 | ![](docs/images/Width.png) | ![](docs/images/Height.png) |
 
-| Depth (D) | Porosity |
+| Depth (D) | Void fraction |
 |-----------|----------|
 | ![](docs/images/Depth.png) | ![](docs/images/Porosity.png) |
 
@@ -29,9 +29,14 @@ The extracted metrics are defined **per cross-section** along continuous tracks,
 ![Melt pool geometry](docs/images/meltpool_geometry.png)
 
 - **W (width)**: maximum lateral extent of the melt pool in the cross-section.
-- **H (height)**: vertical extent of the melt pool, accounting for surface and internal pores.
+- **H (height)**: vertical extent of the melt pool, accounting for the operational treatment of surface-connected and internal voids.
 - **D (depth)**: vertical distance from the lowest material point to the location of maximum width.
-- **Porosity**: ratio of pore cells to total cells in the cross-section (equivalent to a volume fraction for uniform meshes).
+- **Operational void fraction**: ratio of detected void cells to total reconstructed cells in the cross-section (equivalent to a volume fraction for uniform meshes). Fully enclosed voids correspond to internal pores; surface-connected voids represent local missing material or free-surface depressions and should not be interpreted as closed pores.
+
+Some output files retain historical column names such as `porosity_at_iy`,
+`row_has_pores`, and `number_of_pores_in_row`. In the current documentation and
+paper, these quantities should be interpreted as operational void-fraction or
+void-cell descriptors unless a void is explicitly identified as fully enclosed.
 
 In addition, SimToPC outputs:
 
@@ -55,7 +60,7 @@ The available commands are:
 
 - **generate**: prepares and executes LPBF simulation cases from the specified operational parameters.
 
-- **measure**: post-processes completed simulations, assesses track continuity, and extracts melt-pool geometry and porosity metrics.
+- **measure**: post-processes completed simulations, assesses track continuity, and extracts melt-pool geometry and operational void-fraction metrics.
 
 - **surrogate** (optional): trains a surrogate model from the extracted datasets to rapidly explore the process-parameter space.
 
@@ -153,4 +158,3 @@ Flint, T. F., et al. A fundamental analysis of factors affecting chemical homoge
 Flint, T. F., T. Dutilleul, and W. Kyffin. A fundamental investigation into the role of beam focal point, and beam divergence, on thermo-capillary stability and evolution in electron beam welding applications. International Journal of Heat and Mass Transfer 212 (2023): 124262.
 
 Parivendhan, G., Cardiff, P., Flint, T., Tuković, Ž., Obeidi, M., Brabazon, D., Ivanković, A. (2023) A numerical study of processing parameters and their effect on the melt-track profile in Laser Powder Bed Fusion processes, Additive Manufacturing, 67, 10.1016/j.addma.2023.103482.
-
