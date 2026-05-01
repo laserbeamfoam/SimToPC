@@ -10,7 +10,7 @@ demonstrate how SimToPC post-processes completed cases to:
 
 - check melt-track continuity,
 - extract track-resolved melt-pool geometry,
-- and compute porosity-related metrics along the scan path.
+- and compute operational void-fraction metrics along the scan path.
 
 General installation and project-wide prerequisites are described in the main
 repository [README](../../README.md).
@@ -151,11 +151,17 @@ discontinuous, geometric characterisation is skipped for that case.
 For continuous tracks, SimToPC computes:
 
 - **W (width)**: maximum lateral extent of the melt pool,
-- **H (height)**: vertical extent of the melt pool, accounting for surface and
-  internal pores,
+- **H (height)**: vertical extent of the melt pool, accounting for the
+  operational treatment of surface-connected and internal voids,
 - **D (depth)**: vertical distance from the lowest material point to the
   location of maximum width,
-- **Porosity**: ratio of pore cells to total cells in the cross-section.
+- **Operational void fraction**: ratio of detected void cells to total
+  reconstructed cells in the cross-section.
+
+The current CSV files retain historical column names such as `porosity_at_iy`,
+`row_has_pores`, and `number_of_pores_in_row`. These columns should be read as
+void-fraction or void-cell descriptors. Only fully enclosed voids should be
+interpreted as internal pores in the strict metallurgical sense.
 
 These quantities are evaluated along the full scan track.
 
@@ -168,10 +174,10 @@ subdirectories inside the case directory.
 
 The main outputs are:
 
-- `measure_results/row_statistics.csv`: row-level geometry and porosity
+- `measure_results/row_statistics.csv`: row-level geometry and void-count
   information,
 - `measure_results/cross_sections_statistics.csv`: cross-section-level W, H,
-  D, and porosity,
+  D, and operational void fraction,
 - `measure_results/*.png`: diagnostic plots generated from the extracted
   metrics,
 - `measure_aux/continuous.joblib`: continuity flag for the track,

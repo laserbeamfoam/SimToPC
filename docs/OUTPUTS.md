@@ -50,7 +50,14 @@ The measurement workflow proceeds in two main stages:
    - melt pool width (W)
    - melt pool height (H)
    - melt pool depth (D)
-   - porosity
+   - operational void fraction
+
+The code currently preserves some historical output names, including
+`porosity_at_iy`, `row_has_pores`, and `number_of_pores_in_row`. These names
+refer to the operational void-fraction calculation used by SimToPC. Fully
+enclosed voids correspond to internal pores, whereas surface-connected voids
+represent missing material or free-surface depressions in the reconstructed
+cross-section.
 
 The computed quantities are written to disk as text or CSV files
 associated with each simulation case.
@@ -68,7 +75,8 @@ uses the measurements computed by the `measure` command to build
 a surrogate model based on a neural network.
 
 The surrogate model is trained using the melt pool quantities
-(W, D, H, porosity) obtained from the simulation cases.
+(W, D, H, and the operational void-fraction metric) obtained from the
+simulation cases.
 
 The command produces:
 
