@@ -53,9 +53,9 @@ Both simulations use a pulsed laser operating on a
 Clone the companion repository and extract the native laserbeamFoam cases:
 
 ```bash
-git clone git@github.com:ScimonCFD/SimToPC_measure_data.git
-mv SimToPC_measure_data/laserbeamfoam_native.zip .
-rm -rf SimToPC_measure_data
+git clone git@github.com:ScimonCFD/SimToPC_laserbeamfoam_data.git
+mv SimToPC_laserbeamfoam_data/laserbeamfoam_native.zip .
+rm -rf SimToPC_laserbeamfoam_data
 unzip laserbeamfoam_native.zip
 rm laserbeamfoam_native.zip
 ```
