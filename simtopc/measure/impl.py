@@ -123,9 +123,9 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             "Y_COORD_BEGIN_TRACK": float(measure_cfg.y_begin),
             "Y_COORD_END_TRACK": float(measure_cfg.y_end),
         }
-      
+
         aux_dir = _measure_aux_dir(name_new_folder)
-        (case_dir / "measure_inputs.json").write_text(json.dumps(payload, 
+        (case_dir / "measure_inputs.json").write_text(json.dumps(payload,
                                                                  indent=2))
 
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")
