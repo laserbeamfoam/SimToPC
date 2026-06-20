@@ -110,7 +110,7 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
 
 
     # Read the operational parameters
-    parameters = np.loadtxt(cfg_all.parameters_file, skiprows=1)
+    parameters = np.atleast_2d(np.loadtxt(cfg_all.parameters_file, skiprows=1))
     number_cases = parameters.shape[0]
 
     for i in range(number_cases):
