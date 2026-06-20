@@ -191,7 +191,7 @@ def adapt_case(src_dir: Path, dst_dir: Path,
     print(f"  Renamed       {src_time.name}/{alpha_field} → alpha.material")
 
     # --- .foam marker file ---
-    foam_marker = dst_dir / f"{dst_dir.name}.foam"
+    foam_marker = dst_dir / "main.foam"
     foam_marker.touch()
     print(f"  Created       {foam_marker.name}")
 
