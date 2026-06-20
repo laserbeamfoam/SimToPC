@@ -1,0 +1,15 @@
+mesh_density: laserbeamfoam_adapted
+parameters_file: parameters.txt
+output_dir: results
+running_on: local
+
+environment:
+  of_location: "/home/user/OpenFOAM/OpenFOAM-v2512/etc/bashrc"
+
+measure:
+  y_begin: 100e-6
+  y_end:   700e-6
+  x_min:   0
+  x_max:   200e-6
+  cell_size: 5e-6
+  min_points_per_zrow: 2
