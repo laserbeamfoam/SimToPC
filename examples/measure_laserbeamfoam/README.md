@@ -96,7 +96,7 @@ laserbeamfoam_adapted/
     test_case_1/
         constant/polyMesh/   ← points remapped: x→x, z→y, y→z
         constant/g           ← gravity remapped to (0 0 -9.81)
-        0.0001/
+        0.0012/
             alpha.material   ← renamed from alpha.metal
             solidificationTime
     test_case_2/
