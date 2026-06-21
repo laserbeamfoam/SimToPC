@@ -110,7 +110,7 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
 
 
     # Read the operational parameters
-    parameters = np.loadtxt(cfg_all.parameters_file, skiprows=1)
+    parameters = np.atleast_2d(np.loadtxt(cfg_all.parameters_file, skiprows=1))
     number_cases = parameters.shape[0]
 
     for i in range(number_cases):
@@ -123,9 +123,9 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
             "Y_COORD_BEGIN_TRACK": float(measure_cfg.y_begin),
             "Y_COORD_END_TRACK": float(measure_cfg.y_end),
         }
-      
+
         aux_dir = _measure_aux_dir(name_new_folder)
-        (case_dir / "measure_inputs.json").write_text(json.dumps(payload, 
+        (case_dir / "measure_inputs.json").write_text(json.dumps(payload,
                                                                  indent=2))
 
         print(f"\n Measuring geometry-based quantities for test_case_{i+1}")

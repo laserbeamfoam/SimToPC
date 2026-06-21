@@ -733,8 +733,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                     cell_size=cell_size,
                 )
                 if row_evaluation is None:
-                    iz = z_max_at_iy_that_is_in_original_mesh
-                    iz = _round_scalar(iz + cell_size) 
+                    iz = _round_scalar(iz + cell_size)
                               
                 else:
                     if row_evaluation.n_pores > 0:

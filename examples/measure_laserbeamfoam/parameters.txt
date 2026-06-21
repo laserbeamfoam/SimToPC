@@ -1,0 +1,3 @@
+# Scanning Speed (m/s) | Power (W) | Spot size (m)
+  1.25   200   7.500e-05
+  0.90   100   7.500e-05
