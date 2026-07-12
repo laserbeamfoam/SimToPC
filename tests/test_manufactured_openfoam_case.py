@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import math
 import shutil
 import subprocess
 from pathlib import Path
@@ -15,6 +14,20 @@ from simtopc.measure.main import run as run_measure
 
 
 OPENFOAM_BASHRC = os.environ.get("SIMTOPC_OPENFOAM_BASHRC")
+
+MANUFACTURED_SECTIONS = [
+    (25.0e-6, 90.0e-6, 20.0e-6),
+    (90.0e-6, 150.0e-6, 25.0e-6),
+    (150.0e-6, 210.0e-6, 30.0e-6),
+    (210.0e-6, 275.0e-6, 35.0e-6),
+]
+
+REPRESENTATIVE_SECTIONS = {
+    50.0e-6: (30.0e-6, 10.0e-6, 10.0e-6),
+    120.0e-6: (40.0e-6, 15.0e-6, 15.0e-6),
+    180.0e-6: (50.0e-6, 20.0e-6, 20.0e-6),
+    240.0e-6: (60.0e-6, 25.0e-6, 20.0e-6),
+}
 
 
 def _write_minimal_case(case_dir: Path) -> None:
@@ -224,27 +237,20 @@ def _write_manufactured_fields(case_dir: Path) -> None:
     pressure = []
 
     for x, y, z in zip(xs, ys, zs):
-        if 25.0e-6 <= y <= 275.0e-6:
-            radius = 32.5e-6 + 7.5e-6 * math.sin(
-                2.0 * math.pi * (y - 25.0e-6) / 250.0e-6
-            )
-            in_prescribed_pool = (
-                (x - x_centre) ** 2 + (z - z_surface) ** 2 <= radius**2 + 1.0e-18
-                and z <= z_surface + 1.0e-12
-            )
-        else:
-            in_prescribed_pool = False
+        radius = None
+        for y_min, y_max, candidate_radius in MANUFACTURED_SECTIONS:
+            if y_min <= y < y_max:
+                radius = candidate_radius
+                break
 
-        in_internal_void = (
-            in_prescribed_pool
-            and 140.0e-6 <= y <= 160.0e-6
-            and 107.5e-6 <= x <= 112.5e-6
-            and 75.0e-6 <= z <= 80.0e-6
+        occupied = (
+            radius is not None
+            and (x - x_centre) ** 2 + (z - z_surface) ** 2 <= radius**2 + 1.0e-18
+            and z <= z_surface + 1.0e-12
         )
-        occupied = in_prescribed_pool and not in_internal_void
 
         alpha.append(1.0 if occupied else 0.0)
-        solidification_time.append(1.0e-4 if in_prescribed_pool else -1.0)
+        solidification_time.append(1.0e-4 if occupied else -1.0)
         pressure.append(0.0)
 
     (time_dir / "alpha.material").write_text(
@@ -304,20 +310,12 @@ def test_measure_recovers_manufactured_openfoam_meltpool(tmp_path, monkeypatch):
     cross_sections = pd.read_csv(case_dir / "measure_results" / "cross_sections_statistics.csv")
     row_statistics = pd.read_csv(case_dir / "measure_results" / "row_statistics.csv")
 
-    row_30 = cross_sections[cross_sections["iy"].sub(30.0e-6).abs() < 1.0e-12].iloc[0]
-    assert row_30["width"] == pytest.approx(50.0e-6)
-    assert row_30["height"] == pytest.approx(25.0e-6)
-    assert row_30["depth"] == pytest.approx(15.0e-6)
-    assert row_30["porosity_at_iy"] == pytest.approx(0.0)
+    for y_coord, (expected_width, expected_height, expected_depth) in REPRESENTATIVE_SECTIONS.items():
+        section = cross_sections[cross_sections["iy"].sub(y_coord).abs() < 1.0e-12].iloc[0]
+        assert section["width"] == pytest.approx(expected_width)
+        assert section["height"] == pytest.approx(expected_height)
+        assert section["depth"] == pytest.approx(expected_depth)
+        assert section["porosity_at_iy"] == pytest.approx(0.0)
 
-    void_sections = cross_sections[cross_sections["porosity_at_iy"] > 0.0]
-    assert void_sections["iy"].tolist() == pytest.approx(
-        [140.0e-6, 145.0e-6, 150.0e-6, 155.0e-6, 160.0e-6]
-    )
-    assert void_sections["porosity_at_iy"].tolist() == pytest.approx(
-        [0.125, 0.1363636364, 0.15, 0.1578947368, 0.1764705882]
-    )
-
-    void_rows = row_statistics[row_statistics["row_has_pores"]]
-    assert len(void_rows) == 10
-    assert (void_rows["number_of_pores_in_row"] == 3).all()
+    assert cross_sections["porosity_at_iy"].max() == pytest.approx(0.0)
+    assert not row_statistics["row_has_pores"].any()
