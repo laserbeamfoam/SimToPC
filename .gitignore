@@ -11,6 +11,10 @@ data/
 *.npy
 *.npz
 
+# Tutorial reference outputs
+!examples/measure_laserbeamfoam/expected_outputs/
+!examples/measure_laserbeamfoam/expected_outputs/**
+
 # ML artifacts
 *.h5
 *.joblib

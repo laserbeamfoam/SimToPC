@@ -127,7 +127,36 @@ SimToPC provides three command-line modes that together define the full workflow
 Detailed, mode-specific tutorials are provided in the `examples` directory:
 - `examples/generate/README.md`
 - `examples/measure/README.md`
+- `examples/measure_laserbeamfoam/README.md`
 - `examples/surrogate/README.md`
+
+#### Automated tutorial regression test
+
+The repository includes a top-level regression-test script that exercises the
+documented `measure_laserbeamfoam` tutorial in a temporary directory and
+reports success or failure:
+
+```bash
+./run_tutorial_tests.sh --laserbeamfoam-data-zip /path/to/laserbeamfoam_native.zip --skip-measure
+```
+
+This checks the reduced dataset layout, runs the coordinate-adaptation utility,
+and verifies that the adapted cases contain the files required by
+`simtopc measure`. To run the full tutorial, including the `measure` command,
+provide an OpenFOAM bashrc file and omit `--skip-measure`:
+
+```bash
+./run_tutorial_tests.sh \
+    --laserbeamfoam-data-zip /path/to/laserbeamfoam_native.zip \
+    --openfoam-bashrc /path/to/OpenFOAM/etc/bashrc
+```
+
+The full test also compares the generated `row_statistics.csv` and
+`cross_sections_statistics.csv` files against versioned reference outputs for
+both tutorial cases.
+
+If `--laserbeamfoam-data-zip` is omitted, the script clones the companion data
+repository and extracts the reduced tutorial dataset automatically.
 
 
 
