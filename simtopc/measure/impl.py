@@ -56,6 +56,7 @@ else:
     import importlib_resources as resources  # type: ignore
 
 import json
+import pandas as pd
 
 
 def copy_measure_resources(case_dir: Path) -> None:
@@ -102,6 +103,59 @@ def archive_measure_work_files(case_dir: Path) -> None:
     for clip_path in sorted(case_dir.glob("Clip*.png")):
         clip_path.replace(work_dir / clip_path.name)
 
+
+def _read_openfoam_scalar_internal_field(path: Path) -> list[float]:
+    lines = path.read_text().splitlines()
+    start = None
+    count = None
+    for i, line in enumerate(lines):
+        if line.strip().isdigit():
+            count = int(line.strip())
+            start = i + 2
+            break
+    if start is None or count is None:
+        raise ValueError(f"Could not parse OpenFOAM scalar field: {path}")
+    values = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped == ")":
+            break
+        if stripped:
+            values.append(float(stripped))
+    if len(values) != count:
+        raise ValueError(f"Expected {count} values in {path}, found {len(values)}")
+    return values
+
+
+def extract_cell_centres_meltpool(case_dir: Path, cell_size: float) -> None:
+    """Write meltpool.csv from occupied OpenFOAM cell centres.
+
+    This is used by controlled manufactured tests where the reference
+    geometry is prescribed as a mesh-cell mask rather than as interpolated
+    point data.
+    """
+    time_dirs = sorted(
+        [p for p in case_dir.iterdir() if p.is_dir() and p.name not in {"0", "constant", "system", "measure_aux", "measure_results", "measure_work"}],
+        key=lambda p: float(p.name),
+    )
+    if not time_dirs:
+        raise FileNotFoundError(f"No time directory found in {case_dir}")
+    time_dir = time_dirs[-1]
+    xs = _read_openfoam_scalar_internal_field(time_dir / "Cx")
+    ys = _read_openfoam_scalar_internal_field(time_dir / "Cy")
+    zs = _read_openfoam_scalar_internal_field(time_dir / "Cz")
+    alpha = _read_openfoam_scalar_internal_field(time_dir / "cellAlpha.material")
+    half_cell = 0.5 * cell_size
+    rows = [
+        (x - half_cell, y - half_cell, z - half_cell)
+        for x, y, z, a in zip(xs, ys, zs, alpha)
+        if a > 0.5
+    ]
+    pd.DataFrame(rows, columns=["Points_0", "Points_1", "Points_2"]).to_csv(
+        case_dir / "meltpool.csv",
+        index=False,
+    )
+
 def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
     # source the correct OpenFOAM, based on the system and OF version
     # hostname, run_address, OF_LOCATION = set_environment_variables(
@@ -132,9 +186,12 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
         copy_measure_resources(Path(name_new_folder))
         laser_radius_i = parameters[i, 2] / 2
         print(f"\n Extracting meltpool geometry")
-        terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} '
-                 '&& pvpython extract_meltpool.py"'
-                )
+        if measure_cfg.extraction_mode == "cell_centres":
+            extract_cell_centres_meltpool(case_dir, measure_cfg.cell_size)
+        else:
+            terminal(f'bash -lc "source {OF_LOCATION} && cd {name_new_folder} '
+                     '&& pvpython extract_meltpool.py"'
+                    )
 
         archive_measure_work_files(case_dir)
 

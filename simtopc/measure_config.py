@@ -64,6 +64,7 @@ class MeasureConfig:
     x_max: float
     cell_size: float
     min_points_per_zrow: int = 4
+    extraction_mode: str = "point_fields"
     trim: TrimConfig = field(default_factory=TrimConfig)
 
     def validate(self) -> None:
@@ -86,5 +87,10 @@ class MeasureConfig:
             raise ValueError(
                 "measure.min_points_per_zrow must be at least 1, "
                 f"got {self.min_points_per_zrow}."
+            )
+        if self.extraction_mode not in {"point_fields", "cell_centres"}:
+            raise ValueError(
+                "measure.extraction_mode must be 'point_fields' or "
+                f"'cell_centres', got {self.extraction_mode!r}."
             )
         self.trim.validate()

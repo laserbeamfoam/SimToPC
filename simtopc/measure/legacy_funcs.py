@@ -217,7 +217,7 @@ def _build_section_geometry(df, y_actual, y_values, y_tol, cell_size):
     )
 
 
-def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size):
+def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size, coordinate_mode="point_fields"):
     mask_at_row = (iz == _round_array(z_at_iy))
     cells_at_iy_iz = cells_at_iy[mask_at_row]
     x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
@@ -237,7 +237,10 @@ def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size):
         max_x_at_iy_iz_that_is_in_original_mesh
         - min_x_at_iy_iz_that_is_in_original_mesh
     )
-    expected_number_cells_at_iy_iz = int(distance_minx_max_at_zlevel / cell_size)
+    if coordinate_mode == "cell_centres":
+        expected_number_cells_at_iy_iz = int(round(distance_minx_max_at_zlevel / cell_size)) + 1
+    else:
+        expected_number_cells_at_iy_iz = int(distance_minx_max_at_zlevel / cell_size)
 
     ix = min_x_at_iy_iz_that_is_in_original_mesh
     number_non_void_cells_in_row = 0
@@ -247,12 +250,15 @@ def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size):
         max_x_at_iy_iz_that_is_in_original_mesh
         - min_x_at_iy_iz_that_is_in_original_mesh
     )
+    if coordinate_mode == "cell_centres":
+        width_row = _round_scalar(width_row + cell_size)
 
     pore_locations_at_row_i = []
     pores_at_row_i_are_internal = []
     if expected_number_cells_at_iy_iz > 1:
         x_at_iy_iz_rounded = _round_array(x_at_iy_iz)
-        while ix < max_x_at_iy_iz_that_is_in_original_mesh:
+        row_end = max_x_at_iy_iz_that_is_in_original_mesh
+        while ix < row_end or (coordinate_mode == "cell_centres" and np.isclose(ix, row_end)):
             if np.sum(np.isclose(ix, x_at_iy_iz_rounded)) > 0:
                 number_non_void_cells_in_row += 1
             else:
@@ -314,7 +320,14 @@ def _compute_analysis_y_levels(df, measure_cfg, spot_size):
     x_mid_section = _round_scalar((measure_cfg.x_min + measure_cfg.x_max) / 2)
     unique_x = np.unique(x_values)
     x_mid_section_snapped = unique_x[np.argmin(np.abs(unique_x - x_mid_section))]
-    canonical_slice_mask = np.isclose(x_values, x_mid_section_snapped)
+    if measure_cfg.extraction_mode == "cell_centres":
+        canonical_slice_mask = np.isclose(
+            x_values,
+            x_mid_section,
+            atol=0.5 * cell_size + ROUND_TOL,
+        )
+    else:
+        canonical_slice_mask = np.isclose(x_values, x_mid_section_snapped)
     canonical_y_raw = y_values[canonical_slice_mask]
     canonical_z_raw = _round_array(df.loc[canonical_slice_mask, "Points_2"].to_numpy())
     canonical_y_levels = np.sort(np.unique(canonical_y_raw))
@@ -494,7 +507,10 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
     y_merge_tol = analysis_window.y_merge_tol
     # First, check if a y-z slice at the canonical x location is continuous.
     x_mid_section_snapped = analysis_window.x_mid_section_snapped
-    mask_x_mid_section = np.isclose(x, x_mid_section_snapped)
+    if measure_cfg.extraction_mode == "cell_centres":
+        mask_x_mid_section = np.isclose(x, x_mid_section_snapped, atol=0.5 * cell_size + ROUND_TOL)
+    else:
+        mask_x_mid_section = np.isclose(x, x_mid_section_snapped)
     mid_plane_x = df[mask_x_mid_section]
     y_at_mid_plane_x = _round_array(mid_plane_x["Points_1"].to_numpy())
     z_at_mid_plane_x = _round_array(mid_plane_x["Points_2"].to_numpy())
@@ -587,14 +603,21 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                                                 "number_non_void_cells_in_row"]
             max_height_location_at_iy = 0 # Just initialisation
             i = min(id_rows_at_iy)
+
+            pore_row_ids = id_rows_at_iy[pores_at_iy].to_numpy(dtype=int)
+            pores_are_only_internal = all(
+                all(pores_at_row_are_internal[row_id]) for row_id in pore_row_ids
+            )
             
-            if (True not in pores_at_iy.values): # This means there is no holes
-                                                 # at this iy section, neither 
-                                                # internal nor upper boundaries
-                max_height_location_at_iy = z_at_iy[max(id_rows_at_iy)] #AQUI
-                height =  max_height_location_at_iy - min(z_at_iy)
+            if (True not in pores_at_iy.values) or pores_are_only_internal:
+                # Internal missing cells contribute to the operational void
+                # fraction but do not redefine the exterior melt-pool envelope.
+                max_height_location_at_iy = max(z_at_iy)
+                height = max_height_location_at_iy - min(z_at_iy)
+                if measure_cfg.extraction_mode == "cell_centres":
+                    height = _round_scalar(height + cell_size)
                 width = max(width_rows_at_iy)
-                z_location_max_width = width_rows_at_iy.argmax(width)
+                z_location_max_width = np.argmax(width_rows_at_iy.to_numpy())
                 depth = z_at_iy.to_numpy()[z_location_max_width] - min(z_at_iy)
             
             else:
@@ -604,6 +627,8 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                                      # means all the pores are upper boundaries
                             max_height_location_at_iy = z_at_iy[i]
                             height =  max_height_location_at_iy - min(z_at_iy)
+                            if measure_cfg.extraction_mode == "cell_centres":
+                                height = _round_scalar(height + cell_size)
                             i = max(id_rows_at_iy) # # Break the loop
                     i = i + 1
                 
@@ -611,6 +636,8 @@ def calculate_cross_sections_statistics(name_new_folder, row_statistics,
                                      # section has holes, but they are internal 
                     max_height_location_at_iy = z_at_iy[i-1]
                     height =  max_height_location_at_iy - min(z_at_iy)
+                    if measure_cfg.extraction_mode == "cell_centres":
+                        height = _round_scalar(height + cell_size)
                     
                 mask2 = (z_at_iy < max_height_location_at_iy)
                 possible_max_widths = width_rows_at_iy[mask2]
@@ -731,6 +758,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                     z_at_iy=z_at_iy,
                     iz=iz,
                     cell_size=cell_size,
+                    coordinate_mode=measure_cfg.extraction_mode,
                 )
                 if row_evaluation is None:
                     iz = _round_scalar(iz + cell_size)

@@ -98,6 +98,7 @@ def run(config_path: str | Path) -> None:
         x_max=_coerce_float(m, "x_max"),
         cell_size=_coerce_float(m, "cell_size"),
         min_points_per_zrow=_coerce_int(m, "min_points_per_zrow", 4),
+        extraction_mode=str(m.get("extraction_mode", "point_fields")),
         trim=TrimConfig(
             enabled=bool(trim_raw.get("enabled", False)),
             start_spot_sizes=_coerce_float(trim_raw, "start_spot_sizes")

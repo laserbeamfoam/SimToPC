@@ -117,6 +117,9 @@ def test_controlled_internal_missing_cell_is_reported_in_rows_and_void_fraction(
     )
 
     assert is_continuous is True
+    assert np.allclose(cross_sections["width"], 4.0e-6)
+    assert np.allclose(cross_sections["height"], 2.0e-6)
+    assert np.allclose(cross_sections["depth"], 1.0e-6)
     assert np.allclose(cross_sections["porosity_at_iy"], 0.125)
 
     missing_cell_rows = row_statistics[row_statistics["row_has_pores"]]

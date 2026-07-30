@@ -16,17 +16,21 @@ from simtopc.measure.main import run as run_measure
 OPENFOAM_BASHRC = os.environ.get("SIMTOPC_OPENFOAM_BASHRC")
 
 MANUFACTURED_SECTIONS = [
-    (25.0e-6, 90.0e-6, 20.0e-6),
-    (90.0e-6, 150.0e-6, 25.0e-6),
-    (150.0e-6, 210.0e-6, 30.0e-6),
-    (210.0e-6, 275.0e-6, 35.0e-6),
+    (25.0e-6, 110.0e-6, 20.0e-6, 40.0e-6),
+    (110.0e-6, 195.0e-6, 25.0e-6, 60.0e-6),
+    (195.0e-6, 275.0e-6, 30.0e-6, 80.0e-6),
 ]
 
+# Optional internal missing points. The main manufactured case keeps this
+# empty so that the width, height, and depth verification remains a clean
+# three-step reference.
+PRESCRIBED_VOID_POINTS = []
+COORD_TOL = 1.0e-12
+
 REPRESENTATIVE_SECTIONS = {
-    50.0e-6: (30.0e-6, 10.0e-6, 10.0e-6),
-    120.0e-6: (40.0e-6, 15.0e-6, 15.0e-6),
-    180.0e-6: (50.0e-6, 20.0e-6, 20.0e-6),
-    240.0e-6: (60.0e-6, 25.0e-6, 20.0e-6),
+    50.0e-6: (40.0e-6, 20.0e-6, 15.0e-6),
+    120.0e-6: (60.0e-6, 25.0e-6, 20.0e-6),
+    240.0e-6: (80.0e-6, 30.0e-6, 25.0e-6),
 }
 
 
@@ -171,8 +175,19 @@ def _read_scalar_internal_field(path: Path) -> list[float]:
     return values
 
 
-def _scalar_field_text(name: str, dimensions: str, values: list[float]) -> str:
+def _scalar_field_text(
+    name: str,
+    dimensions: str,
+    values: list[float],
+    field_class: str = "volScalarField",
+) -> str:
     body = "\n".join(f"{value:.12g}" for value in values)
+    if field_class == "pointScalarField":
+        boundary_type = "calculated"
+        boundary_value = "value uniform 0;"
+    else:
+        boundary_type = "zeroGradient"
+        boundary_value = ""
     return f"""/*--------------------------------*- C++ -*----------------------------------*\\
 | =========                 |                                                 |
 | \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
@@ -185,7 +200,7 @@ FoamFile
     version     2.0;
     format      ascii;
     arch        "LSB;label=32;scalar=64";
-    class       volScalarField;
+    class       {field_class};
     location    "0.0012";
     object      {name};
 }}
@@ -202,16 +217,88 @@ internalField   nonuniform List<scalar>
 
 boundaryField
 {{
-    back {{ type zeroGradient; }}
-    front {{ type zeroGradient; }}
-    leftWall {{ type zeroGradient; }}
-    rightWall {{ type zeroGradient; }}
-    bottomWall {{ type zeroGradient; }}
-    topWall {{ type zeroGradient; }}
+    back {{ type {boundary_type}; {boundary_value} }}
+    front {{ type {boundary_type}; {boundary_value} }}
+    leftWall {{ type {boundary_type}; {boundary_value} }}
+    rightWall {{ type {boundary_type}; {boundary_value} }}
+    bottomWall {{ type {boundary_type}; {boundary_value} }}
+    topWall {{ type {boundary_type}; {boundary_value} }}
 }}
 
 // ************************************************************************* //
 """
+
+
+def _parse_openfoam_points(path: Path) -> list[tuple[float, float, float]]:
+    lines = path.read_text().splitlines()
+    start = None
+    count = None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.isdigit():
+            count = int(stripped)
+            start = i + 2
+            break
+    if start is None or count is None:
+        raise ValueError(f"Could not parse OpenFOAM points: {path}")
+
+    points = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped == ")":
+            break
+        if not stripped:
+            continue
+        x, y, z = stripped.strip("()").split()
+        points.append((float(x), float(y), float(z)))
+    if len(points) != count:
+        raise ValueError(f"Expected {count} points in {path}, found {len(points)}")
+    return points
+
+
+def _manufactured_x_bounds(y: float, z: float) -> tuple[float, float] | None:
+    x_centre = 100.0e-6
+    z_surface = 90.0e-6
+    cell_size = 5.0e-6
+    for y_min, y_max, height, top_width in MANUFACTURED_SECTIONS:
+        if y_min <= y < y_max:
+            z_bottom = z_surface - height
+            if z < z_bottom - 1.0e-12 or z > z_surface + 1.0e-12:
+                return None
+            level = int(round((z - z_bottom) / cell_size))
+            n_levels = int(round(height / cell_size))
+            top_intervals = int(round(top_width / cell_size))
+            width_intervals = max(2, top_intervals - 2 * (n_levels - level))
+            width = width_intervals * cell_size
+            return x_centre - 0.5 * width, x_centre + 0.5 * width
+    return None
+
+
+def _inside_manufactured_pool(x: float, y: float, z: float) -> bool:
+    bounds = _manufactured_x_bounds(y, z)
+    if bounds is None:
+        return False
+    x_min, x_max = bounds
+    return x_min - 1.0e-12 <= x <= x_max + 1.0e-12
+
+
+def _is_prescribed_void_point(x: float, y: float, z: float) -> bool:
+    return any(
+        abs(x - vx) < COORD_TOL
+        and abs(y - vy) < COORD_TOL
+        and abs(z - vz) < COORD_TOL
+        for vx, vy, vz in PRESCRIBED_VOID_POINTS
+    )
+
+
+def _is_prescribed_void_cell(x: float, y: float, z: float) -> bool:
+    half_cell = 2.5e-6 + COORD_TOL
+    return any(
+        abs(x - vx) <= half_cell
+        and abs(y - vy) <= half_cell
+        and abs(z - vz) <= half_cell
+        for vx, vy, vz in PRESCRIBED_VOID_POINTS
+    )
 
 
 def _write_manufactured_fields(case_dir: Path) -> None:
@@ -230,37 +317,67 @@ def _write_manufactured_fields(case_dir: Path) -> None:
     ys = _read_scalar_internal_field(time_dir / "Cy")
     zs = _read_scalar_internal_field(time_dir / "Cz")
 
-    x_centre = 100.0e-6
-    z_surface = 90.0e-6
-    alpha = []
-    solidification_time = []
-    pressure = []
+    occupied_cells = [
+        _inside_manufactured_pool(x, y, z) and not _is_prescribed_void_cell(x, y, z)
+        for x, y, z in zip(xs, ys, zs)
+    ]
 
-    for x, y, z in zip(xs, ys, zs):
-        radius = None
-        for y_min, y_max, candidate_radius in MANUFACTURED_SECTIONS:
-            if y_min <= y < y_max:
-                radius = candidate_radius
+    points = _parse_openfoam_points(case_dir / "constant" / "polyMesh" / "points")
+    dx = dy = dz = 5.0e-6
+    point_alpha = []
+    point_solidification_time = []
+    point_pressure = []
+    for x, y, z in points:
+        touches_occupied_cell = False
+        for x_offset in (-0.5 * dx, 0.5 * dx):
+            for y_offset in (-0.5 * dy, 0.5 * dy):
+                for z_offset in (-0.5 * dz, 0.5 * dz):
+                    if _inside_manufactured_pool(x + x_offset, y + y_offset, z + z_offset):
+                        touches_occupied_cell = True
+                        break
+                if touches_occupied_cell:
+                    break
+            if touches_occupied_cell:
                 break
+        point_is_material = touches_occupied_cell and not _is_prescribed_void_point(x, y, z)
+        point_alpha.append(1.0 if point_is_material else 0.0)
+        point_solidification_time.append(1.0e-4 if point_is_material else -1.0)
+        point_pressure.append(0.0)
 
-        occupied = (
-            radius is not None
-            and (x - x_centre) ** 2 + (z - z_surface) ** 2 <= radius**2 + 1.0e-18
-            and z <= z_surface + 1.0e-12
-        )
+    cell_alpha = [1.0 if occupied else 0.0 for occupied in occupied_cells]
+    cell_solidification_time = [1.0e-4 if occupied else -1.0 for occupied in occupied_cells]
+    cell_pressure = [0.0 for _ in occupied_cells]
 
-        alpha.append(1.0 if occupied else 0.0)
-        solidification_time.append(1.0e-4 if occupied else -1.0)
-        pressure.append(0.0)
-
+    # SimToPC's ParaView extractor thresholds point data, so the canonical
+    # manufactured fields are point fields. Cell fields with explicit names are
+    # kept only to make the prescribed cell-centre mask inspectable.
     (time_dir / "alpha.material").write_text(
-        _scalar_field_text("alpha.material", "[0 0 0 0 0 0 0]", alpha)
+        _scalar_field_text(
+            "alpha.material",
+            "[0 0 0 0 0 0 0]",
+            point_alpha,
+            field_class="pointScalarField",
+        )
     )
     (time_dir / "solidificationTime").write_text(
-        _scalar_field_text("solidificationTime", "[0 0 1 0 0 0 0]", solidification_time)
+        _scalar_field_text(
+            "solidificationTime",
+            "[0 0 1 0 0 0 0]",
+            point_solidification_time,
+            field_class="pointScalarField",
+        )
     )
     (time_dir / "p").write_text(
-        _scalar_field_text("p", "[1 -1 -2 0 0 0 0]", pressure)
+        _scalar_field_text("p", "[1 -1 -2 0 0 0 0]", point_pressure, field_class="pointScalarField")
+    )
+    (time_dir / "cellAlpha.material").write_text(
+        _scalar_field_text("cellAlpha.material", "[0 0 0 0 0 0 0]", cell_alpha)
+    )
+    (time_dir / "cellSolidificationTime").write_text(
+        _scalar_field_text("cellSolidificationTime", "[0 0 1 0 0 0 0]", cell_solidification_time)
+    )
+    (time_dir / "cellP").write_text(
+        _scalar_field_text("cellP", "[1 -1 -2 0 0 0 0]", cell_pressure)
     )
 
 
