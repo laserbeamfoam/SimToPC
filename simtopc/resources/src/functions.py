@@ -476,7 +476,12 @@ def generate_prediction_map(input_variables_for_map,
                                                            n_divisions_for_prediction]), 
                        y_predictions[:, i].reshape([n_divisions_for_prediction, 
                                                            n_divisions_for_prediction]), shading='auto')
-        plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
+        if POSSIBLE_OUTPUTS[i] == "porosity_mean":
+            plt.colorbar(label="Predicted void fraction mean")
+        elif POSSIBLE_OUTPUTS[i] == "porosity_std":
+            plt.colorbar(label="Predicted void fraction std")
+        else:
+            plt.colorbar(label="Predicted " + POSSIBLE_OUTPUTS[i] + " (m)")
         plt.xlabel(x_name)
         plt.ylabel(y_name)
         plt.title("Predictions using the NN")

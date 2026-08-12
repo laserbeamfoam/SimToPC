@@ -834,8 +834,8 @@ def plotResults(name_new_folder,
         values_for_plot = df[key].to_numpy()
         if key == "porosity_at_iy":
             generate_figure(y_locations, values_for_plot, "y_coordinate", 
-                            "Porosity (porous volume / total volume)", 
-                            "Porosity vs. y-coordinate", "Porosity", 
+                            "Void fraction (void-cell volume / total volume)", 
+                            "Void fraction vs. y-coordinate", "Porosity", 
                             results_dir)
             
         else:

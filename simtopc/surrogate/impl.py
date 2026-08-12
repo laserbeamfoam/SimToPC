@@ -282,9 +282,10 @@ def generate_prediction_map(input_variables_for_map,
                                                    n_divisions_for_prediction]), 
                                                    shading='auto', cmap='jet')
 
-        if ((possible_outputs[i] == "porosity_mean") or 
-            (possible_outputs[i] == "porosity_std")):
-            plt.colorbar(label = ("Predicted " + possible_outputs[i]))
+        if possible_outputs[i] == "porosity_mean":
+            plt.colorbar(label="Predicted void fraction mean")
+        elif possible_outputs[i] == "porosity_std":
+            plt.colorbar(label="Predicted void fraction std")
         else:
             plt.colorbar(label="Predicted " + possible_outputs[i] + " (m)")
         plt.xlabel(x_name)

@@ -5,7 +5,7 @@ description = "SimToPC: post-processing for LPBF simulations"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [{ name = "Simon Rodriguez" }]
-dependencies = ["numpy", "scipy", "pandas", "pyyaml", "matplotlib", "joblib", "importlib-resources; python_version<'3.9'",]
+dependencies = ["numpy", "scipy", "pandas", "numexpr>=2.7.3", "pyyaml", "matplotlib", "joblib", "importlib-resources; python_version<'3.9'",]
 
 [project.optional-dependencies]
 ml = ["tensorflow", 

@@ -12,6 +12,7 @@ setup(
         "numpy",
         "scipy",
         "pandas",
+        "numexpr>=2.7.3",
         "pyyaml",
         "matplotlib",
         "joblib",
