@@ -150,6 +150,27 @@ def _round_array_to_mesh(values, cell_size):
     return _round_array(np.round(np.asarray(values, dtype=float) / cell_size) * cell_size)
 
 
+def _mesh_levels(level_min, level_max, cell_size):
+    """Mesh levels level_min, level_min + cell_size, ..., level_max.
+
+    Computed as level_min + k * cell_size, not by adding cell_size level after
+    level: a cell size that is not a multiple of 10**-ROUND_DECIMALS (10/3 um,
+    for instance) loses part of every step to the rounding, so the levels
+    drift away from the mesh (250, 253.33, 256.66, 259.99 um instead of
+    256.67, 260.00 um) and rows are missed.
+    """
+    n_levels = int(np.floor((level_max - level_min) / cell_size + 0.5)) + 1
+    return _round_array(level_min + np.arange(max(n_levels, 0)) * cell_size)
+
+
+def _on_level(values, level, cell_size):
+    """Which of the (rounded) coordinates lie on a mesh level: within the
+    rounding (ROUND_TOL, the tolerance np.isclose used before), not exactly
+    equal, since the level and the coordinate are rounded separately.
+    Points off the mesh (interpolated by the extraction) stay off, as before."""
+    return np.isclose(np.asarray(values, dtype=float), level, rtol=1e-5, atol=ROUND_TOL)
+
+
 def _deduplicate_levels(levels, merge_tol):
     if levels.size == 0:
         return levels
@@ -166,12 +187,10 @@ def _count_supported_z_levels(z_values, cell_size):
         return 0
     z_min = _round_to_mesh(np.min(z_values), cell_size)
     z_max = _round_to_mesh(np.max(z_values), cell_size)
-    z_level = z_min
     levels_count = 0
-    while z_level <= z_max:
-        if np.sum(np.isclose(z_values, z_level)) >= 1:
+    for z_level in _mesh_levels(z_min, z_max, cell_size):
+        if np.sum(_on_level(z_values, z_level, cell_size)) >= 1:
             levels_count += 1
-        z_level = _round_scalar(z_level + cell_size)
     return levels_count
 
 
@@ -218,7 +237,7 @@ def _build_section_geometry(df, y_actual, y_values, y_tol, cell_size):
 
 
 def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size, coordinate_mode="point_fields"):
-    mask_at_row = (iz == _round_array(z_at_iy))
+    mask_at_row = _on_level(_round_array(z_at_iy), iz, cell_size)
     cells_at_iy_iz = cells_at_iy[mask_at_row]
     x_at_iy_iz = cells_at_iy_iz["Points_0"].to_numpy()
     if x_at_iy_iz.shape[0] == 0:
@@ -258,18 +277,20 @@ def _evaluate_section_row(cells_at_iy, x_at_iy, z_at_iy, iz, cell_size, coordina
     if expected_number_cells_at_iy_iz > 1:
         x_at_iy_iz_rounded = _round_array(x_at_iy_iz)
         row_end = max_x_at_iy_iz_that_is_in_original_mesh
-        while ix < row_end or (coordinate_mode == "cell_centres" and np.isclose(ix, row_end)):
-            if np.sum(np.isclose(ix, x_at_iy_iz_rounded)) > 0:
+        ix_levels = _mesh_levels(ix, row_end, cell_size)
+        if coordinate_mode != "cell_centres":
+            ix_levels = ix_levels[:-1]      # point fields: the cells end at row_end
+        for ix in ix_levels:
+            if np.sum(_on_level(x_at_iy_iz_rounded, ix, cell_size)) > 0:
                 number_non_void_cells_in_row += 1
             else:
                 n_pores_in_row += 1
                 row_has_pores = True
                 pore_locations_at_row_i.append(ix)
-                mask_at_ix = np.isclose(ix, x_at_iy)
+                mask_at_ix = _on_level(x_at_iy, ix, cell_size)
                 cells_at_ix_iy = cells_at_iy[mask_at_ix]
                 z_at_ix_iy = cells_at_ix_iy["Points_2"]
                 pores_at_row_i_are_internal.append(np.sum(iz < z_at_ix_iy) > 0)
-            ix = _round_scalar(ix + cell_size)
 
     if expected_number_cells_at_iy_iz == 1:
         number_non_void_cells_in_row = 1
@@ -541,16 +562,14 @@ def is_meltpool_continuous(name_new_folder, laser_radius_test_case_i,
             z_max_at_y_level_and_x_mid_plane,
             cell_size,
         )
-        z0_at_y_level = z_min_at_iy_that_is_in_original_mesh
-        expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh 
+        expected_levels_count = np.round((z_max_at_iy_that_is_in_original_mesh
                            - z_min_at_iy_that_is_in_original_mesh) / cell_size)
         levels_count = 0
-        while (z0_at_y_level <= z_max_at_iy_that_is_in_original_mesh):
-            mask = (np.round(z0_at_y_level, 8) == np.round(
-                                              z_at_y_level_and_x_mid_plane, 8))    
+        for z0_at_y_level in _mesh_levels(z_min_at_iy_that_is_in_original_mesh,
+                                          z_max_at_iy_that_is_in_original_mesh, cell_size):
+            mask = _on_level(_round_array(z_at_y_level_and_x_mid_plane), z0_at_y_level, cell_size)
             if (np.sum(mask) >= 1):
                 levels_count = levels_count + 1
-            z0_at_y_level = _round_scalar(z0_at_y_level + cell_size)
         if levels_count < measure_cfg.min_points_per_zrow:
             meltpool_is_continuous = False
             break
@@ -749,9 +768,8 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
             x_min_at_iy_that_is_in_original_mesh = section_geometry.x_min_mesh
             x_max_at_iy_that_is_in_original_mesh = section_geometry.x_max_mesh
             
-            iz = z_min_at_iy_that_is_in_original_mesh
-            
-            while (iz <= z_max_at_iy_that_is_in_original_mesh):
+            for iz in _mesh_levels(z_min_at_iy_that_is_in_original_mesh,
+                                   z_max_at_iy_that_is_in_original_mesh, cell_size):
                 row_evaluation = _evaluate_section_row(
                     cells_at_iy=cells_at_iy,
                     x_at_iy=x_at_iy,
@@ -760,10 +778,7 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                     cell_size=cell_size,
                     coordinate_mode=measure_cfg.extraction_mode,
                 )
-                if row_evaluation is None:
-                    iz = _round_scalar(iz + cell_size)
-                              
-                else:
+                if row_evaluation is not None:
                     if row_evaluation.n_pores > 0:
                         pore_locations_at_row_i = [id_row, *row_evaluation.pore_locations]
                         pore_locatios_at_rows.append(pore_locations_at_row_i)
@@ -782,7 +797,6 @@ def calculate_statistics_rows_meltpool(name_new_folder, CSV_3D,
                                                   row_evaluation.number_non_void_cells]
                     
                     Statistics.append(new_statistics_row)
-                    iz = _round_scalar(iz + cell_size)
                     id_row = id_row + 1
             
     row_statistics = pd.DataFrame(Statistics, columns = ["id_row", "y_coord", 

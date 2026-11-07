@@ -103,3 +103,26 @@ def test_compute_analysis_y_levels_rejects_excessive_trimming():
 
     with pytest.raises(ValueError, match="Requested trimming removes the full requested track window"):
         _compute_analysis_y_levels(df, measure_cfg, spot_size=100.0e-6)
+
+
+def test_mesh_levels_do_not_drift_for_a_cell_size_that_is_not_round():
+    # 10/3 um: adding the cell size level after level and rounding to
+    # ROUND_DECIMALS lost 0.003 um per level (256.66 instead of 256.67 um)
+    from simtopc.measure.legacy_funcs import _mesh_levels, _on_level, _round_scalar
+
+    cell_size = 10.0e-6 / 3.0
+    levels = _mesh_levels(250.0e-6, 250.0e-6 + 30 * cell_size, cell_size)
+    assert levels.size == 31
+    mesh_points = np.round(250.0e-6 + np.arange(31) * cell_size, 8)
+    for level, point in zip(levels, mesh_points):
+        assert _on_level(np.array([point]), level, cell_size).all()
+    assert levels[-1] == _round_scalar(250.0e-6 + 30 * cell_size)
+
+
+def test_count_supported_z_levels_for_a_cell_size_that_is_not_round():
+    from simtopc.measure.legacy_funcs import _count_supported_z_levels
+
+    cell_size = 10.0e-6 / 3.0
+    z_values = 250.0e-6 + np.arange(12) * cell_size
+    assert _count_supported_z_levels(z_values, cell_size) == 12
+    assert _count_supported_z_levels(z_values, 5.0e-6) < 12
