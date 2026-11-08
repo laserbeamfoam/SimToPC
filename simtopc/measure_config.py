@@ -36,6 +36,7 @@ Authors
 
 
 from dataclasses import dataclass, field
+from typing import Optional
 
 from simtopc.measure.cells import AxesConfig
 
@@ -58,6 +59,9 @@ class TrimConfig:
                 f"got {self.end_spot_sizes}."
             )
 
+GEOMETRY_MODES = ("single_track", "metallographic")
+
+
 @dataclass(frozen=True)
 class MeasureConfig:
     y_begin: float
@@ -72,6 +76,8 @@ class MeasureConfig:
     axes: AxesConfig = field(default_factory=AxesConfig)
     melt_field: str = "meltHistory"
     metal_field: str = "alpha.metal"
+    geometry_mode: str = "single_track"
+    substrate_top: Optional[float] = None
 
     def validate(self) -> None:
         if self.y_end <= self.y_begin:
@@ -101,6 +107,24 @@ class MeasureConfig:
             )
         self.trim.validate()
         self.axes.validate()
+        if self.geometry_mode not in GEOMETRY_MODES:
+            raise ValueError(
+                "measure.geometry_mode must be one of "
+                f"{', '.join(GEOMETRY_MODES)}, got {self.geometry_mode!r}."
+            )
+        if self.geometry_mode == "single_track" and (
+                self.axes.track, self.axes.vertical) != ("y", "z"):
+            raise ValueError(
+                "measure.geometry_mode single_track measures the point cloud with "
+                "the track along y and z vertical (measure.axes {track: y, vertical: z}); "
+                "adapt the case with tools/adapt_case_to_simtopc.py, or use "
+                "geometry_mode metallographic."
+            )
+        if self.geometry_mode == "metallographic" and self.substrate_top is None:
+            raise ValueError(
+                "measure.substrate_top (the top of the substrate plate, m) is needed by "
+                "measure.geometry_mode metallographic."
+            )
         for key in ("melt_field", "metal_field"):
             value = getattr(self, key)
             if not isinstance(value, str) or not value.strip():

@@ -102,6 +102,16 @@ def _parse_axes(measure_raw):
     )
 
 
+def _coerce_optional_float(mapping, key):
+    if mapping.get(key) is None:
+        return None
+    return _coerce_float(mapping, key)
+
+
+def _coerce_choice(mapping, key, default):
+    return str(mapping.get(key, default)).strip()
+
+
 def build_measure_config(m) -> MeasureConfig:
     """MeasureConfig from the 'measure' block of the configuration file (validated)."""
     m = _require_measure_mapping(m)
@@ -126,6 +136,8 @@ def build_measure_config(m) -> MeasureConfig:
         axes=_parse_axes(m),
         melt_field=str(m.get("melt_field", "meltHistory")),
         metal_field=str(m.get("metal_field", "alpha.metal")),
+        geometry_mode=_coerce_choice(m, "geometry_mode", "single_track"),
+        substrate_top=_coerce_optional_float(m, "substrate_top"),
     )
     measure_cfg.validate()
     return measure_cfg

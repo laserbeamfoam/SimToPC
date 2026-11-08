@@ -175,7 +175,8 @@ def test_config_defaults_keep_current_behaviour():
 
 
 def test_config_axes_mapping():
-    cfg = build_measure_config({**BASE, "axes": {"track": "Z", "vertical": "y"}})
+    cfg = build_measure_config({**BASE, "axes": {"track": "Z", "vertical": "y"},
+                                "geometry_mode": "metallographic", "substrate_top": 3e-4})
     assert cfg.axes.order == ("z", "y", "x")
 
 

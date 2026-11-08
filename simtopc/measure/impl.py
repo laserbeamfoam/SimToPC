@@ -82,7 +82,16 @@ from simtopc.measure.legacy_funcs import (set_environment_variables,
                                           calculate_geometry_full_meltpool,
                                           _measure_aux_dir,
                                           _measure_work_dir,
+                                          _measure_results_dir,
+                                          plotResults,
                                           )
+from simtopc.measure.cells import read_cell_grid
+from simtopc.measure.metallographic import (lateral_cells, measure_sections,
+                                            sections_in_window)
+from joblib import dump
+
+CROSS_SECTION_COLUMNS = ["iy", "width", "height", "depth", "porosity_at_iy",
+                         "total_volume_material_at_iy"]
 
 
 MEASURE_WORK_FILENAMES = (
@@ -156,6 +165,77 @@ def extract_cell_centres_meltpool(case_dir: Path, cell_size: float) -> None:
         index=False,
     )
 
+def measurement_window(measure_cfg, spot_size):
+    """Track window [begin, end] of the measured sections: [y_begin, y_end] less the trim."""
+    trim = measure_cfg.trim
+    begin = float(measure_cfg.y_begin)
+    end = float(measure_cfg.y_end)
+    if trim.enabled:
+        begin += trim.start_spot_sizes * spot_size
+        end -= trim.end_spot_sizes * spot_size
+    if end <= begin:
+        raise ValueError("Requested trimming removes the full requested track window.")
+    return begin, end
+
+
+def read_case_grid(name_new_folder, measure_cfg, need_solidification_time=False):
+    return read_cell_grid(
+        Path(name_new_folder),
+        axes=measure_cfg.axes,
+        melt_field=measure_cfg.melt_field,
+        metal_field=measure_cfg.metal_field,
+        cell_size=measure_cfg.cell_size,
+        need_solidification_time=need_solidification_time,
+    )
+
+
+def measure_case_metallographic(name_new_folder, measure_cfg, spot_size, grid=None):
+    """Metallographic cross-sections of one case (see simtopc.measure.metallographic):
+    writes cross_sections_statistics.csv (the columns of the single-track mode),
+    metallographic_sections.csv and the continuity flags; returns the statistics."""
+    grid = grid if grid is not None else read_case_grid(name_new_folder, measure_cfg)
+    begin, end = measurement_window(measure_cfg, spot_size)
+    sections = sections_in_window(grid, begin, end)
+    if sections.size == 0:
+        raise ValueError(
+            f"No cross-section of {name_new_folder} has its cell centre in the "
+            f"measurement window [{begin}, {end}] along {grid.axes.track}."
+        )
+    lateral = lateral_cells(grid, measure_cfg.x_min, measure_cfg.x_max)
+    results = measure_sections(grid, sections, measure_cfg.substrate_top, lateral)
+    h3 = grid.cell_size ** 3
+    rows = []
+    for r in results:
+        total = r.void_cells + r.solid_cells
+        rows.append([r.track, r.width, r.height, r.depth,
+                     r.void_cells / total if total else 0.0, total * h3])
+    stats = pd.DataFrame(rows, columns=CROSS_SECTION_COLUMNS)
+
+    continuous = all(r.fused for r in results)
+    aux_dir = _measure_aux_dir(name_new_folder)
+    dump(continuous, str(aux_dir / "continuous.joblib"))
+    if not continuous:
+        dump([r.track for r in results if not r.fused], str(aux_dir / "void_iy_levels.joblib"))
+        print(f"Warning: the track of {name_new_folder} is not fused into the substrate "
+              "in every section (not continuous).")
+    results_dir = _measure_results_dir(name_new_folder)
+    stats.to_csv(results_dir / "cross_sections_statistics.csv", index=False, encoding="utf-8")
+    pd.DataFrame({
+        "section": sections,
+        "track_coordinate": [r.track for r in results],
+        "width": [r.width for r in results],
+        "depth": [r.depth for r in results],
+        "height": [r.height for r in results],
+        "fused": [r.fused for r in results],
+        "void_cells": [r.void_cells for r in results],
+        "consolidated_cells": [r.solid_cells for r in results],
+    }).to_csv(results_dir / "metallographic_sections.csv", index=False, encoding="utf-8")
+    print("Generating profiles for the variables")
+    plotResults(name_new_folder,
+                CSV_CROSS_SECTIONS=str(results_dir / "cross_sections_statistics.csv"))
+    return stats
+
+
 def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
     # source the correct OpenFOAM, based on the system and OF version
     # hostname, run_address, OF_LOCATION = set_environment_variables(
@@ -172,6 +252,15 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
 
         case_dir = Path(name_new_folder)
         case_dir.mkdir(parents=True, exist_ok=True)
+
+        laser_radius_i = parameters[i, 2] / 2
+        if measure_cfg.geometry_mode == "metallographic":
+            print(f"\n Measuring the metallographic cross-sections of test_case_{i+1}")
+            measure_case_metallographic(name_new_folder, measure_cfg,
+                                        spot_size=2 * laser_radius_i)
+            print(f"\nFinished measuring geometry-based quantities "
+                  f"for test_case_{i + 1}\n")
+            continue
 
         payload = {
             "Y_COORD_BEGIN_TRACK": float(measure_cfg.y_begin),
