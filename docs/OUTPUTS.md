@@ -62,6 +62,14 @@ cross-section.
 The computed quantities are written to disk as text or CSV files
 associated with each simulation case.
 
+With the cell-based modes (see "Measurement modes" in the README), the same
+`cross_sections_statistics.csv` columns are written, and also:
+
+- `metallographic_sections.csv` (`geometry_mode: metallographic`): section
+  index, track coordinate, width, depth, height, fusion flag and cell counts;
+- `steady_sections.csv` and, with `single_track`,
+  `cross_sections_statistics_all_sections.csv` (`steady_sections: true`).
+
 
 
 

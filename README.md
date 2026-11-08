@@ -44,6 +44,73 @@ In addition, SimToPC outputs:
 - **Aggregated datasets** (CSV) suitable for statistical analysis and machine learning.
 
 
+### Measurement modes
+
+The `measure` block selects how the geometry is measured. The defaults
+reproduce the original SimToPC measurement exactly; the metallographic mode
+reads the cells of the final time directly (no pvpython) and is meant for
+tracks on a substrate plate, such as laserbeamFoam cases with a powder
+layer.
+
+```yaml
+measure:
+  geometry_mode: single_track    # single_track (default) | metallographic
+  axes: {track: y, vertical: z}  # laserbeamFoam native axes: {track: z, vertical: y}
+  substrate_top: 300e-6          # top of the plate (m): metallographic, steady_sections
+  melt_field: meltHistory        # a cell melted at some time when > 0
+  metal_field: alpha.metal       # a cell is metal at the final time when >= 0.5
+  steady_sections: false         # keep only the steady part of the track
+  laser_off_time: 6.67e-4        # optional; default: constant/timeVsLaserPower
+```
+
+**`geometry_mode: single_track`** (default). The melt pool is the material
+point cloud (`alpha.material`, from pvpython or from the cell centres), with
+the track along `y` and `z` vertical (`tools/adapt_case_to_simtopc.py` remaps
+other cases). Width, height and depth are those of the figure above; the track
+is continuous when every section has enough material rows. Use it for the
+measurements of the SimToPC paper, or for melt pools without a distinct
+substrate.
+
+**`geometry_mode: metallographic`**. Each cross-section is one layer of cells
+across the track, measured as an etched cross-section of a track on a plate:
+
+- melted cells: `melt_field > 0`;
+- **width**: extent across the track of the melted cells in the row of cells
+  just below `substrate_top` (the fusion width at the plate top);
+- **depth**: `substrate_top` minus the bottom of the lowest melted cell (the
+  penetration into the plate);
+- **height**: top of the highest cell that was melted and is metal, minus
+  `substrate_top`; gaps of powder or gas below it are ignored, and it is
+  negative for a depression below the plate top;
+- **continuity**: every section is fused into the plate.
+
+The sections are the cells whose centre along the track lies in
+`[y_begin, y_end]` (less the trim), restricted across the track to
+`[x_min, x_max]`; `iy` is the cell centre. The case is read in its native
+axes, given by `axes`. Use this mode to compare with metallographic widths and
+depths (for instance those of single tracks on a plate) and whenever the
+powder above the plate makes the material cloud of `single_track` ambiguous.
+
+**Void fraction.** In both modes the void fraction of a section is the
+operational one: the cells missing between the first and last material cell
+of each row, over the cells of the section. With `metallographic`, the rows
+are those of the consolidated cells of the section (melted and metal). It
+also counts surface-connected gaps.
+
+**`steady_sections: true`**. Keeps, of the measured sections, those whose
+fusion zone in the plate solidified (90 % of its melted cells, by
+`solidificationTime`) before the laser was switched off, the contiguous run
+from the first one. Behind the laser the melt pool of a short simulated track
+is long; the sections still liquid at the switch-off freeze as the end pool,
+which a cut through the middle of a long experimental track does not have.
+Set `y_begin` after the start transient. The candidates and their percentile
+are written to `steady_sections.csv`.
+
+The cell-based modes need uniform cubic cells, ASCII fields and, in the last
+time directory, `melt_field` and `metal_field` (and `solidificationTime` for
+`steady_sections`). See `examples/measure_metallographic/`.
+
+
 ### How to use
 
 #### Command-line workflow

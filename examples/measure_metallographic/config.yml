@@ -1,0 +1,25 @@
+# Metallographic measurement of a laserbeamFoam single track on a substrate
+# (Ti-6Al-4V, 195 W, 1200 mm/s; the conditions of the single tracks of
+# Dilip et al. 2017). The case is read in its native laserbeamFoam axes:
+# x across the track, y vertical, z along the scan. No pvpython is needed.
+mesh_density: cases                  # cases/test_case_1 = the reconstructed run
+parameters_file: parameters.txt
+output_dir: results
+running_on: local
+
+measure:
+  # sections whose cell centre along the track (z) lies in [y_begin, y_end]
+  y_begin: 300e-6
+  y_end:   1000e-6
+  x_min:   0
+  x_max:   400e-6
+  cell_size: 5e-6
+
+  geometry_mode: metallographic      # single_track (default) | metallographic
+  axes: {track: z, vertical: y}      # default {track: y, vertical: z}
+  substrate_top: 300e-6              # top of the plate (m)
+  melt_field: meltHistory            # melted at some time when > 0
+  metal_field: alpha.metal           # metal at the final time when >= 0.5
+  steady_sections: true              # keep the steady part of the track
+  # laser_off_time: 6.66666667e-4    # default: last time with the laser on
+                                     # in constant/timeVsLaserPower

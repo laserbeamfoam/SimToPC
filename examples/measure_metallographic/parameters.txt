@@ -1,0 +1,2 @@
+# Scanning Speed (m/s) | Power (W) | Spot size (m)
+  1.2   195   1.0e-04
