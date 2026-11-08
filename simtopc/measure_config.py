@@ -37,6 +37,8 @@ Authors
 
 from dataclasses import dataclass, field
 
+from simtopc.measure.cells import AxesConfig
+
 
 @dataclass(frozen=True)
 class TrimConfig:
@@ -66,6 +68,10 @@ class MeasureConfig:
     min_points_per_zrow: int = 4
     extraction_mode: str = "point_fields"
     trim: TrimConfig = field(default_factory=TrimConfig)
+    # cell-based modes (cell reader): case axes and final-time fields
+    axes: AxesConfig = field(default_factory=AxesConfig)
+    melt_field: str = "meltHistory"
+    metal_field: str = "alpha.metal"
 
     def validate(self) -> None:
         if self.y_end <= self.y_begin:
@@ -94,3 +100,10 @@ class MeasureConfig:
                 f"'cell_centres', got {self.extraction_mode!r}."
             )
         self.trim.validate()
+        self.axes.validate()
+        for key in ("melt_field", "metal_field"):
+            value = getattr(self, key)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(
+                    f"measure.{key} must be a non-empty field name, got {value!r}."
+                )

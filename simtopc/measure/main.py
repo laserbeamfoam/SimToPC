@@ -40,6 +40,7 @@ from __future__ import annotations
 from pathlib import Path
 from simtopc.config import load_config
 from simtopc.measure_config import MeasureConfig, TrimConfig
+from simtopc.measure.cells import AxesConfig
 from simtopc.measure.impl import run_measure_cases
 
 
@@ -83,11 +84,27 @@ def _coerce_int(mapping, key, default):
         ) from None
 
 
-def run(config_path: str | Path) -> None:
-    config_path = Path(config_path).resolve()
-    cfg_all = load_config(str(config_path))
+def _parse_axes(measure_raw):
+    axes_raw = measure_raw.get("axes", {}) or {}
+    if not isinstance(axes_raw, dict):
+        raise ValueError(
+            "measure.axes must be a mapping such as {track: y, vertical: z}."
+        )
+    unknown = set(axes_raw) - {"track", "vertical"}
+    if unknown:
+        raise ValueError(
+            "measure.axes accepts only the keys track and vertical, got "
+            + ", ".join(sorted(map(str, unknown))) + "."
+        )
+    return AxesConfig(
+        track=str(axes_raw.get("track", "y")).strip().lower(),
+        vertical=str(axes_raw.get("vertical", "z")).strip().lower(),
+    )
 
-    m = _require_measure_mapping(cfg_all.measure)
+
+def build_measure_config(m) -> MeasureConfig:
+    """MeasureConfig from the 'measure' block of the configuration file (validated)."""
+    m = _require_measure_mapping(m)
     trim_raw = m.get("trim", {}) or {}
     if not isinstance(trim_raw, dict):
         raise ValueError("measure.trim must be a mapping of trim options.")
@@ -106,8 +123,19 @@ def run(config_path: str | Path) -> None:
             end_spot_sizes=_coerce_float(trim_raw, "end_spot_sizes")
             if "end_spot_sizes" in trim_raw else 0.0,
         ),
+        axes=_parse_axes(m),
+        melt_field=str(m.get("melt_field", "meltHistory")),
+        metal_field=str(m.get("metal_field", "alpha.metal")),
     )
     measure_cfg.validate()
+    return measure_cfg
+
+
+def run(config_path: str | Path) -> None:
+    config_path = Path(config_path).resolve()
+    cfg_all = load_config(str(config_path))
+
+    measure_cfg = build_measure_config(cfg_all.measure)
 
     run_measure_cases(cfg_all=cfg_all, measure_cfg=measure_cfg, 
     config_path=config_path)
