@@ -14,8 +14,8 @@ License
   along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 Description
-  Cell reader of the cell-based measurement modes (metallographic geometry,
-  closed_pores_3d porosity and steady sections).
+  Cell reader of the cell-based measurement modes (metallographic geometry and
+  steady sections).
 
   Reads the cell fields of the final time of a reconstructed OpenFOAM case
   (melt history, metal volume fraction and, when present, solidification

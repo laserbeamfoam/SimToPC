@@ -86,8 +86,9 @@ from simtopc.measure.legacy_funcs import (set_environment_variables,
                                           plotResults,
                                           )
 from simtopc.measure.cells import read_cell_grid
-from simtopc.measure.metallographic import (lateral_cells, measure_sections,
-                                            sections_in_window)
+from simtopc.measure.metallographic import (laser_off_time_from_case, lateral_cells,
+                                            measure_sections, sections_in_window,
+                                            steady_sections)
 from joblib import dump
 
 CROSS_SECTION_COLUMNS = ["iy", "width", "height", "depth", "porosity_at_iy",
@@ -189,11 +190,66 @@ def read_case_grid(name_new_folder, measure_cfg, need_solidification_time=False)
     )
 
 
+def _sections_of_statistics(name_new_folder, stats, grid):
+    """Track indices of the sections of a single-track cross_sections_statistics table
+    (iy is the lower face of a layer of cells)."""
+    position = (stats["iy"].to_numpy() - grid.origin[0]) / grid.cell_size
+    sections = np.rint(position).astype(int)
+    if sections.size and ((np.abs(position - sections) > 1e-3).any() or sections.min() < 0
+                          or sections.max() >= grid.shape[0]):
+        raise ValueError(
+            f"The measured sections of {name_new_folder} are not on the cell faces "
+            "of the mesh along the track.")
+    return sections
+
+
+def select_steady_sections(name_new_folder, measure_cfg, grid, candidates, lateral=None):
+    """Steady sections among the candidates (see metallographic.steady_sections); writes
+    steady_sections.csv and returns the steady section indices."""
+    t_off = measure_cfg.laser_off_time
+    if t_off is None:
+        t_off = laser_off_time_from_case(name_new_folder)
+    ks, p90 = steady_sections(grid, candidates, measure_cfg.substrate_top, t_off, lateral)
+    pd.DataFrame({
+        "section": candidates,
+        "track_coordinate": grid.centres(0)[candidates],
+        "p90_solidification_time": p90,
+        "steady": np.isin(candidates, ks),
+    }).to_csv(_measure_results_dir(name_new_folder) / "steady_sections.csv", index=False,
+              encoding="utf-8")
+    if ks.size == 0:
+        raise ValueError(
+            f"No steady section in the measured window of {name_new_folder}: no section "
+            f"solidified in the substrate before the laser was switched off ({t_off} s).")
+    print(f"Steady sections: {ks.size} of {len(candidates)}, track "
+          f"{grid.centres(0)[ks[0]]:.6g} to {grid.centres(0)[ks[-1]]:.6g} m")
+    return ks
+
+
+def steady_single_track(name_new_folder, measure_cfg, grid):
+    """Keep the steady sections of the single-track statistics (all the sections are kept
+    in cross_sections_statistics_all_sections.csv)."""
+    results_dir = _measure_results_dir(name_new_folder)
+    csv_path = results_dir / "cross_sections_statistics.csv"
+    if not csv_path.exists():
+        print("No cross-section statistics (melt pool not continuous): no steady sections.")
+        return None
+    stats = pd.read_csv(csv_path)
+    sections = _sections_of_statistics(name_new_folder, stats, grid)
+    ks = select_steady_sections(name_new_folder, measure_cfg, grid, sections)
+    stats.to_csv(results_dir / "cross_sections_statistics_all_sections.csv", index=False,
+                 encoding="utf-8")
+    stats[np.isin(sections, ks)].to_csv(csv_path, index=False, encoding="utf-8")
+    plotResults(name_new_folder, CSV_CROSS_SECTIONS=str(csv_path))
+    return ks
+
+
 def measure_case_metallographic(name_new_folder, measure_cfg, spot_size, grid=None):
     """Metallographic cross-sections of one case (see simtopc.measure.metallographic):
     writes cross_sections_statistics.csv (the columns of the single-track mode),
     metallographic_sections.csv and the continuity flags; returns the statistics."""
-    grid = grid if grid is not None else read_case_grid(name_new_folder, measure_cfg)
+    grid = grid if grid is not None else read_case_grid(
+        name_new_folder, measure_cfg, need_solidification_time=measure_cfg.steady_sections)
     begin, end = measurement_window(measure_cfg, spot_size)
     sections = sections_in_window(grid, begin, end)
     if sections.size == 0:
@@ -202,6 +258,8 @@ def measure_case_metallographic(name_new_folder, measure_cfg, spot_size, grid=No
             f"measurement window [{begin}, {end}] along {grid.axes.track}."
         )
     lateral = lateral_cells(grid, measure_cfg.x_min, measure_cfg.x_max)
+    if measure_cfg.steady_sections:
+        sections = select_steady_sections(name_new_folder, measure_cfg, grid, sections, lateral)
     results = measure_sections(grid, sections, measure_cfg.substrate_top, lateral)
     h3 = grid.cell_size ** 3
     rows = []
@@ -295,6 +353,10 @@ def run_measure_cases(cfg_all, measure_cfg, config_path: Path) -> None:
                                          measure_cfg, 
                                        CSV_3D=str(aux_dir / "meltpool.csv")
                                        )
+        if measure_cfg.steady_sections:
+            grid = read_case_grid(name_new_folder, measure_cfg,
+                                  need_solidification_time=True)
+            steady_single_track(name_new_folder, measure_cfg, grid)
 
         print(f"\nFinished measuring geometry-based quantities "
               f"for test_case_{i + 1}\n")

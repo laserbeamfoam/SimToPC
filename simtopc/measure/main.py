@@ -138,6 +138,8 @@ def build_measure_config(m) -> MeasureConfig:
         metal_field=str(m.get("metal_field", "alpha.metal")),
         geometry_mode=_coerce_choice(m, "geometry_mode", "single_track"),
         substrate_top=_coerce_optional_float(m, "substrate_top"),
+        steady_sections=m.get("steady_sections", False),
+        laser_off_time=_coerce_optional_float(m, "laser_off_time"),
     )
     measure_cfg.validate()
     return measure_cfg

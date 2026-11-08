@@ -31,10 +31,17 @@ Description
     fused   the section has melted cells at or below the substrate top.
   The track is continuous when every measured section is fused.
 
-  With porosity_mode 'rows', the void fraction of each section is the row
+  The void fraction of each section is the row
   count of the current single-track mode applied to the consolidated cells
   of the section (melted and metal): in each row of cells, the cells
   missing between the first and the last consolidated cell are voids.
+
+  Steady sections (optional, steady_sections: true): of the measured
+  sections, those whose fusion zone in the substrate solidified before the
+  laser was switched off (90 % of its melted cells, by solidificationTime),
+  the contiguous run from the first one; the sections still liquid at the
+  switch-off froze as the end pool, which a cut through the middle of a
+  long track does not have.
 
 Assumptions
   - Uniform cubic cells, arrays from simtopc.measure.cells
@@ -46,9 +53,13 @@ Authors
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
+
+_NUMBER = r"[-+0-9.eE]+"
 
 
 @dataclass(frozen=True)
@@ -141,3 +152,45 @@ def measure_sections(grid, sections, substrate_top: float, lateral=None):
     centres = grid.centres(0)
     return [measure_section(melted[k], metal[k], jt, grid.cell_size, grid.origin[1],
                             substrate_top, centres[k]) for k in sections]
+
+
+def laser_off_time_from_case(case_dir) -> float:
+    """Time of the last non-zero power entry of constant/timeVsLaserPower."""
+    path = Path(case_dir) / "constant" / "timeVsLaserPower"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path} not found: give measure.laser_off_time for the steady sections.")
+    pairs = re.findall(r"\(\s*(" + _NUMBER + r")\s+(" + _NUMBER + r")\s*\)", path.read_text())
+    on = [float(t) for t, p in pairs if float(p) > 0]
+    if not on:
+        raise ValueError(f"{path} has no entry with the laser on.")
+    return max(on)
+
+
+def steady_sections(grid, candidates, substrate_top: float, laser_off_time: float, lateral=None):
+    """Steady sections of the track (dilip_tools.steady_sections): among the candidate
+    sections (the measured window), those whose fusion zone in the substrate solidified
+    before the laser was switched off, by the 90th percentile of the solidificationTime
+    of their melted substrate cells; the contiguous run from the first one.
+
+    Returns the steady section indices and the 90th percentile of every candidate."""
+    if grid.solidification_time is None:
+        raise ValueError("The steady sections need the solidificationTime field.")
+    jt = substrate_row(grid, substrate_top) + 1          # rows of the substrate: [:jt]
+    melted = grid.melted()
+    st = grid.solidification_time
+    if lateral is not None:
+        melted = melted & lateral[None, None, :]
+    candidates = np.asarray(candidates, dtype=int)
+    p90 = np.full(candidates.size, np.nan)
+    for i, k in enumerate(candidates):
+        m = melted[k, :jt] & (st[k, :jt] > 0)
+        if m.any():
+            p90[i] = np.percentile(st[k, :jt][m], 90)
+    with np.errstate(invalid="ignore"):
+        ok = p90 < laser_off_time
+    ks = candidates[ok]
+    if ks.size:                                          # the contiguous run from the first one
+        br = np.nonzero(np.diff(ks) > 1)[0]
+        ks = ks[: br[0] + 1] if br.size else ks
+    return ks, p90

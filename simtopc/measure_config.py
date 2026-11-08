@@ -78,6 +78,8 @@ class MeasureConfig:
     metal_field: str = "alpha.metal"
     geometry_mode: str = "single_track"
     substrate_top: Optional[float] = None
+    steady_sections: bool = False
+    laser_off_time: Optional[float] = None
 
     def validate(self) -> None:
         if self.y_end <= self.y_begin:
@@ -119,6 +121,20 @@ class MeasureConfig:
                 "the track along y and z vertical (measure.axes {track: y, vertical: z}); "
                 "adapt the case with tools/adapt_case_to_simtopc.py, or use "
                 "geometry_mode metallographic."
+            )
+        if not isinstance(self.steady_sections, bool):
+            raise ValueError(
+                "measure.steady_sections must be true or false, "
+                f"got {self.steady_sections!r}."
+            )
+        if self.steady_sections and self.substrate_top is None:
+            raise ValueError(
+                "measure.substrate_top (the top of the substrate plate, m) is needed by "
+                "measure.steady_sections."
+            )
+        if self.laser_off_time is not None and self.laser_off_time <= 0:
+            raise ValueError(
+                f"measure.laser_off_time must be positive, got {self.laser_off_time}."
             )
         if self.geometry_mode == "metallographic" and self.substrate_top is None:
             raise ValueError(
