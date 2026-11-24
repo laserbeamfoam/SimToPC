@@ -123,7 +123,8 @@ def build_measure_config(m) -> MeasureConfig:
         y_end=_coerce_float(m, "y_end"),
         x_min=_coerce_float(m, "x_min"),
         x_max=_coerce_float(m, "x_max"),
-        cell_size=_coerce_float(m, "cell_size"),
+        cell_size=None if str(m["cell_size"]).strip().lower() == "auto"
+        else _coerce_float(m, "cell_size"),
         min_points_per_zrow=_coerce_int(m, "min_points_per_zrow", 4),
         extraction_mode=str(m.get("extraction_mode", "point_fields")),
         trim=TrimConfig(
@@ -140,6 +141,15 @@ def build_measure_config(m) -> MeasureConfig:
         substrate_top=_coerce_optional_float(m, "substrate_top"),
         steady_sections=m.get("steady_sections", False),
         laser_off_time=_coerce_optional_float(m, "laser_off_time"),
+        width_max_rows_down=_coerce_int(m, "width_max_rows_down", 2),
+        window_mode=_coerce_choice(m, "window_mode", "fixed"),
+        track_reference=_coerce_choice(m, "track_reference", "case"),
+        steady_tolerance=_coerce_float(m, "steady_tolerance") if "steady_tolerance" in m else 5e-6,
+        steady_filter_length=_coerce_float(m, "steady_filter_length")
+        if "steady_filter_length" in m else 50e-6,
+        window_margin=_coerce_float(m, "window_margin") if "window_margin" in m else 50e-6,
+        window_length=_coerce_float(m, "window_length") if "window_length" in m else 400e-6,
+        window_step=_coerce_float(m, "window_step") if "window_step" in m else 50e-6,
     )
     measure_cfg.validate()
     return measure_cfg

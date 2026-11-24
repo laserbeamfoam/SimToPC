@@ -60,6 +60,8 @@ class TrimConfig:
             )
 
 GEOMETRY_MODES = ("single_track", "metallographic")
+WINDOW_MODES = ("fixed", "steady_stretch")
+TRACK_REFERENCES = ("case", "laser_start")
 
 
 @dataclass(frozen=True)
@@ -68,7 +70,7 @@ class MeasureConfig:
     y_end: float
     x_min: float
     x_max: float
-    cell_size: float
+    cell_size: Optional[float]          # None ("auto"): from the blockMeshDict (metallographic mode)
     min_points_per_zrow: int = 4
     extraction_mode: str = "point_fields"
     trim: TrimConfig = field(default_factory=TrimConfig)
@@ -80,6 +82,15 @@ class MeasureConfig:
     substrate_top: Optional[float] = None
     steady_sections: bool = False
     laser_off_time: Optional[float] = None
+    # metallographic mode: width rule, window and track reference (see simtopc.measure.metallographic)
+    width_max_rows_down: int = 2
+    window_mode: str = "fixed"
+    track_reference: str = "case"
+    steady_tolerance: float = 5e-6
+    steady_filter_length: float = 50e-6
+    window_margin: float = 50e-6
+    window_length: float = 400e-6
+    window_step: float = 50e-6
 
     def validate(self) -> None:
         if self.y_end <= self.y_begin:
@@ -92,7 +103,13 @@ class MeasureConfig:
                 "measure.x_max must be greater than or equal to measure.x_min, "
                 f"got x_min={self.x_min} and x_max={self.x_max}."
             )
-        if self.cell_size <= 0:
+        if self.cell_size is None:
+            if self.geometry_mode != "metallographic":
+                raise ValueError(
+                    "measure.cell_size auto (from the blockMeshDict of each case) is only "
+                    "available with measure.geometry_mode metallographic."
+                )
+        elif self.cell_size <= 0:
             raise ValueError(
                 "measure.cell_size must be positive, "
                 f"got {self.cell_size}."
@@ -141,6 +158,31 @@ class MeasureConfig:
                 "measure.substrate_top (the top of the substrate plate, m) is needed by "
                 "measure.geometry_mode metallographic."
             )
+        if self.window_mode not in WINDOW_MODES:
+            raise ValueError(
+                f"measure.window_mode must be one of {', '.join(WINDOW_MODES)}, "
+                f"got {self.window_mode!r}."
+            )
+        if self.track_reference not in TRACK_REFERENCES:
+            raise ValueError(
+                f"measure.track_reference must be one of {', '.join(TRACK_REFERENCES)}, "
+                f"got {self.track_reference!r}."
+            )
+        if self.geometry_mode != "metallographic" and (
+                self.window_mode != "fixed" or self.track_reference != "case"):
+            raise ValueError(
+                "measure.window_mode steady_stretch and measure.track_reference laser_start "
+                "are options of measure.geometry_mode metallographic."
+            )
+        if not isinstance(self.width_max_rows_down, int) or self.width_max_rows_down < 0:
+            raise ValueError(
+                "measure.width_max_rows_down must be a non-negative integer, "
+                f"got {self.width_max_rows_down!r}."
+            )
+        for key in ("steady_tolerance", "steady_filter_length", "window_margin",
+                    "window_length", "window_step"):
+            if getattr(self, key) <= 0:
+                raise ValueError(f"measure.{key} must be positive, got {getattr(self, key)}.")
         for key in ("melt_field", "metal_field"):
             value = getattr(self, key)
             if not isinstance(value, str) or not value.strip():

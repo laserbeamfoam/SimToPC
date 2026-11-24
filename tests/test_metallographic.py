@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
 
 import numpy as np
 import pandas as pd
 import pytest
 from joblib import load
 
-from cell_case_helpers import DILIP, load_module, make_case
+from cell_case_helpers import make_case
 from simtopc.measure.cells import AxesConfig, read_cell_grid
 from simtopc.measure.legacy_funcs import _evaluate_section_row
 from simtopc.measure.main import build_measure_config, run as run_measure
@@ -59,7 +58,7 @@ def test_measure_section_unfused_and_empty():
     assert not r.fused and r.width == 0.0
     assert r.depth == pytest.approx(30e-6 - 8 * H)          # negative: above the substrate top
     r = measure_section(np.zeros((10, 9), bool), metal, jt=5, h=H, v0=0.0, substrate_top=30e-6, track=0.0)
-    assert not r.fused and np.isnan(r.depth) and np.isnan(r.height) and r.width == 0.0
+    assert not r.fused and r.depth == 0.0 and np.isnan(r.height) and r.width == 0.0
 
 
 def test_height_negative_for_a_depression():
@@ -195,45 +194,7 @@ def test_config_geometry_mode_invalid(extra, message):
 
 
 # ------------------------------------------------------------------ reference (real runs)
-
-def _reference(run, lo_um, hi_um):
-    """Sections and section-wise width and depth (um) as compare.py, cell size of the run."""
-    dt = load_module("dilip_tools_ref", DILIP / "dilip_tools.py")
-    d = dt.load(run)
-    h = d["h"]; mh = d["melted"]; plate = d["plate"]
-    z = (np.arange(mh.shape[0]) + 0.5) * h
-    ks = np.nonzero((z >= lo_um - 1e-6 * h) & (z <= hi_um + 1e-6 * h))[0]
-    jt = int(round(plate / h)) - 1
-
-    def extent(row):
-        i = np.nonzero(row)[0]
-        return (i.max() - i.min() + 1) * h if i.size else 0.0
-
-    w = np.array([extent(mh[k, jt]) for k in ks])
-    dep = np.array([plate - np.nonzero(mh[k].any(axis=1))[0].min() * h for k in ks])
-    return d, ks, w, dep
-
-
-def _simtopc(run, d, lo_um, hi_um):
-    g = read_cell_grid(run, axes=AxesConfig("z", "y"), cell_size=d["h"] * 1e-6)
-    ks = sections_in_window(g, lo_um * 1e-6, hi_um * 1e-6)
-    lateral = lateral_cells(g, 0.0, d["width"] * 1e-6)
-    return ks, measure_sections(g, ks, d["plate"] * 1e-6, lateral)
-
-
-@pytest.mark.parametrize("run,lo,hi,w_mean,p_mean", [
-    (DILIP / "runs" / "P195_v1200", 302.0, 478.0, 147.4, 50.0),              # compare.csv, steady sections
-    (DILIP / "runs" / "P195_v1200", 400.0, 800.0, 141.3, 52.8),              # compare.csv, z 400-800
-    (DILIP / "runs_gci" / "P195_v1200_3.333um", 302.0, 478.0, 144.9, 51.7),  # GCI
-    (DILIP / "runs_gci" / "P195_v1200_2.5um", 302.0, 478.0, 143.9, 52.7),    # GCI
-])
-def test_metallographic_matches_dilip_reference(run, lo, hi, w_mean, p_mean):
-    if not (run / "VIRGIN_CASE.json").exists() or (run / ".to_reconstruct").exists():
-        pytest.skip("Dilip run data not available")
-    d, ks_ref, w_ref, d_ref = _reference(run, lo, hi)
-    ks, res = _simtopc(run, d, lo, hi)
-    np.testing.assert_array_equal(ks, ks_ref)
-    np.testing.assert_allclose([r.width * 1e6 for r in res], w_ref, rtol=0, atol=1e-9)
-    np.testing.assert_allclose([r.depth * 1e6 for r in res], d_ref, rtol=0, atol=1e-9)
-    assert all(r.fused for r in res)
-    assert round(float(w_ref.mean()), 1) == w_mean and round(float(d_ref.mean()), 1) == p_mean
+# The comparison with real runs is tests/test_metallographic_validation.py (the four case D runs
+# of bed2_gprops_mid_tall against tall_profiles.py and measure_tall.json). The earlier comparison
+# with compare.py on the P195_v1200 runs (powder bed later rejected, width without the lower-row
+# rule and depth to the lowest melted cell even if gas) was removed with the 2026-11-24 rules.
