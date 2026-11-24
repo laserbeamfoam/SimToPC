@@ -65,8 +65,20 @@ associated with each simulation case.
 With the cell-based modes (see "Measurement modes" in the README), the same
 `cross_sections_statistics.csv` columns are written, and also:
 
-- `metallographic_sections.csv` (`geometry_mode: metallographic`): section
-  index, track coordinate, width, depth, height, fusion flag and cell counts;
+- `metallographic_sections.csv` (`geometry_mode: metallographic`): the
+  sections of the window: section index, track coordinate (of the case and from
+  the track reference), width, rows below the substrate-top row where the width
+  was taken (`width_rows_down`, -1 not measured), depth, height, fill (metal
+  fraction of the fusion zone at and below the substrate top), centreline
+  surface height, fusion flag and cell counts;
+- `metallographic_profile.csv`: the same for every section of the mesh, with
+  `in_window` and, with `window_mode: steady_stretch`, `steady_stretch`;
+- `metallographic_summary.csv` (next to the configuration file): one row per
+  case: scan speed, power, spot size, cell size, track reference, window, steady
+  stretch, number of sections, mean, standard deviation and median of the width,
+  sections whose width was taken one or two rows lower or not measured, mean
+  and standard deviation of the depth, mean and minimum fill, mean and minimum
+  centreline surface, continuity;
 - `steady_sections.csv` and, with `single_track`,
   `cross_sections_statistics_all_sections.csv` (`steady_sections: true`).
 

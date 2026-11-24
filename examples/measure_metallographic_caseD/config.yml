@@ -1,0 +1,32 @@
+# Metallographic measurement of four laserbeamFoam single tracks on a substrate
+# (Ti-6Al-4V, 195 W; 1.2 and 1.0 m/s on 5 and 3.33 um cells; the conditions of
+# Dilip et al. 2017), with one measurement window per scan speed set by the
+# steady stretches of the tracks. The cases are read in their native
+# laserbeamFoam axes: x across the track, y vertical, z along the scan.
+mesh_density: cases                  # cases/test_case_N = the reconstructed runs
+parameters_file: parameters.txt      # one row per case: speed, power, spot
+output_dir: results
+running_on: local
+
+measure:
+  # range of the track searched for the steady stretch, from the laser start
+  y_begin: 0
+  y_end:   1200e-6
+  x_min:   0                          # lateral range (the whole box)
+  x_max:   300e-6
+  cell_size: auto                     # from the blockMeshDict of each case
+
+  geometry_mode: metallographic
+  axes: {track: z, vertical: y}
+  substrate_top: 150e-6               # top of the plate (m)
+  melt_field: meltHistory             # fusion zone: melted at some time
+  metal_field: alpha.metal            # metal at the final time when >= 0.5
+  width_max_rows_down: 2              # width one or two rows lower if its edges ended as gas
+
+  track_reference: laser_start        # track coordinates from the first laser position
+  window_mode: steady_stretch         # one window per scan speed
+  steady_tolerance: 5e-6              # W and D within +-5 um of their median
+  steady_filter_length: 50e-6         # running median along the track
+  window_margin: 50e-6                # after the latest start of the steady stretches
+  window_step: 50e-6                  # window start rounded up to a multiple of this
+  window_length: 400e-6
