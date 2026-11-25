@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import json
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from cell_case_helpers import DILIP, load_module, make_case
-from simtopc.measure.cells import AxesConfig, CellGrid, read_cell_grid
+from cell_case_helpers import make_case
+from simtopc.measure.cells import AxesConfig, CellGrid
 from simtopc.measure.main import build_measure_config, run as run_measure
 from simtopc.measure.metallographic import laser_off_time_from_case, steady_sections
 
@@ -157,22 +155,3 @@ def test_config_steady_sections_defaults_and_validation():
         build_measure_config({**BASE, "steady_sections": "yes please", "substrate_top": 3e-4})
     with pytest.raises(ValueError, match="laser_off_time must be positive"):
         build_measure_config({**BASE, "laser_off_time": 0})
-
-
-# ------------------------------------------------------------------ reference (real runs)
-
-@pytest.mark.parametrize("name", ["P195_v1200", "P100_v1200"])
-def test_steady_sections_match_dilip_tools(name):
-    run = DILIP / "runs" / name
-    if not (run / "VIRGIN_CASE.json").exists() or (run / ".to_reconstruct").exists():
-        pytest.skip("Dilip run data not available")
-    dt = load_module("dilip_tools_ref", DILIP / "dilip_tools.py")
-    d = dt.load(run)
-    t_off = json.loads((DILIP / "cases" / name / "CASE.json").read_text())["laser_on_s"]
-    ks_ref, p90_ref = dt.steady_sections(d, t_off)
-    g = read_cell_grid(run, axes=AxesConfig("z", "y"), cell_size=5e-6, need_solidification_time=True)
-    candidates = np.nonzero(g.centres(0) >= 300e-6 - 1e-12)[0]
-    for off in (t_off, laser_off_time_from_case(run)):
-        ks, p90 = steady_sections(g, candidates, d["plate"] * 1e-6, off)
-        np.testing.assert_array_equal(ks, ks_ref)
-        np.testing.assert_array_equal(p90, p90_ref[candidates])

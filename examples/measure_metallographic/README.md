@@ -1,55 +1,57 @@
-# Measure — metallographic mode (laserbeamFoam single track on a substrate)
+# Measure — metallographic mode with one window per scan speed
 
 ## Purpose
 
-This example measures a single track on a substrate plate in the way an etched
-cross-section is measured in the laboratory, with `geometry_mode:
-metallographic`, keeping the steady part of the track. The simulated conditions are those of the Ti-6Al-4V single
-tracks of Dilip et al. (2017): 195 W, 1200 mm/s, a spot of 100 µm, a 30 µm
-powder layer on a plate whose top is at 300 µm.
+Four laserbeamFoam single tracks on a Ti-6Al-4V plate (195 W, spot 100 µm,
+30 µm powder layer; 1.2 and 1.0 m/s, each on 5 µm and 3.33 µm cells), measured
+as etched cross-sections are measured in the laboratory (Dilip et al. 2017):
+
+- **width:** the fusion width at the plate top. When the edge cells of that
+  row ended as gas (the bead surface sank into it), the width is taken one row
+  lower, at most two rows.
+- **depth:** from the plate top to the bottom of the lowest melted-metal cell.
+- **fill:** the metal fraction of the fusion zone below the plate top. It is a
+  control, not a filter of the sections.
+
+The window is the same for all the tracks of a scan speed. It starts 50 µm
+after the latest start of their steady stretches, rounded up to a multiple of
+50 µm, and is 400 µm long. A steady stretch is where the width and the depth
+stay within ±5 µm of their median.
+
+The track coordinates are measured from the first laser position
+(`track_reference: laser_start`), because one of the cases lies in a longer box
+with its track further along.
 
 The reference data of that paper (micrographs and figures) are not
 distributed with SimToPC.
 
-## The case
+## The cases
 
-`cases/test_case_1` must be a completed, reconstructed `laserbeamFoam` run in
-its native axes (no `adapt_case_to_simtopc.py`):
+`cases/test_case_1` … `test_case_4`, in the order of `parameters.txt`. Each one
+is a completed, reconstructed `laserbeamFoam` run in its native axes, with:
 
-- `x` across the track, `y` vertical (gravity along `-y`), `z` along the scan;
-- a box of 400 × 430 × 1000 µm³ with uniform 5 µm cells (one `blockMeshDict`
-  block, or `Cx`, `Cy`, `Cz` written with `postProcess -func writeCellCentres`);
-- in the last time directory, the ASCII fields `meltHistory`, `alpha.metal`
-  and `solidificationTime` (the `meltPoolHistory` option of the solver), and
-  `constant/timeVsLaserPower`.
+- one uniform `blockMeshDict` block;
+- the ASCII fields `meltHistory` and `alpha.metal` in the last time directory;
+- `constant/timeVsLaserPosition`.
 
-A symbolic link to the run directory is enough: SimToPC only reads the case
-and writes `measure_aux/` and `measure_results/` in it.
+SimToPC writes `measure_aux/` and `measure_results/` in each case directory. To
+leave the runs untouched, the case directory can hold symbolic links to the
+run's `system/`, `constant/` and last time directory.
 
 ## Running
 
     simtopc measure config.yml
 
-## Outputs (`cases/test_case_1/measure_results/`)
+## Outputs
 
-- `cross_sections_statistics.csv`: per section, `iy` (cell centre along the
-  track), `width` (fusion width at the plate top), `height` (top of the
-  consolidated bead above the plate top), `depth` (penetration below the plate
-  top), `porosity_at_iy` (operational void fraction of the section) and
-  `total_volume_material_at_iy`;
-- `metallographic_sections.csv`: the same geometry with the fusion flag and the
-  cell counts of each section;
-- `steady_sections.csv`: the 90th percentile of the solidification time of the
-  fusion zone of each candidate section, and which sections are steady;
-- the plots `Width.png`, `Height.png`, `Depth.png`, `Porosity.png`, `DByW.png`.
+- `metallographic_summary.csv`, next to `config.yml`: one row per case with the
+  window, the steady stretch, the mean, sd and median of the width, the
+  sections measured one or two rows lower, the mean and sd of the depth, the
+  fill and the centreline surface.
+- `cases/test_case_N/measure_results/`:
+  - `metallographic_sections.csv`: the window sections.
+  - `metallographic_profile.csv`: every section of the mesh.
+  - `cross_sections_statistics.csv` and the plots.
 
-`measure_aux/continuous.joblib` is true when every measured section is fused
-into the plate.
-
-## Reference
-
-J. J. S. Dilip, S. Zhang, C. Teng, K. Zeng, C. Robinson, D. Pal, B. Stucker,
-"Influence of processing parameters on the evolution of melt pool, porosity,
-and microstructures in Ti-6Al-4V alloy parts fabricated by selective laser
-melting", Progress in Additive Manufacturing 2 (2017) 157-167,
-doi:10.1007/s40964-017-0030-2.
+`tests/test_metallographic_validation.py` checks these numbers against the
+reference scripts of the study. It is skipped when the runs are not available.

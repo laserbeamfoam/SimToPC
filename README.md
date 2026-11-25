@@ -97,7 +97,7 @@ restricted across the track to `[x_min, x_max]`. With `window_mode: fixed`
 (default) the window is `[y_begin, y_end]` (less the trim); with
 `window_mode: steady_stretch` there is one window per scan speed, set by the
 steady stretches of the cases of that speed (see
-`examples/measure_metallographic_caseD`). With `track_reference:
+`examples/measure_metallographic`). With `track_reference:
 laser_start`, track coordinates are measured from the first laser position.
 `cell_size: auto` takes the cell size of each case from its blockMeshDict. The
 case is read in its native axes, given by `axes`. Use this mode to compare

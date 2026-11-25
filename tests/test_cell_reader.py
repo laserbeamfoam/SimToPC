@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from cell_case_helpers import (DILIP, load_module, make_case, write_blockmesh,
+from cell_case_helpers import (make_case, write_blockmesh,
                                write_scalar_field, write_uniform_field)
 from simtopc.measure.cells import (AxesConfig, last_time_dir, read_blockmesh_geometry,
                                    read_cell_grid, read_scalar_field)
@@ -194,20 +194,3 @@ def test_config_axes_invalid(axes, message):
 def test_config_field_names_must_not_be_empty():
     with pytest.raises(ValueError, match="measure.melt_field"):
         build_measure_config({**BASE, "melt_field": " "})
-
-
-# ------------------------------------------------------------------ reference (real run)
-
-DILIP_RUN = DILIP / "runs" / "P195_v1200"
-
-
-@pytest.mark.skipif(not (DILIP_RUN / "VIRGIN_CASE.json").exists(), reason="Dilip run data not available")
-def test_reader_reproduces_dilip_reference_arrays():
-    dt = load_module("dilip_tools_ref", DILIP / "dilip_tools.py")
-    ref = dt.load(DILIP_RUN)
-    g = read_cell_grid(DILIP_RUN, axes=AxesConfig(track="z", vertical="y"), cell_size=5e-6)
-    assert g.time == ref["time"]
-    np.testing.assert_array_equal(g.melted(), ref["melted"])
-    np.testing.assert_array_equal(g.metal, ref["alpha"])
-    np.testing.assert_array_equal(g.solidification_time, ref["st"])
-    assert g.cell_size * 1e6 == pytest.approx(ref["h"], rel=1e-12)

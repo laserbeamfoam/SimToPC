@@ -219,7 +219,7 @@ def test_steady_stretch_windows_end_to_end(tmp_path):
 def test_example_caseD_config_is_valid():
     from pathlib import Path
     from simtopc.config import load_config
-    example = Path(__file__).resolve().parents[1] / "examples" / "measure_metallographic_caseD"
+    example = Path(__file__).resolve().parents[1] / "examples" / "measure_metallographic"
     cfg = build_measure_config(load_config(str(example / "config.yml")).measure)
     assert cfg.window_mode == "steady_stretch" and cfg.track_reference == "laser_start"
     assert cfg.cell_size is None and cfg.substrate_top == pytest.approx(150e-6)

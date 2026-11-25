@@ -1,5 +1,5 @@
 """Small synthetic OpenFOAM cases for the tests of the cell-based measurement modes,
-and the locations of the real runs used by the comparisons (skipped when missing)."""
+and the location of the real runs of the metallographic example (skipped when not given)."""
 from __future__ import annotations
 
 import importlib.util
@@ -8,13 +8,16 @@ from pathlib import Path
 import numpy as np
 
 
-PHILIPS = Path(
-    "/media/simon/28188c55-61a7-4153-8d95-b056ff7f5f56/Andrea spinal cage ct + gcode/"
-    "raw data/PhilipsNNApproach"
-)
-DILIP = PHILIPS / "validacion_claude" / "dilip2017"
-RVE_PIPELINE = PHILIPS / "rve_pipeline"
-RVE_TEST_CASE = RVE_PIPELINE / "tests" / "uniform700" / "ray_fix_meluxina" / "run_meluxina" / "d4x8" / "case"
+EXAMPLE_METALLOGRAPHIC = Path(__file__).resolve().parents[1] / "examples" / "measure_metallographic"
+
+
+def metallographic_runs():
+    """Folder with the completed runs of examples/measure_metallographic (one sub-folder per
+    case, named test_case_1 ... as in the example), from SIMTOPC_METALLOGRAPHIC_RUNS; None when
+    the variable is not set (the tests on real runs are then skipped)."""
+    import os
+    value = os.environ.get("SIMTOPC_METALLOGRAPHIC_RUNS")
+    return Path(value) if value else None
 
 
 def load_module(name, path):
