@@ -7,6 +7,8 @@ This example shows the metallographic mode of `simtopc measure`
 mode measures a track as an etched cross-section is measured in the
 laboratory: the fusion zone is what melted at some time (`meltHistory > 0`),
 and the lengths are taken from the top of the plate.
+The mode is explained in
+[docs/METALLOGRAPHIC_MODE.md](../../docs/METALLOGRAPHIC_MODE.md).
 
 The mode is for `laserbeamFoam` cases only, because it needs the field
 `meltHistory`. `laserMeltFoam` cases are measured with the default mode

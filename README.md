@@ -71,7 +71,8 @@ is continuous when every section has enough material rows. Use it for the
 measurements of the SimToPC paper, or for melt pools without a distinct
 substrate.
 
-**`geometry_mode: metallographic`** (laserbeamFoam cases only). Each
+**`geometry_mode: metallographic`** (laserbeamFoam cases only; explained with a
+figure in [docs/METALLOGRAPHIC_MODE.md](docs/METALLOGRAPHIC_MODE.md)). Each
 cross-section is one layer of cells across the track, measured as an etched
 cross-section of a track on a plate (Dilip et al. 2017). The mode needs the
 cell field `meltHistory` (laserbeamFoam with `meltPoolHistory`), which records
