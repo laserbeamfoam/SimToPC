@@ -1,0 +1,15 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+# Remove what a run and SimToPC wrote in one case of the metallographic
+# example, and restore system/controlDict (the solver rewrites it during a
+# run).
+#
+#     ./Allclean test_case_1
+#------------------------------------------------------------------------------
+set -e
+name=${1:?usage: ./Allclean test_case_N}
+cd "$(dirname "$0")/cases/$name"
+
+rm -rf 0 [1-9]* 0.[0-9]* processor* constant/polyMesh log.* measure_aux measure_results
+cp system/controlDict.laserOn system/controlDict
+echo "$name: cleaned"

@@ -113,7 +113,8 @@ file), so that their means are taken over the same part of the track.
 1. *Profile.* The width and the depth of every case are measured in every
    section of the mesh along the track.
 2. *Steady stretch of a case.* The two profiles are smoothed with a running
-   median of `steady_filter_length` (default 50 µm). The steady stretch is
+   median of `steady_filter_length` (default 50 µm; an odd number of cells
+   is used). The steady stretch is
    the longest stretch of the track, searched between `y_begin` and `y_end`,
    in which the smoothed width and the smoothed depth both stay within
    `steady_tolerance` (default ±5 µm) of their median over that stretch.
@@ -236,6 +237,7 @@ Detailed, mode-specific tutorials are provided in the `examples` directory:
 - `examples/generate/README.md`
 - `examples/measure/README.md`
 - `examples/measure_laserbeamfoam/README.md`
+- `examples/measure_metallographic/README.md`
 - `examples/surrogate/README.md`
 
 #### Automated tutorial regression test

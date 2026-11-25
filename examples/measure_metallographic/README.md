@@ -21,7 +21,7 @@ track, `y` vertical, `z` along the scan). No adaptation step is needed.
 
 ## The cases
 
-Single tracks on a Ti-6Al-4V plate with a 30 µm powder layer, 195 W and a
+Single tracks on a Ti-6Al-4V plate with a powder layer of 30 µm nominal thickness, 195 W and a
 100 µm spot (the process conditions of Dilip et al. 2017). The plate top is
 at `y = 150 µm`, which is the `substrate_top` given in `config.yml` (the
 user must give it; SimToPC does not find it from the case). The cells are cubes.
@@ -38,7 +38,7 @@ The two meshes of a scan speed use the same box.
 `cases/test_case_N` holds what is needed to run each case: `system/`,
 `constant/` (with the laser path and the powder particles in
 `constant/location`) and the initial fields in `initial/`. The computed
-fields are not distributed (several GB per case). The results of SimToPC
+fields are not distributed (0.2 to 0.8 GB per case for the last time alone). The results of SimToPC
 on the completed runs are in `expected_outputs/`.
 
 ---
@@ -55,6 +55,8 @@ In every cross-section of the mesh (one per cell along the track):
   is metal at the final time.
 - **fill:** the metal fraction of the fusion zone at and below the plate top.
   It is a control of the section, not a filter.
+- **height:** from the plate top to the top of the highest melted cell that
+  is metal at the final time.
 - **surface:** the height of the metal on the centreline, from the plate top.
 
 ### The window
@@ -67,7 +69,8 @@ part of the track.
 1. **Profile.** The width and the depth are measured in every section along
    the track.
 2. **Steady stretch of a case.** The two profiles are smoothed with a 50 µm
-   running median (`steady_filter_length`). The steady stretch is the
+   running median (`steady_filter_length`; an odd number of cells is used:
+   11 cells on the 5 µm mesh, 15 on the 3.33 µm mesh). The steady stretch is the
    longest stretch of the track in which the smoothed width and the smoothed
    depth both stay within ±5 µm (`steady_tolerance`) of their median over
    that stretch. It leaves out the start of the track, where the melt pool
@@ -78,6 +81,9 @@ part of the track.
    (`window_length`).
 4. **Check.** The window must end inside the steady stretch of every case of
    that speed. Otherwise SimToPC stops with an error.
+
+Only the cases with cells not larger than `steady_tolerance` set and check
+the window (here, all four).
 
 Track coordinates are measured from the first laser position
 (`track_reference: laser_start`), because the tracks do not start at the
@@ -104,7 +110,9 @@ earliest end of the two steady stretches. At 1.0 m/s the latest start is
 
 - SimToPC installed (see main [README](../../README.md)). The metallographic
   mode reads the ASCII fields directly; ParaView is not used.
-- To run the cases: `laserbeamFoam` (see below) and a cluster.
+- To run the cases: `laserbeamFoam` (see below) and a cluster. The runs
+  behind `expected_outputs/` used OpenFOAM v2506. `laserMeltFoam` and
+  ParaView are not needed for this example.
 
 ---
 
@@ -117,7 +125,13 @@ cd examples/measure_metallographic
 
 `Allrun` prepares the case (`blockMesh`, `setFields`, `setSolidFraction`,
 `decomposePar`), runs `laserbeamFoam` with the number of ranks of
-`system/decomposeParDict` and reconstructs the last time.
+`system/decomposeParDict` and reconstructs the last time. It calls `mpirun`
+directly: on a cluster, call it from a job script of your scheduler.
+
+During a run the solver rewrites `system/controlDict` (it switches the
+maximum time step between `controlDict.laserOn` and `controlDict.cooling`).
+`./Allclean test_case_N` removes what a run wrote and restores that file;
+`Allrun` does not start on a case that has already been run.
 
 **Solver version.** These cases were run with laserbeamFoam (branch
 `OpenFoam_com_main`) together with the changes of pull requests #148, #149,
@@ -171,7 +185,8 @@ SimToPC writes:
 | `test_case_3` | 500–900 | 80  | 140.0 ± 0.0 | 75.0 ± 0.0 | 88.7 |
 | `test_case_4` | 500–900 | 120 | 135.6 ± 2.0 | 79.9 ± 0.5 | 87.7 |
 
-Mean ± standard deviation over the sections of the window. The complete
+Mean ± standard deviation (population, `ddof = 0`) over the sections of the
+window. The complete
 numbers are in `expected_outputs/metallographic_summary.csv`, and the
 profile of every case along the track in
 `expected_outputs/test_case_N/metallographic_profile.csv`.

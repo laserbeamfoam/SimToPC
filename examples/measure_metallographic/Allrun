@@ -15,6 +15,12 @@ cd "$(dirname "$0")/cases/$name"
 
 np=$(sed -n 's/^numberOfSubdomains *\([0-9]*\);.*/\1/p' system/decomposeParDict)
 
+if ls -d processor* [1-9]* 0.[0-9]* > /dev/null 2>&1
+then
+    echo "$name has already been run: ./Allclean $name first"
+    exit 1
+fi
+
 rm -rf 0
 cp -r initial 0
 blockMesh > log.blockMesh 2>&1
