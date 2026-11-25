@@ -1,0 +1,27 @@
+FoamFile { version 2.0; format ascii; class dictionary; object movieSurfaces; }
+// The metal surface at the snapshot times, for the shot movie (tools/shot_movie), made after the
+// run from the fields written at those times: postProcess -dict system/movieSurfaces -time '...'
+functions
+{
+    metalSurface
+    {
+        type            surfaces;
+        libs            (sampling);
+        writeControl    timeStep;
+        writeInterval   1;
+        surfaceFormat   vtk;
+        formatOptions   { vtk { format binary; } }
+        interpolationScheme cellPoint;
+        fields          (alpha.metal T epsilon1);
+        surfaces
+        {
+            metal
+            {
+                type        isoSurface;
+                isoField    alpha.metal;
+                isoValue    0.5;
+                interpolate true;
+            }
+        }
+    }
+}

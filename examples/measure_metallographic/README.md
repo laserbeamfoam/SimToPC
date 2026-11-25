@@ -1,57 +1,158 @@
-# Measure — metallographic mode with one window per scan speed
+# Measure — metallographic mode
 
 ## Purpose
 
-Four laserbeamFoam single tracks on a Ti-6Al-4V plate (195 W, spot 100 µm,
-30 µm powder layer; 1.2 and 1.0 m/s, each on 5 µm and 3.33 µm cells), measured
-as etched cross-sections are measured in the laboratory (Dilip et al. 2017):
+This example shows the metallographic mode of `simtopc measure`
+(`geometry_mode: metallographic`) on four `laserbeamFoam` single tracks. The
+mode measures a track as an etched cross-section is measured in the
+laboratory: the fusion zone is what melted at some time (`meltHistory > 0`),
+and the lengths are taken from the top of the plate.
 
-- **width:** the fusion width at the plate top. When the edge cells of that
-  row ended as gas (the bead surface sank into it), the width is taken one row
-  lower, at most two rows.
-- **depth:** from the plate top to the bottom of the lowest melted-metal cell.
-- **fill:** the metal fraction of the fusion zone below the plate top. It is a
-  control, not a filter of the sections.
+The mode is for `laserbeamFoam` cases only, because it needs the field
+`meltHistory`. `laserMeltFoam` cases are measured with the default mode
+(`geometry_mode: single_track`).
 
-The window is the same for all the tracks of a scan speed. It starts 50 µm
-after the latest start of their steady stretches, rounded up to a multiple of
-50 µm, and is 400 µm long. A steady stretch is where the width and the depth
-stay within ±5 µm of their median.
+The cases are read in their native `laserbeamFoam` axes (`x` across the
+track, `y` vertical, `z` along the scan). No adaptation step is needed.
 
-The track coordinates are measured from the first laser position
-(`track_reference: laser_start`), because one of the cases lies in a longer box
-with its track further along.
-
-The reference data of that paper (micrographs and figures) are not
-distributed with SimToPC.
+---
 
 ## The cases
 
-`cases/test_case_1` … `test_case_4`, in the order of `parameters.txt`. Each one
-is a completed, reconstructed `laserbeamFoam` run in its native axes, with:
+Single tracks on a Ti-6Al-4V plate with a 30 µm powder layer, 195 W and a
+100 µm spot (the process conditions of Dilip et al. 2017). The plate top is
+at `y = 150 µm`. The cells are cubes.
 
-- one uniform `blockMeshDict` block;
-- the ASCII fields `meltHistory` and `alpha.metal` in the last time directory;
-- `constant/timeVsLaserPosition`.
+| Case | Scan speed (m/s) | Cell (µm) | Box x × y × z (µm) | Cells | Track along z (µm) |
+|------|------------------|-----------|--------------------|-------|--------------------|
+| `test_case_1` | 1.2 | 5    | 300 × 380 × 1400 | 1 276 800 | 100–1300 |
+| `test_case_2` | 1.2 | 3.33 | 300 × 380 × 1400 | 4 309 200 | 100–1300 |
+| `test_case_3` | 1.0 | 5    | 300 × 500 × 1600 | 1 920 000 | 300–1500 |
+| `test_case_4` | 1.0 | 3.33 | 300 × 500 × 1600 | 6 480 000 | 300–1500 |
 
-SimToPC writes `measure_aux/` and `measure_results/` in each case directory. To
-leave the runs untouched, the case directory can hold symbolic links to the
-run's `system/`, `constant/` and last time directory.
+The two meshes of a scan speed use the same box.
 
-## Running
+`cases/test_case_N` holds what is needed to run each case: `system/`,
+`constant/` (with the laser path and the powder particles in
+`constant/location`) and the initial fields in `initial/`. The computed
+fields are not distributed (several GB per case). The results of SimToPC
+on the completed runs are in `expected_outputs/`.
 
-    simtopc measure config.yml
+---
 
-## Outputs
+## What is measured
 
-- `metallographic_summary.csv`, next to `config.yml`: one row per case with the
-  window, the steady stretch, the mean, sd and median of the width, the
-  sections measured one or two rows lower, the mean and sd of the depth, the
-  fill and the centreline surface.
+In every cross-section of the mesh (one per cell along the track):
+
+- **width:** the width of the fusion zone in the row of cells just below the
+  plate top. When an edge cell of that row is not metal at the final time
+  (`alpha.metal < 0.5`, the bead surface sank into it), the width is taken
+  one row lower, at most two rows (`width_max_rows_down`).
+- **depth:** from the plate top to the bottom of the lowest melted cell that
+  is metal at the final time.
+- **fill:** the metal fraction of the fusion zone at and below the plate top.
+  It is a control of the section, not a filter.
+- **surface:** the height of the metal on the centreline, from the plate top.
+
+### The window
+
+The means are taken over a window of the track that is the same for all the
+cases of a scan speed (`window_mode: steady_stretch`):
+
+1. The steady stretch of a case is the longest stretch of its track where
+   the width and the depth, after a 50 µm running median, stay within ±5 µm
+   of their median.
+2. The window starts 50 µm after the latest start of the steady stretches of
+   that scan speed, rounded up to a multiple of 50 µm, and is 400 µm long.
+
+Track coordinates are measured from the first laser position
+(`track_reference: laser_start`), because the tracks do not start at the
+same `z` in the two boxes.
+
+---
+
+## Requirements
+
+- SimToPC installed (see main [README](../../README.md)). The metallographic
+  mode reads the ASCII fields directly; ParaView is not used.
+- To run the cases: `laserbeamFoam` (see below) and a cluster.
+
+---
+
+## Step 1 — Run the cases
+
+```bash
+cd examples/measure_metallographic
+./Allrun test_case_1      # and test_case_2, test_case_3, test_case_4
+```
+
+`Allrun` prepares the case (`blockMesh`, `setFields`, `setSolidFraction`,
+`decomposePar`), runs `laserbeamFoam` with the number of ranks of
+`system/decomposeParDict` and reconstructs the last time.
+
+**Solver version.** These cases were run with laserbeamFoam `main`
+(119b0c74) plus pull requests #148, #149, #151, #156, #157, #158, #159, #160
+and #169, which were open at the time (combined commit d02fa29b). Results
+with a later version of the solver may differ slightly.
+
+**Cost.** The runs behind `expected_outputs/` took, on nodes of 128 cores:
+
+| Case | Ranks | Wall time (h) | Node-hours |
+|------|-------|---------------|------------|
+| `test_case_1` | 128 | 5.7  | 6  |
+| `test_case_2` | 512 | 9.0  | 36 |
+| `test_case_3` | 128 | 11.9 | 12 |
+| `test_case_4` | 512 | 19.3 | 77 |
+
+After a run, the case directory must hold `system/`, `constant/` and the
+last time directory, reconstructed and in ASCII, with `meltHistory` and
+`alpha.metal`.
+
+---
+
+## Step 2 — Run SimToPC
+
+```bash
+simtopc measure config.yml
+```
+
+SimToPC writes:
+
+- `metallographic_summary.csv`, next to `config.yml`: one row per case with
+  the window, the steady stretch, the mean, standard deviation and median of
+  the width, the number of sections measured one or two rows lower, the mean
+  and standard deviation of the depth, the fill and the centreline surface.
 - `cases/test_case_N/measure_results/`:
-  - `metallographic_sections.csv`: the window sections.
-  - `metallographic_profile.csv`: every section of the mesh.
+  - `metallographic_sections.csv`: the sections of the window;
+  - `metallographic_profile.csv`: every section of the mesh;
   - `cross_sections_statistics.csv` and the plots.
 
-`tests/test_metallographic_validation.py` checks these numbers against the
-reference scripts of the study. It is skipped when the runs are not available.
+---
+
+## Expected results
+
+| Case | Window from the laser start (µm) | Sections | Width (µm) | Depth (µm) | Fill (%) |
+|------|----------------------------------|----------|------------|------------|----------|
+| `test_case_1` | 450–850 | 80  | 138.4 ± 2.9 | 60.0 ± 0.0 | 95.6 |
+| `test_case_2` | 450–850 | 120 | 132.6 ± 1.9 | 63.3 ± 0.0 | 92.5 |
+| `test_case_3` | 500–900 | 80  | 140.0 ± 0.0 | 75.0 ± 0.0 | 88.7 |
+| `test_case_4` | 500–900 | 120 | 135.6 ± 2.0 | 79.9 ± 0.5 | 87.7 |
+
+Mean ± standard deviation over the sections of the window. The complete
+numbers are in `expected_outputs/metallographic_summary.csv`, and the
+profile of every case along the track in
+`expected_outputs/test_case_N/metallographic_profile.csv`.
+
+`tests/test_metallographic_validation.py` compares a new measurement with
+these files. It runs when the environment variable
+`SIMTOPC_METALLOGRAPHIC_RUNS` points to a folder with the four completed
+cases (`test_case_1` … `test_case_4`), and is skipped otherwise.
+
+---
+
+## Reference
+
+Dilip, J.J.S., Zhang, S., Teng, C. et al. Influence of processing parameters
+on the evolution of melt pool, porosity, and microstructures in Ti-6Al-4V
+alloy parts fabricated by selective laser melting. *Progress in Additive
+Manufacturing* 2, 157–167 (2017).

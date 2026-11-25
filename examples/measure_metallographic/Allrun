@@ -1,0 +1,26 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+# Run one case of the metallographic example with laserbeamFoam and leave it
+# ready for SimToPC (reconstructed last time, ASCII).
+#
+#     ./Allrun test_case_1
+#
+# The laserbeamFoam environment must be loaded. The number of MPI ranks is
+# the one of system/decomposeParDict (128 or 512): these cases are meant
+# for a cluster. See README.md for the solver version and the cost.
+#------------------------------------------------------------------------------
+set -e
+name=${1:?usage: ./Allrun test_case_N}
+cd "$(dirname "$0")/cases/$name"
+
+np=$(sed -n 's/^numberOfSubdomains *\([0-9]*\);.*/\1/p' system/decomposeParDict)
+
+rm -rf 0
+cp -r initial 0
+blockMesh > log.blockMesh 2>&1
+setFields > log.setFields 2>&1
+setSolidFraction -subDivisions 1 > log.setSolidFraction 2>&1   # the powder particles of constant/location
+decomposePar > log.decomposePar 2>&1
+mpirun -np "$np" laserbeamFoam -parallel > log.laserbeamFoam 2>&1
+reconstructPar -latestTime > log.reconstructPar 2>&1
+echo "$name: finished, last time $(ls -d [0-9]* | sort -g | tail -1)"

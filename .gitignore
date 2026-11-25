@@ -34,3 +34,9 @@ log.*
 # Allow this base OpenFOAM case to be versioned
 !examples/generate/COARSE/base_case_of2412/constant/
 !examples/generate/COARSE/base_case_of2412/system/
+
+# Metallographic tutorial: case inputs and reference outputs
+!examples/measure_metallographic/cases/
+!examples/measure_metallographic/cases/**
+!examples/measure_metallographic/expected_outputs/
+!examples/measure_metallographic/expected_outputs/**
