@@ -56,18 +56,44 @@ In every cross-section of the mesh (one per cell along the track):
 
 ### The window
 
-The means are taken over a window of the track that is the same for all the
-cases of a scan speed (`window_mode: steady_stretch`):
+The means are taken over a window of the track that SimToPC finds from the
+tracks themselves (`window_mode: steady_stretch`). It is the same for the
+two cases of a scan speed, so that both meshes are measured over the same
+part of the track.
 
-1. The steady stretch of a case is the longest stretch of its track where
-   the width and the depth, after a 50 µm running median, stay within ±5 µm
-   of their median.
-2. The window starts 50 µm after the latest start of the steady stretches of
-   that scan speed, rounded up to a multiple of 50 µm, and is 400 µm long.
+1. **Profile.** The width and the depth are measured in every section along
+   the track.
+2. **Steady stretch of a case.** The two profiles are smoothed with a 50 µm
+   running median (`steady_filter_length`). The steady stretch is the
+   longest stretch of the track in which the smoothed width and the smoothed
+   depth both stay within ±5 µm (`steady_tolerance`) of their median over
+   that stretch. It leaves out the start of the track, where the melt pool
+   is still growing, and its end, where the last melt pool froze.
+3. **Window of a scan speed.** It starts 50 µm (`window_margin`) after the
+   latest start of the steady stretches of that speed, rounded up to a
+   multiple of 50 µm (`window_step`), and it is 400 µm long
+   (`window_length`).
+4. **Check.** The window must end inside the steady stretch of every case of
+   that speed. Otherwise SimToPC stops with an error.
 
 Track coordinates are measured from the first laser position
 (`track_reference: laser_start`), because the tracks do not start at the
 same `z` in the two boxes.
+
+In this example (µm from the laser start):
+
+| Case | Scan speed (m/s) | Steady stretch | Window |
+|------|------------------|----------------|--------|
+| `test_case_1` | 1.2 | 397.5–1157.5 | 450–850 |
+| `test_case_2` | 1.2 | 241.7–1128.3 | 450–850 |
+| `test_case_3` | 1.0 | 402.5–1147.5 | 500–900 |
+| `test_case_4` | 1.0 | 435.0–1115.0 | 500–900 |
+
+At 1.2 m/s the latest start is 397.5 µm; 50 µm later is 447.5 µm, rounded
+up to 450 µm, and the window is 450–850 µm. It ends before 1128.3 µm, the
+earliest end of the two steady stretches. At 1.0 m/s the latest start is
+435.0 µm; 50 µm later is 485.0 µm, rounded up to 500 µm, and the window is
+500–900 µm, which ends before 1115.0 µm.
 
 ---
 

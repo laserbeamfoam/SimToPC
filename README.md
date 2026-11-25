@@ -96,14 +96,40 @@ The sections are the cells whose centre along the track lies in the window,
 restricted across the track to `[x_min, x_max]`. With `window_mode: fixed`
 (default) the window is `[y_begin, y_end]` (less the trim); with
 `window_mode: steady_stretch` there is one window per scan speed, set by the
-steady stretches of the cases of that speed (see
-`examples/measure_metallographic`). With `track_reference:
+steady stretches of the cases of that speed (see below). With `track_reference:
 laser_start`, track coordinates are measured from the first laser position.
 `cell_size: auto` takes the cell size of each case from its blockMeshDict. The
 case is read in its native axes, given by `axes`. Use this mode to compare
 with metallographic widths and depths of single tracks on a plate, and
 whenever the powder above the plate makes the material cloud of
 `single_track` ambiguous.
+
+**`window_mode: steady_stretch`** (metallographic mode). The measurement
+window is not given by the user: it is found from the tracks, and it is the
+same for all the cases of a scan speed (first column of the parameters
+file), so that their means are taken over the same part of the track.
+
+1. *Profile.* The width and the depth of every case are measured in every
+   section of the mesh along the track.
+2. *Steady stretch of a case.* The two profiles are smoothed with a running
+   median of `steady_filter_length` (default 50 µm). The steady stretch is
+   the longest stretch of the track, searched between `y_begin` and `y_end`,
+   in which the smoothed width and the smoothed depth both stay within
+   `steady_tolerance` (default ±5 µm) of their median over that stretch.
+3. *Window of a scan speed.* It starts `window_margin` (default 50 µm) after
+   the latest start of the steady stretches of the cases of that speed,
+   rounded up to a multiple of `window_step` (default 50 µm), and it is
+   `window_length` long (default 400 µm).
+4. *Check.* The window must end inside the steady stretch of every one of
+   those cases. Otherwise the run stops with an error: the tracks are too
+   short for that window, and `window_length` or the cases must change.
+
+Only the cases with a cell size not larger than `steady_tolerance` set the
+window, because a coarser mesh cannot resolve the tolerance; the window is
+then applied to all the cases of that speed. The steady stretch of every
+case and the window are written to `metallographic_summary.csv`, and
+`metallographic_profile.csv` marks the sections of both. A worked example
+is in `examples/measure_metallographic`.
 
 **Void fraction.** In both modes the void fraction of a section is the
 operational one: the cells missing between the first and last material cell
