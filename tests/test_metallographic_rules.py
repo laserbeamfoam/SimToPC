@@ -224,3 +224,17 @@ def test_example_caseD_config_is_valid():
     assert cfg.window_mode == "steady_stretch" and cfg.track_reference == "laser_start"
     assert cfg.cell_size is None and cfg.substrate_top == pytest.approx(150e-6)
     assert np.loadtxt(example / "parameters.txt", skiprows=1).shape == (4, 3)
+
+
+def test_metallographic_rejects_a_case_without_melt_history(tmp_path):
+    """A laserMeltFoam case has no meltHistory: the metallographic mode stops with a clear error."""
+    melted, metal = _pool()
+    am = np.repeat(metal[None], 6, axis=0).astype(float)
+    make_case(tmp_path / "cases" / "test_case_1", {"alpha.metal": am}, H)
+    (tmp_path / "parameters.txt").write_text("# v P spot\n 1.0 100 1e-5\n")
+    (tmp_path / "config.yml").write_text(
+        "mesh_density: cases\nparameters_file: parameters.txt\noutput_dir: results\nrunning_on: local\n"
+        "measure:\n  y_begin: 0\n  y_end: 30e-6\n  x_min: 0\n  x_max: 55e-6\n  cell_size: auto\n"
+        "  geometry_mode: metallographic\n  axes: {track: z, vertical: y}\n  substrate_top: 30e-6\n")
+    with pytest.raises(ValueError, match="laserbeamFoam cases.*laserMeltFoam"):
+        run_measure(tmp_path / "config.yml")

@@ -71,25 +71,39 @@ is continuous when every section has enough material rows. Use it for the
 measurements of the SimToPC paper, or for melt pools without a distinct
 substrate.
 
-**`geometry_mode: metallographic`**. Each cross-section is one layer of cells
-across the track, measured as an etched cross-section of a track on a plate:
+**`geometry_mode: metallographic`** (laserbeamFoam cases only). Each
+cross-section is one layer of cells across the track, measured as an etched
+cross-section of a track on a plate (Dilip et al. 2017). The mode needs the
+cell field `meltHistory` (laserbeamFoam with `meltPoolHistory`), which records
+whether a cell ever melted; laserMeltFoam does not write it, so its cases are
+rejected with an error and are measured with `single_track`.
 
-- melted cells: `melt_field > 0`;
-- **width**: extent across the track of the melted cells in the row of cells
-  just below `substrate_top` (the fusion width at the plate top);
-- **depth**: `substrate_top` minus the bottom of the lowest melted cell (the
-  penetration into the plate);
+- fusion zone: `melt_field > 0`; metal: `metal_field >= 0.5`;
+- **width**: extent across the track of the fusion zone in the row of cells
+  just below `substrate_top` (the fusion width at the plate top); when an edge
+  cell of that row ended as gas, the width is taken one row lower, down to
+  `width_max_rows_down` rows (default 2), and is not measured beyond;
+- **depth**: `substrate_top` minus the bottom of the lowest melted-metal cell
+  (the penetration into the plate);
 - **height**: top of the highest cell that was melted and is metal, minus
   `substrate_top`; gaps of powder or gas below it are ignored, and it is
   negative for a depression below the plate top;
+- **fill**: metal fraction of the fusion zone at and below the plate top (a
+  control, not a filter), and the **centreline surface** height;
 - **continuity**: every section is fused into the plate.
 
-The sections are the cells whose centre along the track lies in
-`[y_begin, y_end]` (less the trim), restricted across the track to
-`[x_min, x_max]`; `iy` is the cell centre. The case is read in its native
-axes, given by `axes`. Use this mode to compare with metallographic widths and
-depths (for instance those of single tracks on a plate) and whenever the
-powder above the plate makes the material cloud of `single_track` ambiguous.
+The sections are the cells whose centre along the track lies in the window,
+restricted across the track to `[x_min, x_max]`. With `window_mode: fixed`
+(default) the window is `[y_begin, y_end]` (less the trim); with
+`window_mode: steady_stretch` there is one window per scan speed, set by the
+steady stretches of the cases of that speed (see
+`examples/measure_metallographic_caseD`). With `track_reference:
+laser_start`, track coordinates are measured from the first laser position.
+`cell_size: auto` takes the cell size of each case from its blockMeshDict. The
+case is read in its native axes, given by `axes`. Use this mode to compare
+with metallographic widths and depths of single tracks on a plate, and
+whenever the powder above the plate makes the material cloud of
+`single_track` ambiguous.
 
 **Void fraction.** In both modes the void fraction of a section is the
 operational one: the cells missing between the first and last material cell

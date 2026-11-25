@@ -244,10 +244,24 @@ def steady_single_track(name_new_folder, measure_cfg, grid):
     return ks
 
 
+def require_melt_field(name_new_folder, melt_field):
+    """The metallographic mode is for laserbeamFoam cases: it needs the cell field that records
+    whether a cell ever melted (meltHistory), which laserMeltFoam does not write."""
+    from simtopc.measure.cells import last_time_dir
+    t = last_time_dir(name_new_folder)
+    if not (t / melt_field).exists():
+        raise ValueError(
+            f"measure.geometry_mode metallographic is for laserbeamFoam cases: it needs the cell "
+            f"field {melt_field!r} (meltHistory, written by laserbeamFoam with meltPoolHistory) in "
+            f"{t}, which is missing. laserMeltFoam does not write it: measure laserMeltFoam cases "
+            "with geometry_mode single_track.")
+
+
 def profile_case_metallographic(name_new_folder, measure_cfg):
     """All the cross-sections of one case, measured with the metallographic rules (see
     simtopc.measure.metallographic), with the track coordinate measured from the track
     reference; the grid itself is not kept (large cases)."""
+    require_melt_field(name_new_folder, measure_cfg.melt_field)
     grid = read_case_grid(name_new_folder, measure_cfg,
                           need_solidification_time=measure_cfg.steady_sections)
     reference = 0.0

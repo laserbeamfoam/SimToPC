@@ -77,6 +77,9 @@ Description
   long track does not have.
 
 Assumptions
+  - laserbeamFoam cases: the cell field meltHistory (meltPoolHistory) records
+    whether a cell ever melted; laserMeltFoam does not write it and its cases
+    are rejected (measure them with the single_track mode)
   - Uniform cubic cells, arrays from simtopc.measure.cells
   - The substrate top lies on a cell face
 
