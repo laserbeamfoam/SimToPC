@@ -56,7 +56,7 @@ layer.
 measure:
   geometry_mode: single_track    # single_track (default) | metallographic
   axes: {track: y, vertical: z}  # laserbeamFoam native axes: {track: z, vertical: y}
-  substrate_top: 300e-6          # top of the plate (m): metallographic, steady_sections
+  substrate_top: 300e-6          # top of the plate (m): required by metallographic and steady_sections
   melt_field: meltHistory        # a cell melted at some time when > 0
   metal_field: alpha.metal       # a cell is metal at the final time when >= 0.5
   steady_sections: false         # keep only the steady part of the track

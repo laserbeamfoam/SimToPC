@@ -24,8 +24,27 @@ final time of the simulation. Two fields decide what each cell is:
   **fusion zone**, the equivalent of what the etching reveals.
 - `alpha.metal >= 0.5`: the cell is metal at the final time.
 
-The plate top is given by the user (`substrate_top`); it must lie on a face
-between two rows of cells.
+### The reference height: `substrate_top`
+
+The user must give the height of the plate top in `config.yml`:
+
+```yaml
+measure:
+  geometry_mode: metallographic
+  substrate_top: 150e-6      # top of the plate (m)
+```
+
+It is the reference of the measurement: the width is taken in the row of
+cells just below it, and the depth is measured down from it.
+
+- It is mandatory and has no default value. Without it SimToPC stops with
+  an error before measuring.
+- It must lie on a face between two rows of cells. Otherwise SimToPC stops
+  with an error.
+- SimToPC does not find it from the case: the plate and the powder on it
+  are both metal in the simulation. It is the user's responsibility to give
+  the real top of the plate; with another value, the track is measured at
+  that height without a warning.
 
 ![A cross-section with the metallographic width and depth](images/metallographic_section.png)
 

@@ -23,7 +23,8 @@ track, `y` vertical, `z` along the scan). No adaptation step is needed.
 
 Single tracks on a Ti-6Al-4V plate with a 30 µm powder layer, 195 W and a
 100 µm spot (the process conditions of Dilip et al. 2017). The plate top is
-at `y = 150 µm`. The cells are cubes.
+at `y = 150 µm`, which is the `substrate_top` given in `config.yml` (the
+user must give it; SimToPC does not find it from the case). The cells are cubes.
 
 | Case | Scan speed (m/s) | Cell (µm) | Box x × y × z (µm) | Cells | Track along z (µm) |
 |------|------------------|-----------|--------------------|-------|--------------------|
