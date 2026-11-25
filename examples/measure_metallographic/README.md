@@ -119,10 +119,14 @@ cd examples/measure_metallographic
 `decomposePar`), runs `laserbeamFoam` with the number of ranks of
 `system/decomposeParDict` and reconstructs the last time.
 
-**Solver version.** These cases were run with laserbeamFoam `main`
-(119b0c74) plus pull requests #148, #149, #151, #156, #157, #158, #159, #160
-and #169, which were open at the time (combined commit d02fa29b). Results
-with a later version of the solver may differ slightly.
+**Solver version.** These cases were run with laserbeamFoam (branch
+`OpenFoam_com_main`) together with the changes of pull requests #148, #149,
+#157, #159 and #160, now merged into that branch, and of #151, #156 and
+#169, which were still under review when these results were published. The
+case files use options of two of them: `longPause` in
+`constant/LaserProperties` (#151) and `latentHeatMethod apparentCapacity` in
+`system/fvSolution` (#159). Results with another version of the solver may
+differ slightly.
 
 **Cost.** The runs behind `expected_outputs/` took, on nodes of 128 cores:
 
